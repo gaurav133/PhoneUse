@@ -47,36 +47,9 @@ public class MainActivity extends Activity implements OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-		Log.d("anurag","MainActivity oncreate called");
         mContext = this;
         init();
     }
-    
- // Broadcast Receiver for Music play.
-    private BroadcastReceiver musicPlay = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // TODO Auto-generated method stub
-            Log.v("gaurav", "Music play started");
-            Log.v("gaurav", "intent action:" + intent.getAction());
-            
-            
-            
-            
-
-            // Check if this is first time music has started after app start.
-           /* if (isFirstTimeStartBackgroundAppService) {
-                isFirstTimeStartBackgroundAppService = false;
-                startTimeBackground = System.nanoTime();
-            }
-            if (isMusicStopped) {
-                startTimeBackground = System.nanoTime();
-            }
-            isMusicStopped = false;*/
-            // isMusicPlaying = true;
-            // isRunningBackgroundAppsThread = true;
-        }
-    };
 
     /**
      * Initialize UI controls and event listeners.
@@ -92,29 +65,6 @@ public class MainActivity extends Activity implements OnClickListener {
         mServiceStartButton.setOnClickListener(this);
         mServiceStopButton.setOnClickListener(this);
         
-        IntentFilter musicPlayFilter = new IntentFilter(
-                "android.media.action.OPEN_AUDIO_EFFECT_CONTROL_SESSION");
-        musicPlayFilter.addAction("com.android.music.metachanged");
-        
-        musicPlayFilter.addAction("com.htc.music.metachanged");
-        
-        musicPlayFilter.addAction("fm.last.android.metachanged");
-        musicPlayFilter
-        .addAction("com.sec.android.app.music.metachanged");
-        musicPlayFilter.addAction("com.nullsoft.winamp.metachanged");
-        musicPlayFilter.addAction("com.amazon.mp3.metachanged");
-        musicPlayFilter.addAction("com.miui.player.metachanged");
-        musicPlayFilter.addAction("com.real.IMP.metachanged");
-        musicPlayFilter.addAction("com.sonyericsson.music.metachanged");
-        musicPlayFilter.addAction("com.rdio.android.metachanged");
-        musicPlayFilter
-        .addAction("com.samsung.sec.android.MusicPlayer.metachanged");
-        musicPlayFilter.addAction("com.andrew.apollo.metachanged");
-        
-        musicPlayFilter.addAction("com.android.music.playstatechanged");
-        musicPlayFilter.addAction("com.android.music.playbackcomplete");
-        musicPlayFilter.addAction("com.android.music.queuechanged");
-        registerReceiver(musicPlay, musicPlayFilter);
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -169,7 +119,7 @@ public class MainActivity extends Activity implements OnClickListener {
            // insertIntoDB();
 
             // Unbind the service, as no longer needed.
-           // unbindService(mConnection);
+               unbindService(mConnection);
             
             if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
                 usageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
@@ -229,14 +179,35 @@ public class MainActivity extends Activity implements OnClickListener {
                 }                                       
             }
         
-          /*  String p = queryUsageStats.toString();
-            Log.v ("gaurav", "String: " + p);*/
-            // Log.v ("gaurav", "Query stats: " + usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0,  System.currentTimeMillis()));
             // TODO Show results in a listview instead of finishing activity.
+            // Launch app usage list activity.
+           /* Intent usageIntent = new Intent();
+            usageIntent.setAction("com.example.phoneuse.USAGE_LIST");
+            startActivity(usageIntent);*/
+            
             finish();
             break;
         default:
             break;
+        }
+    }
+    
+    /**
+     * onResume method to dynamically show data as tracking progresses.
+     */
+    @Override
+    protected void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+        
+        Log.v ("gaurav", "mainService is: " + mMainService);
+        // Show data dynamically.
+        if (mMainService != null) {
+            for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
+                Log.v("gaurav", " App name : " + entry.getKey() + " Time used: " + entry.getValue()
+                        / 1000000000);
+                // i++;
+            }
         }
     }
 
@@ -245,7 +216,7 @@ public class MainActivity extends Activity implements OnClickListener {
         MySQLiteHelper helper = MySQLiteHelper.getInstance(mContext);
 
         SQLiteDatabase db = helper.getWritableDatabase();
-        for (Map.Entry<String, Double> map : mMainService.foregroundActivityMap.entrySet()) {
+        for (Map.Entry<String, Long> map : mMainService.foregroundActivityMap.entrySet()) {
             Log.v("gaurav", "Key : " + map.getKey() + "Value : " + map.getValue());
         }
         MySQLiteHelper.insert(mMainService.foregroundActivityMap, db);
@@ -264,7 +235,7 @@ public class MainActivity extends Activity implements OnClickListener {
         // TODO Auto-generated method stub
         
         if (mMainService != null) {
-            for (Map.Entry<String, Double> entry : mMainService.foregroundActivityMap.entrySet()) {
+            for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
                 Log.v("gaurav", " App name : " + entry.getKey() + " Time used: " + entry.getValue()
                         / 1000000000);
                 // i++;

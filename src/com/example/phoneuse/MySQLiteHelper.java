@@ -60,8 +60,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
     private static final String GET_FOREGROUND_TIMES = "Select " + COLUMN_APP_NAME + "," + COLUMN_TIME_SPENT + " FROM FOREGROUND";
     private static final String GET_BACKGROUND_TIMES = "Select " + COLUMN_APP_NAME + "," + COLUMN_TIME_SPENT + " FROM BACKGROUND";
 
-    public static void insert(HashMap<String, Double> foregroundMap, SQLiteDatabase db) {
-        for (Map.Entry<String, Double> mapValues : foregroundMap.entrySet()) {
+    public static void insert(HashMap<String, Long> foregroundMap, SQLiteDatabase db) {
+        for (Map.Entry<String, Long> mapValues : foregroundMap.entrySet()) {
             /*String INSERT_QUERY = "Insert INTO FOREGROUND(APP_NAME,TIME_SPENT) values("
                     + mapValues.getKey() + "," + mapValues.getValue() + ")";
             db.execSQL(INSERT_QUERY);*/
