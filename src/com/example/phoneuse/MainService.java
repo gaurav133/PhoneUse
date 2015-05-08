@@ -1,12 +1,10 @@
 package com.example.phoneuse;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 
 import android.annotation.TargetApi;
@@ -40,9 +38,10 @@ public class MainService extends Service {
     
     private final IBinder mBinder = new LocalBinder();
     private TelephonyManager telephonyManager;
+    private static final String LOG_TAG = MainService.class.getSimpleName();
     
     // Hashmap to hold time values for foreground and background activity time values.
-    HashMap<String, Double> foregroundActivityMap, backgroundActivityMap;
+    HashMap<String, Long> foregroundActivityMap, backgroundActivityMap;
     HashMap<String, Integer> callDetailsMap;
     ArrayList<TimeIntervalNode> listMusicPlayTimes;
     
@@ -54,8 +53,7 @@ public class MainService extends Service {
     
     private boolean isRunningForegroundAppsThread = false,
             isRunningBackgroundApps = false,
-            isFirstTimeStartForgroundAppService = false,
-            isFirstTimeStartBackgroundAppService = false, isScreenOn = false,
+            isFirstTimeStartForgroundAppService = false, isScreenOn = false,
             isMusicPlaying = false,
             isMusicStarted = false;
     
@@ -64,15 +62,15 @@ public class MainService extends Service {
     private ApplicationInfo mApplicationInfo;
     private ComponentName mComponentName;
     
-    private double mPreviousStartTime;
+    private long mPreviousStartTime;
     private String mPackageName;
     private String mCurrentAppName, mPreviousAppName;
     
     private Context mContext = null;
-    private double startTime, usedTime, startTimestamp, endTimestamp;
-    private double musicListenTime;
-    private double musicStartTime, musicStopTime;
-    private double musicStartTimeStamp, musicStopTimeStamp;
+    private long startTime, usedTime, startTimestamp, endTimestamp;
+    private long musicListenTime;
+    private long musicStartTime, musicStopTime;
+    private long musicStartTimeStamp, musicStopTimeStamp;
     
     // Broadcast receiver to receive screen wake up events.
     private BroadcastReceiver screenWakeUp = new BroadcastReceiver() {
@@ -83,7 +81,7 @@ public class MainService extends Service {
                 isRunningForegroundAppsThread = true;
                 isScreenOn = true;
                 startThread();
-                Log.v("gaurav", "Screen is on");
+                Log.v(LOG_TAG, "Screen is on");
             }
         }
     };
@@ -93,9 +91,9 @@ public class MainService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
-            Log.v("gaurav", "Music play started");
-            Log.v ("gaurav", "Intent received: " + intent.getExtras().toString());
-            Log.v("gaurav", "intent action:" + intent.getAction());
+            Log.v(LOG_TAG, "Music play started");
+            Log.v (LOG_TAG, "Intent received: " + intent.getExtras().toString());
+            Log.v(LOG_TAG, "intent action:" + intent.getAction());
             
             // Check if this is first time music has started after app start.
             if (isFirstTimeStartBackgroundAppService) {
@@ -116,7 +114,7 @@ public class MainService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
-            Log.v("gaurav", "Music paused");
+            Log.v(LOG_TAG, "Music paused");
             musicListenTime += (System.nanoTime() - startTimeBackground);
             isMusicStopped = true;
         }
@@ -128,7 +126,7 @@ public class MainService extends Service {
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
             if (intent.getAction().equals("android.intent.action.SCREEN_OFF")) {
-                Log.v("gaurav", "SCREEN IS OFF");
+                Log.v(LOG_TAG, "SCREEN IS OFF");
                 isFirstTimeStartForgroundAppService = false;
                 isScreenOn = false;
                 isRunningForegroundAppsThread = false;
@@ -160,7 +158,7 @@ public class MainService extends Service {
      * Calculate total time for which phone is used.
      */
     public double phoneUsedTime() {
-        for (Map.Entry<String, Double> entry : foregroundActivityMap.entrySet()) {
+        for (Map.Entry<String, Long> entry : foregroundActivityMap.entrySet()) {
             usedTime += entry.getValue() / 1000000000;
         }
         return usedTime;
@@ -186,58 +184,27 @@ public class MainService extends Service {
         setUpReceivers(true);
         
         // Initialize hash-maps to hold time values.
-        foregroundActivityMap = new HashMap<String, Double>();
-        backgroundActivityMap = new HashMap<String, Double>();
+        foregroundActivityMap = new HashMap<String, Long>();
+        backgroundActivityMap = new HashMap<String, Long>();
         callDetailsMap = new HashMap<String, Integer>();
         listMusicPlayTimes = new ArrayList<TimeIntervalNode>();
         
         // Starting time from which calculation needs to be done.
         startTime = System.nanoTime();
         
-        Log.v("gaurav", "Service 1 created");
+        Log.v(LOG_TAG, "Service 1 created");
     }
 
     private void setUpReceivers(boolean register) {
         if (register) {
             IntentFilter wakeUpFilter = new IntentFilter("android.intent.action.SCREEN_ON");
             IntentFilter dimFilter = new IntentFilter("android.intent.action.SCREEN_OFF");
-           /* IntentFilter musicPauseFilter = new IntentFilter(
-                    "android.media.action.CLOSE_AUDIO_EFFECT_CONTROL_SESSION");
-            IntentFilter musicPlayFilter = new IntentFilter(
-                    "android.media.action.OPEN_AUDIO_EFFECT_CONTROL_SESSION");
-            
-              musicPlayFilter.addAction("com.android.music.metachanged");
-              
-              musicPlayFilter.addAction("com.htc.music.metachanged");
-              
-              musicPlayFilter.addAction("fm.last.android.metachanged");
-              musicPlayFilter
-              .addAction("com.sec.android.app.music.metachanged");
-              musicPlayFilter.addAction("com.nullsoft.winamp.metachanged");
-              musicPlayFilter.addAction("com.amazon.mp3.metachanged");
-              musicPlayFilter.addAction("com.miui.player.metachanged");
-              musicPlayFilter.addAction("com.real.IMP.metachanged");
-              musicPlayFilter.addAction("com.sonyericsson.music.metachanged");
-              musicPlayFilter.addAction("com.rdio.android.metachanged");
-              musicPlayFilter
-              .addAction("com.samsung.sec.android.MusicPlayer.metachanged");
-              musicPlayFilter.addAction("com.andrew.apollo.metachanged");
-              
-              musicPlayFilter.addAction("com.android.music.playstatechanged");
-              musicPlayFilter.addAction("com.android.music.playbackcomplete");
-              musicPlayFilter.addAction("com.android.music.queuechanged");*/
-             
-            
             // Register receivers.
             registerReceiver(screenWakeUp, wakeUpFilter);
             registerReceiver(screenDim, dimFilter);
-         //   registerReceiver(musicPlay, musicPlayFilter);
-         //   registerReceiver(musicPause, musicPauseFilter);
         } else {
             unregisterReceiver(screenWakeUp);
             unregisterReceiver(screenDim);
-         //   unregisterReceiver(musicPlay);
-         //   unregisterReceiver(musicPause);
         }
     }
 
@@ -246,22 +213,23 @@ public class MainService extends Service {
             return foregroundMap;
         }*/
 
-        HashMap<String, Double> foregroundMap = new HashMap<String, Double>();
+        HashMap<String, Long> foregroundMap = new HashMap<String, Long>();
         /**
          * Initialize foreground map to 0 values.
          */
         private void initializeMap() {
-            for (Map.Entry<String, Double> entry : foregroundMap.entrySet()) {
-                entry.setValue(0.0);
+            for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
+                entry.setValue(0L);
             }
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public void run() {
             if (isFirstTimeStartForgroundAppService) {
                 initializeMap();
                 mPreviousStartTime = startTime;
-                foregroundMap.put(mPreviousAppName, 0.0);
+                foregroundMap.put(mPreviousAppName, 0L);
             }
             
             // Next time when screen becomes ON again, update foreground map to hold previous values. 
@@ -291,7 +259,7 @@ public class MainService extends Service {
                 mCurrentAppName = (String) mPackageManager.getApplicationLabel(mApplicationInfo);
                 
                 if (mCurrentAppName != mPreviousAppName) {
-                    double time = System.nanoTime();
+                    long time = System.nanoTime();
                     if (foregroundMap.containsKey(mPreviousAppName)) {
                         foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + (time - mPreviousStartTime));
                     } else {
@@ -299,7 +267,7 @@ public class MainService extends Service {
                     }
                     
                     // Start time for current app.
-                    Log.v("gaurav", "I AM CALLED APP NAME CHANGED");
+                    Log.v(LOG_TAG, "I AM CALLED APP NAME CHANGED");
                     mPreviousStartTime = time;
                 }
                 mPreviousAppName = mCurrentAppName;
@@ -325,7 +293,7 @@ public class MainService extends Service {
                     musicStartTime = System.nanoTime();
                 }
             }
-            double time = System.nanoTime();
+            long time = System.nanoTime();
             if (foregroundMap.containsKey(mPreviousAppName)) {
                 foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + (time - mPreviousStartTime));
             } else {
@@ -336,54 +304,47 @@ public class MainService extends Service {
         }
     }
 
-    private void storeMap(HashMap<String, Double> h) {
+    private void storeMap(HashMap<String, Long> h) {
         foregroundActivityMap.putAll(h);
         
-        for (Map.Entry<String, Double> entry : foregroundActivityMap.entrySet()) {
-            Log.v ("gaurav", "APP NAME: " + entry.getKey() + "TIME: " + entry.getValue()/1000000000);
+        for (Map.Entry<String, Long> entry : foregroundActivityMap.entrySet()) {
+            Log.v (LOG_TAG, "APP NAME: " + entry.getKey() + "TIME: " + entry.getValue()/1000000000);
         }
         
     }
     
     /**
      * Get call logs for a particular duration.
+     * @param startTime Starting time from which call logs are desired (Inclusive).
+     * @param endTime End time upto which call logs are desired (Exclusive).
+     * @return HashMap containing filtered call log entries for given time interval.
      */
-    private void getCallDetails() {
+    private HashMap<String, Integer> getCallDetails(long startTime, long endTime) {
 
-        StringBuffer sb = new StringBuffer();
         Cursor managedCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
                 null, null, CallLog.Calls.DATE + " DESC");
-        int number = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
-        int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
+        
         int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
         int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-        sb.append("Call Details :");
+        
         while (managedCursor.moveToNext()) {
             
-            String phNumber = managedCursor.getString(number);
-            String callType = managedCursor.getString(type);
             String callDate = managedCursor.getString(date);
-            Date callDayTime = new Date(Long.valueOf(callDate));
-            String dateStr = new SimpleDateFormat("dd:MM:yyyy", Locale.ENGLISH).format(callDayTime);
-        
+            
               // Only add if the call times overlap with tracking times.
-            if ((Double.parseDouble(callDate) <= startTimestamp && (Double.parseDouble(callDate) + duration) >= startTimestamp)
-                    || (Double.parseDouble(callDate) > startTimestamp && Double
-                            .parseDouble(callDate) <= endTimestamp)) {
+            if ((Double.parseDouble(callDate) <= startTime && (Double.parseDouble(callDate) + duration) >= startTime)
+                    || (Double.parseDouble(callDate) > startTime && Double
+                            .parseDouble(callDate) < endTime)) {
                 
                 // Add the details in hashmap.
-                Log.v ("gaurav", "number: " + phNumber);
-                Log.v ("gaurav", "callType: " + callType);
-                Log.v ("gaurav", "callDate: " + callDate);
-                Log.v ("gaurav", "callDayTime: " + callDayTime);
-                Log.v ("gaurav", "Duration: " + duration);
-                Log.v ("gaurav", "dateStr: " + dateStr);
+                Log.v (LOG_TAG, "callDate: " + callDate);
+                Log.v (LOG_TAG, "Duration: " + duration);
                 
                 callDetailsMap.put(callDate, duration);
             }
             
         }
-
+        return callDetailsMap;
     }
 
     /**
@@ -398,13 +359,13 @@ public class MainService extends Service {
     public boolean onUnbind(Intent intent) {
         // TODO Auto-generated method stub
         
-        Log.v ("gaurav", "Service unbind");
+        Log.v (LOG_TAG, "Service unbind");
         endTimestamp = System.currentTimeMillis();
         
         // Check whether music playing in background while we are stopping
         // tracking.
         if (isMusicPlaying()) {
-            Log.v ("gaurav", "Music is playing");
+            Log.v (LOG_TAG, "Music is playing");
             musicStopTimeStamp = System.currentTimeMillis();
             musicListenTime += (System.nanoTime() - musicStartTime);
             
@@ -416,7 +377,9 @@ public class MainService extends Service {
             listMusicPlayTimes.add(intervalNode);
         }
         
-        getCallDetails();
+        // Get call details for given timestamps.
+        callDetailsMap = getCallDetails(startTimestamp, endTimestamp);
+        
         // Unregister receivers.
         setUpReceivers(false);
         
@@ -426,27 +389,23 @@ public class MainService extends Service {
         
         // Display list. 
         ListIterator<TimeIntervalNode> iterator = listMusicPlayTimes.listIterator();
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");    
         
         while (iterator.hasNext()) {
             TimeIntervalNode node = iterator.next();
             
             
-            Log.v ("gaurav", "startTime : " + new Date((long) node.startTime));
-            Log.v ("gaurav", "endTime : " + new Date((long) node.endTime));
-            Log.v ("gaurav", "duration : " + node.duration);
+            Log.v (LOG_TAG, "startTime : " + new Date((long) node.startTime));
+            Log.v (LOG_TAG, "endTime : " + new Date((long) node.endTime));
+            Log.v (LOG_TAG, "duration : " + node.duration);
         }
         
-        Log.v ("gaurav", "list : " + listMusicPlayTimes);
-        Log.v("gaurav", "You listened to music for: " + musicListenTime / 1000000000 + "seconds");
+        Log.v (LOG_TAG, "list : " + listMusicPlayTimes);
+        Log.v(LOG_TAG, "You listened to music for: " + musicListenTime / 1000000000 + "seconds");
         
         // If music was played, then only add data to map.
         if (musicListenTime != 0) {
             backgroundActivityMap.put("music", musicListenTime);
         }
-        
-        // At this point we need to check call logs, and display the calls made during tracking period.
-        
         
         return super.onUnbind(intent);
     }
@@ -455,10 +414,9 @@ public class MainService extends Service {
     public IBinder onBind(Intent intent) {
         
                 
-        Log.v("gaurav", "onBind Call");
+        Log.v(LOG_TAG, "onBind Call");
         isRunningForegroundAppsThread = true;
         isFirstTimeStartForgroundAppService = true;
-        isFirstTimeStartBackgroundAppService = true;
         
         telephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
         startTimestamp = System.currentTimeMillis();
@@ -470,15 +428,11 @@ public class MainService extends Service {
         
         // If music is already playing when tracking started.
         if (isMusicPlaying()) {
-            // musicPlay = true;
             isMusicStarted = true;
             isRunningBackgroundApps = true;
             musicStartTimeStamp = System.currentTimeMillis();
             musicStartTime = System.nanoTime();
-            //isMusicStopped = false;
-        }
-        // TODO Auto-generated method stub
-        
+            }
         }
         return mBinder;
     }
@@ -493,7 +447,7 @@ public class MainService extends Service {
         final UsageStatsManager usageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
         final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0,  System.currentTimeMillis());
 
-       // Log.v ("gaurav", "Query stats: " + queryUsageStats);
+       // Log.v (LOG_TAG, "Query stats: " + queryUsageStats);
         return !queryUsageStats.isEmpty();
     }
     

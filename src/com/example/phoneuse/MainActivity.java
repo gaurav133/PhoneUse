@@ -203,7 +203,7 @@ public class MainActivity extends Activity implements OnClickListener {
         Log.v ("gaurav", "mainService is: " + mMainService);
         // Show data dynamically.
         if (mMainService != null) {
-            for (Map.Entry<String, Double> entry : mMainService.foregroundActivityMap.entrySet()) {
+            for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
                 Log.v("gaurav", " App name : " + entry.getKey() + " Time used: " + entry.getValue()
                         / 1000000000);
                 // i++;
@@ -216,7 +216,7 @@ public class MainActivity extends Activity implements OnClickListener {
         MySQLiteHelper helper = MySQLiteHelper.getInstance(mContext);
 
         SQLiteDatabase db = helper.getWritableDatabase();
-        for (Map.Entry<String, Double> map : mMainService.foregroundActivityMap.entrySet()) {
+        for (Map.Entry<String, Long> map : mMainService.foregroundActivityMap.entrySet()) {
             Log.v("gaurav", "Key : " + map.getKey() + "Value : " + map.getValue());
         }
         MySQLiteHelper.insert(mMainService.foregroundActivityMap, db);
@@ -235,7 +235,7 @@ public class MainActivity extends Activity implements OnClickListener {
         // TODO Auto-generated method stub
         
         if (mMainService != null) {
-            for (Map.Entry<String, Double> entry : mMainService.foregroundActivityMap.entrySet()) {
+            for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
                 Log.v("gaurav", " App name : " + entry.getKey() + " Time used: " + entry.getValue()
                         / 1000000000);
                 // i++;
