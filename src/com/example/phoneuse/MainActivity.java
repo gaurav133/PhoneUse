@@ -32,6 +32,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.phoneuse.MainService.LocalBinder;
+import com.example.phoneuse.database.PhoneUsageDatabase;
 
 public class MainActivity extends Activity implements OnClickListener {
     private Context mContext;
@@ -41,6 +42,7 @@ public class MainActivity extends Activity implements OnClickListener {
     private long mStartServiceTime;
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     
+
     // UI elements.
     Button mServiceStartButton, mServiceStopButton;
 
@@ -49,6 +51,7 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mContext = this;
+        mDatabase = new PhoneUsageDatabase(mContext);
         init();
     }
 
@@ -212,14 +215,12 @@ public class MainActivity extends Activity implements OnClickListener {
 
     public void insertIntoDB() {
         // Get SQL Helper.
-        MySQLiteHelper helper = MySQLiteHelper.getInstance(mContext);
 
-        SQLiteDatabase db = helper.getWritableDatabase();
         for (Map.Entry<String, Long> map : mMainService.foregroundActivityMap.entrySet()) {
             Log.v(LOG_TAG, "Key : " + map.getKey() + "Value : " + map.getValue());
         }
-        MySQLiteHelper.insert(mMainService.foregroundActivityMap, db);
-        MySQLiteHelper.retrieve(db);
+//        mDatabase.insert(mMainService.foregroundActivityMap);
+//        MySQLiteHelper.retrieve(db);
     }
 
     @Override

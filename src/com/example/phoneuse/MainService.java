@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import com.example.phoneuse.Utility.UsageInfo;
+
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.Service;
@@ -43,7 +45,7 @@ public class MainService extends Service {
     // Hashmap to hold time values for foreground and background activity time values.
     HashMap<String, Long> foregroundActivityMap, backgroundActivityMap;
     HashMap<String, Integer> callDetailsMap;
-    ArrayList<TimeIntervalNode> listMusicPlayTimes;
+    ArrayList<UsageInfo> listMusicPlayTimes;
     
     // Interval tree to store time durations music was being played.
     
@@ -187,7 +189,7 @@ public class MainService extends Service {
         foregroundActivityMap = new HashMap<String, Long>();
         backgroundActivityMap = new HashMap<String, Long>();
         callDetailsMap = new HashMap<String, Integer>();
-        listMusicPlayTimes = new ArrayList<TimeIntervalNode>();
+        listMusicPlayTimes = new ArrayList<UsageInfo>();
         
         // Starting time from which calculation needs to be done.
         startTime = System.nanoTime();
@@ -280,10 +282,10 @@ public class MainService extends Service {
                     isMusicStarted = false;
                     
                     // As music has been stopped add resulting interval to list.
-                    TimeIntervalNode intervalNode = new TimeIntervalNode();
-                    intervalNode.startTime = musicStartTimeStamp;
-                    intervalNode.endTime = musicStopTimeStamp;
-                    intervalNode.duration = (int) ((intervalNode.endTime - intervalNode.startTime)/1000);
+                    UsageInfo intervalNode = new UsageInfo();
+                    intervalNode.setmIntervalStartTime(musicStartTimeStamp);
+                    intervalNode.setmIntervalEndTime(musicStopTimeStamp);
+                    intervalNode.setmIntervalDuration((long) ((intervalNode.getmIntervalEndTime() - intervalNode.getmIntervalStartTime())/1000));
                     listMusicPlayTimes.add(intervalNode);
                     
                 } else if (isMusicPlaying() && !isMusicStarted) {
@@ -370,10 +372,10 @@ public class MainService extends Service {
             musicListenTime += (System.nanoTime() - musicStartTime);
             
          // As music has been stopped add resulting interval to list.
-            TimeIntervalNode intervalNode = new TimeIntervalNode();
-            intervalNode.startTime = musicStartTimeStamp;
-            intervalNode.endTime = musicStopTimeStamp;
-            intervalNode.duration = (int) ((intervalNode.endTime - intervalNode.startTime)/1000);
+            UsageInfo intervalNode = new UsageInfo();
+            intervalNode.setmIntervalStartTime(musicStartTimeStamp);
+            intervalNode.setmIntervalEndTime(musicStopTimeStamp);
+            intervalNode.setmIntervalDuration((long) ((intervalNode.getmIntervalEndTime() - intervalNode.getmIntervalStartTime())/1000));
             listMusicPlayTimes.add(intervalNode);
         }
         
@@ -388,15 +390,15 @@ public class MainService extends Service {
         isMusicStarted = false;
         
         // Display list. 
-        ListIterator<TimeIntervalNode> iterator = listMusicPlayTimes.listIterator();
+        ListIterator<UsageInfo> iterator = listMusicPlayTimes.listIterator();
         
         while (iterator.hasNext()) {
-            TimeIntervalNode node = iterator.next();
+        	UsageInfo node = iterator.next();
             
             
-            Log.v (LOG_TAG, "startTime : " + new Date((long) node.startTime));
-            Log.v (LOG_TAG, "endTime : " + new Date((long) node.endTime));
-            Log.v (LOG_TAG, "duration : " + node.duration);
+            Log.v (LOG_TAG, "startTime : " + new Date((long) node.getmIntervalStartTime()));
+            Log.v (LOG_TAG, "endTime : " + new Date((long) node.getmIntervalEndTime()));
+            Log.v (LOG_TAG, "duration : " + node.getmIntervalDuration());
         }
         
         Log.v (LOG_TAG, "list : " + listMusicPlayTimes);
