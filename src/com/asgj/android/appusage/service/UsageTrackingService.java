@@ -1,4 +1,4 @@
-package com.example.phoneuse;
+package com.asgj.android.appusage.service;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-
-import com.example.phoneuse.Utility.UsageInfo;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
@@ -31,21 +29,23 @@ import android.provider.CallLog;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.asgj.android.appusage.Utility.UsageInfo;
+
 /**
  * Service to track application usage time for different apps being used by the user.
  * It'll track usage for foreground apps as well as background apps (Music, Call).
  * @author jain.g
  */
-public class MainService extends Service {
+public class UsageTrackingService extends Service {
     
     private final IBinder mBinder = new LocalBinder();
     private TelephonyManager telephonyManager;
-    private static final String LOG_TAG = MainService.class.getSimpleName();
+    private static final String LOG_TAG = UsageTrackingService.class.getSimpleName();
     
     // Hashmap to hold time values for foreground and background activity time values.
-    HashMap<String, Long> foregroundActivityMap, backgroundActivityMap;
-    HashMap<String, Integer> callDetailsMap;
-    ArrayList<UsageInfo> listMusicPlayTimes;
+    public HashMap<String, Long> foregroundActivityMap, backgroundActivityMap;
+    public HashMap<String, Integer> callDetailsMap;
+    public ArrayList<UsageInfo> listMusicPlayTimes;
     
     // Interval tree to store time durations music was being played.
     
@@ -171,8 +171,8 @@ public class MainService extends Service {
      */
     public class LocalBinder extends Binder {
         // Return service instance from this class.
-        MainService getInstance() {
-            return MainService.this;
+        public UsageTrackingService getInstance() {
+            return UsageTrackingService.this;
         }
     }
 

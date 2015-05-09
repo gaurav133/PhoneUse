@@ -1,4 +1,4 @@
-package com.example.phoneuse.database;
+package com.asgj.android.appusage.database;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,9 +13,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
-import com.example.phoneuse.Utility.UsageInfo;
-import com.example.phoneuse.database.PhoneUsageDbHelper.Columns;
-import com.example.phoneuse.database.PhoneUsageDbHelper.Table;
+import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.database.PhoneUsageDbHelper.Columns;
+import com.asgj.android.appusage.database.PhoneUsageDbHelper.Table;
 
 public class PhoneUsageDatabase {
 

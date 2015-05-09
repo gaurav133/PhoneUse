@@ -1,4 +1,4 @@
-package com.example.phoneuse.Utility;
+package com.asgj.android.appusage.Utility;
 
 public class UsageInfo {
 

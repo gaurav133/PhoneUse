@@ -1,4 +1,4 @@
-package com.example.phoneuse;
+package com.asgj.android.appusage.activities;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -13,13 +13,10 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -31,16 +28,19 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.example.phoneuse.MainService.LocalBinder;
-import com.example.phoneuse.database.PhoneUsageDatabase;
+import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.database.PhoneUsageDatabase;
+import com.asgj.android.appusage.service.UsageTrackingService;
+import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 
-public class MainActivity extends Activity implements OnClickListener {
+public class UsageListMainActivity extends Activity implements OnClickListener {
     private Context mContext;
-    private MainService mMainService;
+    private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
     private List<UsageStats> mQueryUsageStats;
     private long mStartServiceTime;
-    private static final String LOG_TAG = MainActivity.class.getSimpleName();
+    private PhoneUsageDatabase mDatabase;
+    private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     
 
     // UI elements.
@@ -99,8 +99,8 @@ public class MainActivity extends Activity implements OnClickListener {
                
             // Here you bind to the service.
             Intent startServiceIntent = new Intent();
-            startServiceIntent.setClass(this, MainService.class);
-            startServiceIntent.setComponent(new ComponentName(this, MainService.class));
+            startServiceIntent.setClass(this, UsageTrackingService.class);
+            startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
             bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
 
             // Home Screen intent.
