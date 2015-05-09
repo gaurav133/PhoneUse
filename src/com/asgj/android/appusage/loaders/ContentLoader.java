@@ -1,4 +1,4 @@
-package com.example.phoneuse;
+package com.asgj.android.appusage.loaders;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
