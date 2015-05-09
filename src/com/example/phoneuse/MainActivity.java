@@ -37,11 +37,12 @@ import com.example.phoneuse.database.PhoneUsageDatabase;
 public class MainActivity extends Activity implements OnClickListener {
     private Context mContext;
     private MainService mMainService;
-    private UsageStatsManager usageStatsManager;
-    private List<UsageStats> queryUsageStats;
-    private PhoneUsageDatabase mDatabase;
+    private UsageStatsManager mUsageStatsManager;
+    private List<UsageStats> mQueryUsageStats;
+    private long mStartServiceTime;
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
+    
 
-    private long time;
     // UI elements.
     Button mServiceStartButton, mServiceStopButton;
 
@@ -56,11 +57,11 @@ public class MainActivity extends Activity implements OnClickListener {
 
     /**
      * Initialize UI controls and event listeners.
-     * This method is called everytime the activity is created.
+     * This method is called every-time the activity is created.
      */
     public void init() {
 
-        // Initialise buttons.
+        // Initialize buttons.
         Button mServiceStartButton = (Button) findViewById(R.id.startButton);
         Button mServiceStopButton = (Button) findViewById(R.id.stopButton);
 
@@ -89,11 +90,11 @@ public class MainActivity extends Activity implements OnClickListener {
         switch (v.getId()) {
         case R.id.startButton:
             
-             time = System.currentTimeMillis();
-             Log.v ("gaurav", "Time: " + time);
+             mStartServiceTime = System.currentTimeMillis();
+             Log.v (LOG_TAG, "Time: " + mStartServiceTime);
              SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");    
-             Date resultdate = new Date(time);
-             Log.v ("gaurav",sdf.format(resultdate));
+             Date resultdate = new Date(mStartServiceTime);
+             Log.v (LOG_TAG,sdf.format(resultdate));
             if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) { 
                
             // Here you bind to the service.
@@ -125,58 +126,57 @@ public class MainActivity extends Activity implements OnClickListener {
                unbindService(mConnection);
             
             if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
-                usageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
+                mUsageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
                 
                 SimpleDateFormat sdf1 = new SimpleDateFormat("MMM dd,yyyy HH:mm");   
-             // Get current time zone and it's offset from epoch.
                 
                 Calendar c = Calendar.getInstance();
                 c.set(Calendar.HOUR_OF_DAY, 0);
                 c.set(Calendar.MINUTE, 0);
                 c.set(Calendar.SECOND, 0);
                 
-                Log.v ("gaurav", "CALENDAR OBJECT: " + c);
+                Log.v (LOG_TAG, "CALENDAR OBJECT: " + c);
                 TimeZone currentTimeZone = TimeZone.getDefault();
                 int offset = currentTimeZone.getRawOffset();
                 Date resultdate2 = new Date(offset);
-                Log.v ("gaurav", "Current timezone: " + currentTimeZone + " and offset : " + sdf1.format(resultdate2));
+                Log.v (LOG_TAG, "Current timezone: " + currentTimeZone + " and offset : " + sdf1.format(resultdate2));
                 
                 long time2 = System.currentTimeMillis();
                 
                 // Need to query usage stats for present day according to timezone.
-                queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, c.getTimeInMillis(), time2);
+                mQueryUsageStats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, c.getTimeInMillis(), time2);
                  
                 Date resultdate1 = new Date(c.getTimeInMillis());
                 
-                Log.v ("gaurav","Inside stop" + sdf1.format(resultdate1));
+                Log.v (LOG_TAG,"Inside stop" + sdf1.format(resultdate1));
                 
                 SimpleDateFormat sdf11 = new SimpleDateFormat("MMM dd,yyyy HH:mm");    
                 Date resultdate11 = new Date(time2);
-                Log.v ("gaurav",sdf11.format(resultdate11));
+                Log.v (LOG_TAG,sdf11.format(resultdate11));
                }
             
-            Log.v ("gaurav", "Query stats:" + queryUsageStats);
+            Log.v (LOG_TAG, "Query stats:" + mQueryUsageStats);
             // Query stats:
-            if(queryUsageStats != null) {
+            if(mQueryUsageStats != null) {
                 SortedMap<Long,UsageStats> mySortedMap = new TreeMap<Long,UsageStats>();
-                for (UsageStats usageStats : queryUsageStats) {
+                for (UsageStats usageStats : mQueryUsageStats) {
                     mySortedMap.put(usageStats.getTotalTimeInForeground(),usageStats);
                 }                    
                 if(mySortedMap != null && !mySortedMap.isEmpty()) {
                     for (Map.Entry<Long, UsageStats> entry : mySortedMap.entrySet()) {
-                        Log.v ("gaurav", "Key : " + entry.getKey());
-                        Log.v ("gaurav", "Value : " + entry.getValue());
+                        Log.v (LOG_TAG, "Key : " + entry.getKey());
+                        Log.v (LOG_TAG, "Value : " + entry.getValue());
                         String topPackageName =  entry.getValue().getPackageName();
-                        Log.v ("gaurav", "Package name: " + topPackageName);
-                        Log.v ("gaurav", "Time spent in foreground: " + entry.getValue().getTotalTimeInForeground()/1000);
-                       // Log.v ("gaurav", "First timestamp")
+                        Log.v (LOG_TAG, "Package name: " + topPackageName);
+                        Log.v (LOG_TAG, "Time spent in foreground: " + entry.getValue().getTotalTimeInForeground()/1000);
+                       // Log.v (LOG_TAG, "First timestamp")
                         
                         SimpleDateFormat sdf11 = new SimpleDateFormat("MMM dd,yyyy HH:mm");    
                         Date resultdate11 = new Date(entry.getValue().getFirstTimeStamp());
-                        Log.v ("gaurav","First timestamp: " + sdf11.format(resultdate11));
+                        Log.v (LOG_TAG,"First timestamp: " + sdf11.format(resultdate11));
                         
                         Date resultdate111 = new Date(entry.getValue().getLastTimeStamp());
-                        Log.v ("gaurav","Last timestamp: " + sdf11.format(resultdate111));
+                        Log.v (LOG_TAG,"Last timestamp: " + sdf11.format(resultdate111));
                     }
                     
                 }                                       
@@ -203,13 +203,12 @@ public class MainActivity extends Activity implements OnClickListener {
         // TODO Auto-generated method stub
         super.onResume();
         
-        Log.v ("gaurav", "mainService is: " + mMainService);
+        Log.v (LOG_TAG, "mainService is: " + mMainService);
         // Show data dynamically.
         if (mMainService != null) {
             for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
-                Log.v("gaurav", " App name : " + entry.getKey() + " Time used: " + entry.getValue()
+                Log.v(LOG_TAG, " App name : " + entry.getKey() + " Time used: " + entry.getValue()
                         / 1000000000);
-                // i++;
             }
         }
     }
@@ -218,7 +217,7 @@ public class MainActivity extends Activity implements OnClickListener {
         // Get SQL Helper.
 
         for (Map.Entry<String, Long> map : mMainService.foregroundActivityMap.entrySet()) {
-            Log.v("gaurav", "Key : " + map.getKey() + "Value : " + map.getValue());
+            Log.v(LOG_TAG, "Key : " + map.getKey() + "Value : " + map.getValue());
         }
 //        mDatabase.insert(mMainService.foregroundActivityMap);
 //        MySQLiteHelper.retrieve(db);
@@ -237,19 +236,18 @@ public class MainActivity extends Activity implements OnClickListener {
         
         if (mMainService != null) {
             for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
-                Log.v("gaurav", " App name : " + entry.getKey() + " Time used: " + entry.getValue()
+                Log.v(LOG_TAG, " App name : " + entry.getKey() + " Time used: " + entry.getValue()
                         / 1000000000);
-                // i++;
             }
+            
             mMainService.phoneUsedTime();
             Toast.makeText(mContext, "Phone used for: " + mMainService.phoneUsedTime() + "seconds",
                     Toast.LENGTH_LONG).show();
-          //  Log.v("gaurav", "Phone screen on for: " + mMainService.phoneUsedTime() + "seconds");
+          //  Log.v(LOG_TAG, "Phone screen on for: " + mMainService.phoneUsedTime() + "seconds");
         }
         
         //queryUsageStats = null;
         super.onDestroy();
-        // Unregister receivers.
     }
 
     @Override
