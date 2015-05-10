@@ -345,10 +345,9 @@ public class UsageTrackingService extends Service {
             String callDate = managedCursor.getString(date);
             
               // Only add if the call times overlap with tracking times.
-            if ((Double.parseDouble(callDate) <= startTime && (Double.parseDouble(callDate) + duration) >= startTime)
-                    || (Double.parseDouble(callDate) > startTime && Double
-                            .parseDouble(callDate) < endTime)) {
-                
+            if ((Long.parseLong(callDate) <= startTime && (Long.parseLong(callDate) + duration) >= startTime)
+                    || (Long.parseLong(callDate) > startTime && Long.parseLong(callDate) < endTime)) {
+    
                 // Add the details in hashmap.
                 Log.v (LOG_TAG, "callDate: " + callDate);
                 Log.v (LOG_TAG, "Duration: " + duration);
