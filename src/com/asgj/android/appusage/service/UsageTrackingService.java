@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
@@ -31,6 +29,7 @@ import android.provider.CallLog;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
 
 /**
@@ -239,7 +238,7 @@ public class UsageTrackingService extends Service {
                 foregroundMap.put(mPreviousAppName, 0L);
                 isFirstTimeStartForgroundAppService = false;
 
-                foregroundMap.put(mPreviousAppName, 0.0);
+                foregroundMap.put(mPreviousAppName, 0L);
             }
             
             // Next time when screen becomes ON again, update foreground map to hold previous values. 
@@ -402,9 +401,8 @@ public class UsageTrackingService extends Service {
         isMusicStarted = false;
         
         // Display list. 
-        ListIterator<TimeIntervalNode> iterator = listMusicPlayTimes.listIterator();
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");    
-
+        ListIterator<UsageInfo> iterator = listMusicPlayTimes.listIterator();
+        
         while (iterator.hasNext()) {
         	UsageInfo node = iterator.next();
             
