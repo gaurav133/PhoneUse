@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.phoneuse"
+    package="com.asgj.android.appusage"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
+            android:name="com.asgj.android.appusage.activities.UsageListMainActivity"
             android:label="@string/app_name" >
             
             <intent-filter>
@@ -32,7 +32,7 @@
         </activity>
         
         <service
-            android:name=".MainService"
+            android:name="com.asgj.android.appusage.service.UsageTrackingService"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="abc" />

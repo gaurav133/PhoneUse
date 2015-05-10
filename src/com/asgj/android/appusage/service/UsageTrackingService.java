@@ -1,4 +1,4 @@
-package com.example.phoneuse;
+package com.asgj.android.appusage.service;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,21 +31,32 @@ import android.provider.CallLog;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.asgj.android.appusage.Utility.UsageInfo;
+
 /**
  * Service to track application usage time for different apps being used by the user.
  * It'll track usage for foreground apps as well as background apps (Music, Call).
  * @author jain.g
  */
-public class MainService extends Service {
+public class UsageTrackingService extends Service {
     
     private final IBinder mBinder = new LocalBinder();
     private TelephonyManager telephonyManager;
-    private static final String LOG_TAG = MainService.class.getSimpleName();
+||||||| merged common ancestors
+=======
+    private static final String LOG_TAG = UsageTrackingService.class.getSimpleName();
+>>>>>>> 6ce5dfd062d18779b7706af8254b2154aca6997d:src/com/asgj/android/appusage/service/UsageTrackingService.java
     
     // Hashmap to hold time values for foreground and background activity time values.
-    HashMap<String, Long> foregroundActivityMap, backgroundActivityMap;
+||||||| merged common ancestors
+    HashMap<String, Double> foregroundActivityMap, backgroundActivityMap;
     HashMap<String, Integer> callDetailsMap;
     ArrayList<TimeIntervalNode> listMusicPlayTimes;
+=======
+    public HashMap<String, Long> foregroundActivityMap, backgroundActivityMap;
+    public HashMap<String, Integer> callDetailsMap;
+    public ArrayList<UsageInfo> listMusicPlayTimes;
+>>>>>>> 6ce5dfd062d18779b7706af8254b2154aca6997d:src/com/asgj/android/appusage/service/UsageTrackingService.java
     
     // Interval tree to store time durations music was being played.
     
@@ -128,9 +139,15 @@ public class MainService extends Service {
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
             if (intent.getAction().equals("android.intent.action.SCREEN_OFF")) {
+||||||| merged common ancestors
+                Log.v("gaurav", "SCREEN IS OFF");
+                isFirstTimeStartForgroundAppService = false;
+                isScreenOn = false;
+=======
                 Log.v(LOG_TAG, "SCREEN IS OFF");
-                /*isFirstTimeStartForgroundAppService = false;
-                */isScreenOn = false;
+                isFirstTimeStartForgroundAppService = false;
+                isScreenOn = false;
+>>>>>>> 6ce5dfd062d18779b7706af8254b2154aca6997d:src/com/asgj/android/appusage/service/UsageTrackingService.java
                 isRunningForegroundAppsThread = false;
                 
                 // If screen dim, and user isn't listening to songs or talking, then update boolean variables.
@@ -171,8 +188,8 @@ public class MainService extends Service {
      */
     public class LocalBinder extends Binder {
         // Return service instance from this class.
-        MainService getInstance() {
-            return MainService.this;
+        public UsageTrackingService getInstance() {
+            return UsageTrackingService.this;
         }
     }
 
@@ -189,7 +206,7 @@ public class MainService extends Service {
         foregroundActivityMap = new HashMap<String, Long>();
         backgroundActivityMap = new HashMap<String, Long>();
         callDetailsMap = new HashMap<String, Integer>();
-        listMusicPlayTimes = new ArrayList<TimeIntervalNode>();
+        listMusicPlayTimes = new ArrayList<UsageInfo>();
         
         // Starting time from which calculation needs to be done.
         startTime = System.nanoTime();
@@ -231,11 +248,14 @@ public class MainService extends Service {
             if (isFirstTimeStartForgroundAppService) {
                 initializeMap();
                 mPreviousStartTime = startTime;
+<<<<<<< HEAD:src/com/example/phoneuse/MainService.java
                 
                 // Initially, when service is started, application name would be Phone Use.
                 mPreviousAppName = mContext.getString(R.string.app_name);
                 foregroundMap.put(mPreviousAppName, 0L);
                 isFirstTimeStartForgroundAppService = false;
+||||||| merged common ancestors
+                foregroundMap.put(mPreviousAppName, 0.0);
             }
             
             // Next time when screen becomes ON again, update foreground map to hold previous values. 
@@ -287,10 +307,10 @@ public class MainService extends Service {
                     isMusicStarted = false;
                     
                     // As music has been stopped add resulting interval to list.
-                    TimeIntervalNode intervalNode = new TimeIntervalNode();
-                    intervalNode.startTime = musicStartTimeStamp;
-                    intervalNode.endTime = musicStopTimeStamp;
-                    intervalNode.duration = (int) ((intervalNode.endTime - intervalNode.startTime)/1000);
+                    UsageInfo intervalNode = new UsageInfo();
+                    intervalNode.setmIntervalStartTime(musicStartTimeStamp);
+                    intervalNode.setmIntervalEndTime(musicStopTimeStamp);
+                    intervalNode.setmIntervalDuration((long) ((intervalNode.getmIntervalEndTime() - intervalNode.getmIntervalStartTime())/1000));
                     listMusicPlayTimes.add(intervalNode);
                     
                 } else if (isMusicPlaying() && !isMusicStarted) {
@@ -308,18 +328,32 @@ public class MainService extends Service {
                 }
                 storeMap(foregroundMap);
              
+            }               
+||||||| merged common ancestors
+            long time = System.nanoTime();
+            if (foregroundMap.containsKey(mPreviousAppName)) {
+                foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + (time - mPreviousStartTime));
+            } else {
+                foregroundMap.put(mPreviousAppName, time - mPreviousStartTime);
             }
-
-               
+            storeMap(foregroundMap);
+            
+>>>>>>> 6ce5dfd062d18779b7706af8254b2154aca6997d:src/com/asgj/android/appusage/service/UsageTrackingService.java
         }
     }
 
     private void storeMap(HashMap<String, Long> h) {
         foregroundActivityMap.putAll(h);
         
-        /*for (Map.Entry<String, Long> entry : foregroundActivityMap.entrySet()) {
-            Log.v (LOG_TAG, "APP NAME: " + entry.getKey() + "TIME: " + entry.getValue()/1000000000000L);
-        }*/
+||||||| merged common ancestors
+        for (Map.Entry<String, Double> entry : foregroundActivityMap.entrySet()) {
+            Log.v ("gaurav", "APP NAME: " + entry.getKey() + "TIME: " + entry.getValue()/1000000000);
+        }
+=======
+        for (Map.Entry<String, Long> entry : foregroundActivityMap.entrySet()) {
+            Log.v (LOG_TAG, "APP NAME: " + entry.getKey() + "TIME: " + entry.getValue()/1000000000);
+        }
+>>>>>>> 6ce5dfd062d18779b7706af8254b2154aca6997d:src/com/asgj/android/appusage/service/UsageTrackingService.java
         
     }        
         
@@ -382,10 +416,10 @@ public class MainService extends Service {
             musicListenTime += (System.nanoTime() - musicStartTime);
             
          // As music has been stopped add resulting interval to list.
-            TimeIntervalNode intervalNode = new TimeIntervalNode();
-            intervalNode.startTime = musicStartTimeStamp;
-            intervalNode.endTime = musicStopTimeStamp;
-            intervalNode.duration = (int) ((intervalNode.endTime - intervalNode.startTime)/1000);
+            UsageInfo intervalNode = new UsageInfo();
+            intervalNode.setmIntervalStartTime(musicStartTimeStamp);
+            intervalNode.setmIntervalEndTime(musicStopTimeStamp);
+            intervalNode.setmIntervalDuration((long) ((intervalNode.getmIntervalEndTime() - intervalNode.getmIntervalStartTime())/1000));
             listMusicPlayTimes.add(intervalNode);
         }
         
@@ -400,15 +434,20 @@ public class MainService extends Service {
         isMusicStarted = false;
         
         // Display list. 
+||||||| merged common ancestors
         ListIterator<TimeIntervalNode> iterator = listMusicPlayTimes.listIterator();
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");    
+
+>>>>>>> 6ce5dfd062d18779b7706af8254b2154aca6997d:src/com/asgj/android/appusage/service/UsageTrackingService.java
         
         while (iterator.hasNext()) {
-            TimeIntervalNode node = iterator.next();
+        	UsageInfo node = iterator.next();
             
             
-            Log.v (LOG_TAG, "startTime : " + new Date((long) node.startTime));
-            Log.v (LOG_TAG, "endTime : " + new Date((long) node.endTime));
-            Log.v (LOG_TAG, "duration : " + node.duration);
+            Log.v (LOG_TAG, "startTime : " + new Date((long) node.getmIntervalStartTime()));
+            Log.v (LOG_TAG, "endTime : " + new Date((long) node.getmIntervalEndTime()));
+            Log.v (LOG_TAG, "duration : " + node.getmIntervalDuration());
+>>>>>>> 6ce5dfd062d18779b7706af8254b2154aca6997d:src/com/asgj/android/appusage/service/UsageTrackingService.java
         }
         
         Log.v (LOG_TAG, "list : " + listMusicPlayTimes);
