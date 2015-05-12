@@ -11,15 +11,19 @@ import java.util.TreeMap;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,11 +39,12 @@ import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 
 public class UsageListMainActivity extends Activity implements OnClickListener {
     private Context mContext;
-    private UsageTrackingService mMainService;
+    private static UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
     private List<UsageStats> mQueryUsageStats;
     private long mStartServiceTime;
     private PhoneUsageDatabase mDatabase;
+    private boolean isServiceStarted = false;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     
 
@@ -53,6 +58,17 @@ public class UsageListMainActivity extends Activity implements OnClickListener {
         mContext = this;
         mDatabase = new PhoneUsageDatabase(mContext);
         init();
+        
+        // Check whether binding is needed.
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (preferences.getBoolean("ServiceStart", false) == true) {
+            Log.v (LOG_TAG, "Service restrart from activity");
+            Intent startServiceIntent = new Intent();
+            startServiceIntent.setClass(this, UsageTrackingService.class);
+            startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
+            startService(startServiceIntent);
+            bindService(startServiceIntent, mConnection, 0);
+        }
     }
 
     /**
@@ -75,20 +91,31 @@ public class UsageListMainActivity extends Activity implements OnClickListener {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             // TODO Auto-generated method stub
+            Log.v (LOG_TAG, "Service disconnected");
         }
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mMainService = ((LocalBinder) service).getInstance();
+            Log.v (LOG_TAG, "Service connected, mMainService is: " + mMainService);
         }
     };
 
+    @SuppressWarnings("deprecation")
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onClick(View v) {
         // TODO Auto-generated method stub
         switch (v.getId()) {
         case R.id.startButton:
+            
+            isServiceStarted = true;
+            
+            // Commit this to shared-preference.
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean("ServiceStart",true);
+            editor.commit();
             
              mStartServiceTime = System.currentTimeMillis();
              Log.v (LOG_TAG, "Time: " + mStartServiceTime);
@@ -97,11 +124,11 @@ public class UsageListMainActivity extends Activity implements OnClickListener {
              Log.v (LOG_TAG,sdf.format(resultdate));
             if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) { 
                
-            // Here you bind to the service.
             Intent startServiceIntent = new Intent();
             startServiceIntent.setClass(this, UsageTrackingService.class);
             startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
-            bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+            startService(startServiceIntent);
+            bindService(startServiceIntent, mConnection, 0);
 
             // Home Screen intent.
             Intent intentGoToHomeScreen = new Intent();
@@ -109,7 +136,7 @@ public class UsageListMainActivity extends Activity implements OnClickListener {
             intentGoToHomeScreen.addCategory("android.intent.category.HOME");
 
             // Test toast.
-            Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_LONG)
+            Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_SHORT)
                     .show();
             startActivity(intentGoToHomeScreen);
                 }
@@ -119,11 +146,18 @@ public class UsageListMainActivity extends Activity implements OnClickListener {
             /**
              * When user presses stop button, service should be stopped, and data inserted to database.
              */
-            // Insert into DB.
-           // insertIntoDB();
 
-            // Unbind the service, as no longer needed.
-               unbindService(mConnection);
+            // Destroy the service, as no longer needed.
+            Intent stopServiceIntent = new Intent();
+            stopServiceIntent.setClass(this, UsageTrackingService.class);
+            stopServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
+            stopService(stopServiceIntent);
+            
+            isServiceStarted = false;
+            SharedPreferences preferences1 = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor1 = preferences1.edit();
+            editor1.putBoolean("ServiceStart",false);
+            editor1.commit();
             
             if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
                 mUsageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
@@ -206,21 +240,11 @@ public class UsageListMainActivity extends Activity implements OnClickListener {
         Log.v (LOG_TAG, "mainService is: " + mMainService);
         // Show data dynamically.
         if (mMainService != null) {
-            for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
+            for (Map.Entry<String, Long> entry : mMainService.mForegroundActivityMap.entrySet()) {
                 Log.v(LOG_TAG, " App name : " + entry.getKey() + " Time used: " + entry.getValue()
                         / 1000000000);
             }
         }
-    }
-
-    public void insertIntoDB() {
-        // Get SQL Helper.
-
-        for (Map.Entry<String, Long> map : mMainService.foregroundActivityMap.entrySet()) {
-            Log.v(LOG_TAG, "Key : " + map.getKey() + "Value : " + map.getValue());
-        }
-//        mDatabase.insert(mMainService.foregroundActivityMap);
-//        MySQLiteHelper.retrieve(db);
     }
 
     @Override
@@ -234,19 +258,13 @@ public class UsageListMainActivity extends Activity implements OnClickListener {
     protected void onDestroy() {
         // TODO Auto-generated method stub
         
+        Log.v (LOG_TAG, "onDestroy activity");
         if (mMainService != null) {
-            for (Map.Entry<String, Long> entry : mMainService.foregroundActivityMap.entrySet()) {
-                Log.v(LOG_TAG, " App name : " + entry.getKey() + " Time used: " + entry.getValue()
-                        / 1000000000);
-            }
             
-            mMainService.phoneUsedTime();
             Toast.makeText(mContext, "Phone used for: " + mMainService.phoneUsedTime() + "seconds",
                     Toast.LENGTH_LONG).show();
-          //  Log.v(LOG_TAG, "Phone screen on for: " + mMainService.phoneUsedTime() + "seconds");
         }
         
-        //queryUsageStats = null;
         super.onDestroy();
     }
 
