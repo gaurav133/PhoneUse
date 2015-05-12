@@ -4,8 +4,10 @@
     tools:context="com.example.phoneuse.MainActivity" >
 
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
+        android:id="@+id/action_start"
         android:title="@string/action_settings"/>
 
+     <item
+        android:id="@+id/action_stop"
+        android:title="@string/action_settings"/>
 </menu>
