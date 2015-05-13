@@ -133,7 +133,6 @@ public class UsageListMainActivity extends Activity {
         super.onDestroy();
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void startTrackingService() {
         mStartServiceTime = System.currentTimeMillis();
         Log.v(LOG_TAG, "Time: " + mStartServiceTime);
@@ -146,7 +145,8 @@ public class UsageListMainActivity extends Activity {
             Intent startServiceIntent = new Intent();
             startServiceIntent.setClass(this, UsageTrackingService.class);
             startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
-            bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
+            startService(startServiceIntent);
+            bindService(startServiceIntent, mConnection, 0);
 
             // Home Screen intent.
             Intent intentGoToHomeScreen = new Intent();
@@ -237,7 +237,6 @@ public class UsageListMainActivity extends Activity {
 
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // TODO Auto-generated method stub
