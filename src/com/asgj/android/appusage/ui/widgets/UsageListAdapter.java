@@ -19,16 +19,19 @@ public class UsageListAdapter<Data> extends BaseAdapter {
 	Data mData = null;
 	ArrayList<UsageInfo> mList = null;
 	HashMap<String, Long> mMap = null;
-	String[] keys;
+	ArrayList<String> keys;
 
 	public UsageListAdapter(Context context, Data data) throws Exception {
 		mContext = context;
 		mData = data;
+		keys = new ArrayList<>();
 		if (mData instanceof ArrayList) {
 			mList = (ArrayList) mData;
 		} else if (mData instanceof HashMap) {
-			mMap = (HashMap) mData;
-			keys = (String[]) mMap.keySet().toArray();
+			mMap = (HashMap<String, Long>) mData;
+			for(String s : mMap.keySet()){
+				keys.add(s);
+			}
 
 		} else {
 			throw new Exception("data should be either arraylist or hashmap");
@@ -41,7 +44,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
 		if (mList != null) {
 			return mList.size();
 		} else if (mMap != null) {
-			return keys.length;
+			return keys.size();
 		} else {
 			return 0;
 		}
@@ -76,11 +79,11 @@ public class UsageListAdapter<Data> extends BaseAdapter {
 			text_middle.setText("" + mList.get(position).getmIntervalEndTime());
 			text_right.setText("" + mList.get(position).getmIntervalDuration());
 		} else if (mMap != null) {
-			text_left.setText(keys[position]);
-			text_right.setText("" + mMap.get(keys[position]));
+			text_left.setText(keys.get(position));
+			text_right.setText("" + mMap.get(keys.get(position)));
 			text_middle.setVisibility(View.GONE);
 		}
 
-		return null;
+		return convertView;
 	}
 }

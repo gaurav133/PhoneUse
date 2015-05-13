@@ -164,6 +164,10 @@ public class SlidingTabsBasicFragment<AppData, MusicData, CallData> extends
 		public int getCount() {
 			return mList.length;
 		}
+		@Override
+		public int getItemPosition(Object object) {
+			return POSITION_NONE;
+		}
 
 		/**
 		 * @return true if the value returned from
