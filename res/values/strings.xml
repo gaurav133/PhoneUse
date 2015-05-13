@@ -4,5 +4,9 @@
     <string name="app_name">PhoneUse</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="screen_wake_up">Wake Up</string>
+    <string name="screen_dim">Dim</string>
+    <string name="string_start">Start</string>
+    <string name="string_stop">Stop</string>
 
 </resources>
