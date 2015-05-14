@@ -77,10 +77,7 @@ public class PhoneUsageDatabase {
 			UsageInfo mValues) {
 		ContentValues cv = new ContentValues();
 		cv.put(Columns.COLUMN_APP_NAME, pkgname);
-		final Calendar calendar = Calendar.getInstance();
-		String date = calendar.get(Calendar.DAY_OF_MONTH) + ":"
-				+ calendar.get(Calendar.MONTH) + ":"
-				+ calendar.get(Calendar.YEAR);
+		String date = Utils.getDateFromMiliSeconds(mValues.getmIntervalStartTime()/1000);
 		cv.put(Columns.COLUMN_DATE, date);
 		cv.put(Columns.COLUMN_START_INTERVAL_TIME,
 				mValues.getmIntervalStartTime());
