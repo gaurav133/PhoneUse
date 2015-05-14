@@ -14,6 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDbHelper.Columns;
 import com.asgj.android.appusage.database.PhoneUsageDbHelper.Table;
 
@@ -76,10 +77,7 @@ public class PhoneUsageDatabase {
 			UsageInfo mValues) {
 		ContentValues cv = new ContentValues();
 		cv.put(Columns.COLUMN_APP_NAME, pkgname);
-		final Calendar calendar = Calendar.getInstance();
-		String date = calendar.get(Calendar.DAY_OF_MONTH) + ":"
-				+ calendar.get(Calendar.MONTH) + ":"
-				+ calendar.get(Calendar.YEAR);
+		String date = Utils.getDateFromMiliSeconds(mValues.getmIntervalStartTime()/1000);
 		cv.put(Columns.COLUMN_DATE, date);
 		cv.put(Columns.COLUMN_START_INTERVAL_TIME,
 				mValues.getmIntervalStartTime());
@@ -140,4 +138,56 @@ public class PhoneUsageDatabase {
 		return total_time;
 
 	}
+	public long getTotalDurationOfAllAppsByDate(String date){
+		long time_start = Utils.getMiliSecFromDate(date);
+		long time_end = time_start + (24 * 3600 * 1000);
+		String selection = Columns.COLUMN_DATE + "=" + date + " AND "
+				+ Columns.COLUMN_START_INTERVAL_TIME + ">" + time_start +
+				 " AND " + Columns.COLUMN_START_INTERVAL_TIME
+					+ "<" + time_end;
+		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection,
+				null, null, null, null);
+		long total_time = 0;
+		if (cursor != null && cursor.getCount() > 0) {
+			cursor.moveToFirst();
+			do {
+				total_time = total_time
+						+ cursor.getLong(cursor
+								.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION));
+			} while (cursor.moveToNext());
+		}
+		return total_time;
+
+	}
+
+	public long getTotalDurationOfApplicationOfAppByDate(String packageName,
+			String date) {
+		long time_start = Utils.getMiliSecFromDate(date);
+		long time_end = time_start + (24 * 3600 * 1000);
+		return getTotalDurationOfAppInInternal(packageName, date, time_start,
+				time_end, false);
+	}
+	
+	public ArrayList<String> getAllPackagesUsedByDate(String date){
+		long time_start = Utils.getMiliSecFromDate(date);
+		long time_end = time_start + (24 * 3600 * 1000);
+		String selection = Columns.COLUMN_DATE + "=" + date + " AND "
+				+ Columns.COLUMN_START_INTERVAL_TIME + ">" + time_start +
+				 " AND " + Columns.COLUMN_START_INTERVAL_TIME
+					+ "<" + time_end;
+		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection,
+				null, null, null, null);
+		ArrayList<String> mPackList = new ArrayList<>();
+		if (cursor != null && cursor.getCount() > 0) {
+			cursor.moveToFirst();
+			do {
+				mPackList.add(cursor.getString(cursor
+								.getColumnIndex(Columns.COLUMN_APP_NAME)));
+			} while (cursor.moveToNext());
+		}
+		return mPackList;
+
+	}
+
+	
 }
