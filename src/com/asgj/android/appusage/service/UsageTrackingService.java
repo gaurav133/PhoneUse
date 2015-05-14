@@ -147,7 +147,8 @@ public class UsageTrackingService extends Service {
      * Calculate total time for which phone is used.
      */
     public long phoneUsedTime() {
-        Log.v ("gaurav", "Map is: " + mForegroundActivityMap);        
+        Log.v ("gaurav", "Map is: " + mForegroundActivityMap);
+        mUsedTime = 0;
         for (Map.Entry<String, Long> entry : mForegroundActivityMap.entrySet()) {
             mUsedTime += entry.getValue();
         }
@@ -193,7 +194,6 @@ public class UsageTrackingService extends Service {
         noti.setLatestEventInfo(this, getText(R.string.action_settings),
                 getText(R.string.hello_world), pendingIntent);
         startForeground(1, noti);
-    
 
         Log.v(LOG_TAG, "Service 1 created");
     }
@@ -379,7 +379,7 @@ public class UsageTrackingService extends Service {
          mThread = new newThreadForForeground();
          (new Thread(mThread)).start();
     }
-    
+
     /**
      * onUnbind is called only when activity is destroyed (either back-press or kill through task manager).
      */
@@ -457,13 +457,13 @@ public class UsageTrackingService extends Service {
 
         super.onDestroy();
     }
-    
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // TODO Auto-generated method stub
         return START_NOT_STICKY;
     }
-    
+
     @Override
     public IBinder onBind(Intent intent) {
 
@@ -504,5 +504,4 @@ public class UsageTrackingService extends Service {
        // Log.v (LOG_TAG, "Query stats: " + queryUsageStats);
         return !queryUsageStats.isEmpty();
     }
-
 }
