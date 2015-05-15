@@ -4,12 +4,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.provider.CallLog;
+import android.util.Log;
 public class Utils {
 	
 	public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
@@ -54,4 +58,35 @@ public class Utils {
 		Date resultdate = new Date(miliSec);
 		return sdf.format(resultdate);
 	}
+	 /**
+     * Get call logs for a particular duration.
+     * @param startTime Starting time from which call logs are desired (Inclusive).
+     * @param endTime End time upto which call logs are desired (Exclusive).
+     * @return HashMap containing filtered call log entries for given time interval.
+     */
+    public static HashMap<String, Integer> getCallDetails(Context context,long startTime, long endTime,HashMap<String, Integer> mCallDetailsMap) {
+
+        Cursor managedCursor = context.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
+                null, null, CallLog.Calls.DATE + " DESC");
+
+        int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
+        int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
+
+        while (managedCursor.moveToNext()) {
+
+            String callDate = managedCursor.getString(date);
+            
+              // Only add if the call times overlap with tracking times.
+            if ((Long.parseLong(callDate) <= startTime && (Long.parseLong(callDate) + duration) >= startTime)
+                    || (Long.parseLong(callDate) > startTime && Long.parseLong(callDate) < endTime)) {
+
+                // Add the details in hash-map.
+                
+                mCallDetailsMap.put(callDate, duration);
+            }
+        }
+        return mCallDetailsMap;
+    }
+
+
 }

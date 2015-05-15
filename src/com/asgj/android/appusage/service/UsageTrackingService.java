@@ -34,6 +34,7 @@ import android.util.Log;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.database.PhoneUsageDbHelper;
 
@@ -55,7 +56,7 @@ public class UsageTrackingService extends Service {
     public ArrayList<UsageInfo> mListMusicPlayTimes;
 
     int mIndex = 0;
-    newThreadForForeground mThread;
+    BackgroundTrackingTask mBgTrackingTask;
 
     private boolean mIsRunningForegroundAppsThread = false,
             mIsRunningBackgroundApps = false,
@@ -107,7 +108,7 @@ public class UsageTrackingService extends Service {
                 isScreenOn = false;
                 mIsRunningForegroundAppsThread = false;
                 doHandlingOnApplicationClose();
-                storeMap(mThread.foregroundMap);
+                storeMap(mBgTrackingTask.foregroundMap);
                 // If screen dim, and user isn't listening to songs or talking, then update boolean variables.
                 if (mTelephonyManager.getCallState() == TelephonyManager.CALL_STATE_IDLE && !isMusicPlaying()) {
                     mIsRunningBackgroundApps = false;
@@ -265,37 +266,36 @@ public class UsageTrackingService extends Service {
 
     }
     
-
-    private final class newThreadForForeground implements Runnable {
-        public HashMap<String, Long> getMap() {
-            return foregroundMap;
+    private void initializeMap( HashMap<String, Long> foregroundMap) {
+        for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
+            entry.setValue(0L);
         }
+    }
+
+
+    
+    private void initLocalMapForThread( HashMap<String, Long> foregroundMap){
+    	 if (mIsFirstTimeStartForgroundAppService) {
+             initializeMap(foregroundMap);
+             mPreviousStartTime = mStartTime;
+             Log.v ("gaurav", "mPreviousStartTime: " + mPreviousStartTime);
+
+             // Initially, when service is started, application name would be Phone Use.
+             mPreviousAppName = mContext.getString(R.string.app_name);
+           //  foregroundMap.put(mPreviousAppName, 0L);
+             mIsFirstTimeStartForgroundAppService = false;
+         }
+
+
+    }
+    
+
+    private final class BackgroundTrackingTask implements Runnable {
 
         HashMap<String, Long> foregroundMap = new HashMap<String, Long>();
-        
-        // Initialize foreground map to 0 values.
-        private void initializeMap() {
-            for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
-                entry.setValue(0L);
-            }
-        }
-
-        @SuppressWarnings("deprecation")
         @Override
         public void run() {
-            if (mIsFirstTimeStartForgroundAppService) {
-                initializeMap();
-                Log.v (LOG_TAG, "Hashmap: " + foregroundMap);
-                mPreviousStartTime = mStartTime;
-                Log.v ("gaurav", "mPreviousStartTime: " + mPreviousStartTime);
-
-                // Initially, when service is started, application name would be Phone Use.
-                mPreviousAppName = mContext.getString(R.string.app_name);
-              //  foregroundMap.put(mPreviousAppName, 0L);
-                mIsFirstTimeStartForgroundAppService = false;
-            }
-
-            // Next time when screen becomes ON again, update foreground map to hold previous values. 
+            initLocalMapForThread(foregroundMap);
             if (isScreenOn) {
 
                 // Update start time.
@@ -333,18 +333,9 @@ public class UsageTrackingService extends Service {
                     mMusicStartTimeStamp = System.currentTimeMillis();
                     mMusicStartTime = System.nanoTime();
                 }
-
             }
-            
             // If tracking has ended, store last application.
-            if (mIsEndTracking == true) {
-                long time = System.nanoTime();
-                if (foregroundMap.containsKey(mPreviousAppName)) {
-                    foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-                } else {
-                    foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-                }
-            }
+            doHandlingOnEndthread(foregroundMap);
         }
     }
 
@@ -352,45 +343,25 @@ public class UsageTrackingService extends Service {
         mForegroundActivityMap.putAll(h);
         
     }
-
-    /**
-     * Get call logs for a particular duration.
-     * @param startTime Starting time from which call logs are desired (Inclusive).
-     * @param endTime End time upto which call logs are desired (Exclusive).
-     * @return HashMap containing filtered call log entries for given time interval.
-     */
-    private HashMap<String, Integer> getCallDetails(long startTime, long endTime) {
-
-        Cursor managedCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
-                null, null, CallLog.Calls.DATE + " DESC");
-
-        int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
-        int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-
-        while (managedCursor.moveToNext()) {
-
-            String callDate = managedCursor.getString(date);
-            
-              // Only add if the call times overlap with tracking times.
-            if ((Long.parseLong(callDate) <= startTime && (Long.parseLong(callDate) + duration) >= startTime)
-                    || (Long.parseLong(callDate) > startTime && Long.parseLong(callDate) < endTime)) {
-
-                // Add the details in hash-map.
-                Log.v (LOG_TAG, "callDate: " + callDate);
-                Log.v (LOG_TAG, "Duration: " + duration);
-                
-                mCallDetailsMap.put(callDate, duration);
+    
+    private void doHandlingOnEndthread(HashMap<String, Long> foregroundMap){
+    	if (mIsEndTracking == true) {
+            long time = System.nanoTime();
+            if (foregroundMap.containsKey(mPreviousAppName)) {
+                foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+            } else {
+                foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
             }
         }
-        return mCallDetailsMap;
     }
 
+       /**
     /**
      * Starts a new thread to track foreground and background application time.
      */
     public void startThread() {
-         mThread = new newThreadForForeground();
-         (new Thread(mThread)).start();
+         mBgTrackingTask = new BackgroundTrackingTask();
+         (new Thread(mBgTrackingTask)).start();
     }
 
     /**
@@ -415,7 +386,7 @@ public class UsageTrackingService extends Service {
         mIsEndTracking = true;
         
         long time = System.nanoTime();
-        storeMap(mThread.foregroundMap);
+        storeMap(mBgTrackingTask.foregroundMap);
         mForegroundActivityMap.put(mPreviousAppName, TimeUnit.SECONDS.convert(time - mPreviousStartTime, TimeUnit.NANOSECONDS));
 
         mEndTimestamp = System.currentTimeMillis();
@@ -424,48 +395,19 @@ public class UsageTrackingService extends Service {
         // tracking.
         if (isMusicPlaying()) {
             Log.v (LOG_TAG, "Music is playing");
-            mMusicStopTimeStamp = System.currentTimeMillis();
-            mMusicListenTime += (TimeUnit.SECONDS.convert(time - mMusicStartTime, TimeUnit.NANOSECONDS));
-
-         // As music has been stopped add resulting interval to list.
-            UsageInfo usageInfoMusic = new UsageInfo();
-            usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
-            usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
-            usageInfoMusic.setmIntervalDuration(TimeUnit.SECONDS.convert(time - mMusicStartTime, TimeUnit.NANOSECONDS));
-            mListMusicPlayTimes.add(usageInfoMusic);
-            
-         // Insert music entry to DB.
-            mDatabase.insertMusicEntry(usageInfoMusic);
+          doHandleForMusicClose();
         }
 
         // As application has changed, we need to dump data to DB.
-        UsageInfo usageInfoApp = new UsageInfo();
-        usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
-        usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-        usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-
-        Log.v (LOG_TAG, "Previous App name:" + mPreviousAppName);
-        Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
-        // Insert data to database for previous application.
-        mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
-
+        doHandlingOnApplicationClose();
         // Get call details for given time-stamps.
-        mCallDetailsMap = getCallDetails(mStartTimestamp, mEndTimestamp);
+        mCallDetailsMap = Utils.getCallDetails(mContext, mStartTimestamp, mEndTimestamp,mCallDetailsMap);
         
         // Unregister receivers.
         //setUpReceivers(false);
         
         // Display list. 
         ListIterator<UsageInfo> iterator = mListMusicPlayTimes.listIterator();
-        
-        while (iterator.hasNext()) {
-            UsageInfo node = iterator.next();
-
-            Log.v (LOG_TAG, "startTime : " + new Date((long) node.getmIntervalStartTime()));
-            Log.v (LOG_TAG, "endTime : " + new Date((long) node.getmIntervalEndTime()));
-            Log.v (LOG_TAG, "duration : " + node.getmIntervalDuration());
-        }
-
         mDatabase.exportDatabse(PhoneUsageDbHelper.getInstance(mContext).getDatabaseName());
 
         super.onDestroy();
