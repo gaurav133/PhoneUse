@@ -39,7 +39,7 @@ public class PhoneUsageDatabase {
 			File data = Environment.getDataDirectory();
 
 			if (sd.canWrite()) {
-				String currentDBPath = "//data//" + "com.example.phoneuse"
+				String currentDBPath = "//data//" + "com.asgj.android.appusage"
 						+ "//databases//" + databaseName + "";
 				String backupDBPath = "backupname.db";
 				File currentDB = new File(data, currentDBPath);
