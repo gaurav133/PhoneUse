@@ -106,20 +106,7 @@ public class UsageTrackingService extends Service {
                 Log.v(LOG_TAG, "SCREEN IS OFF");
                 isScreenOn = false;
                 mIsRunningForegroundAppsThread = false;
-                long time = System.nanoTime();
-                mPreviousAppExitTimeStamp = System.currentTimeMillis();
-                
-                // As application has changed, we need to dump data to DB.
-                UsageInfo usageInfoApp = new UsageInfo();
-                usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
-                usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-                usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-                
-                Log.v (LOG_TAG, "Previous App name:" + mPreviousAppName);
-                Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
-                // Insert data to database for previous application.
-                mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
-
+                doHandlingOnApplicationClose();
                 storeMap(mThread.foregroundMap);
                 // If screen dim, and user isn't listening to songs or talking, then update boolean variables.
                 if (mTelephonyManager.getCallState() == TelephonyManager.CALL_STATE_IDLE && !isMusicPlaying()) {
@@ -211,6 +198,73 @@ public class UsageTrackingService extends Service {
             unregisterReceiver(screenDim);
         }
     }
+    private void doHandlingOnApplicationClose(){
+    	 mPreviousAppExitTimeStamp = System.currentTimeMillis();
+         long time = System.nanoTime();
+
+         // As application has changed, we need to dump data to DB.
+         UsageInfo usageInfoApp = new UsageInfo();
+         usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
+         usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
+         usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+
+         Log.v (LOG_TAG, "Previous App name not equal:" + mPreviousAppName);
+         Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
+         // Insert data to database for previous application.
+         mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
+         
+         
+
+    }
+    
+    private void doHandlingForApplicationStarted(){
+    	long time = System.nanoTime();
+    	 mPreviousAppStartTimeStamp = System.currentTimeMillis();
+         Log.v(LOG_TAG, "I AM CALLED APP NAME CHANGED");
+         mPreviousStartTime = time;
+
+    }
+    
+    private boolean isTopApplicationchange(){
+    	  mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
+          mPackageManager = mContext.getPackageManager();
+          List<ActivityManager.RunningTaskInfo> taskInfo = mActivityManager.getRunningTasks(1);
+
+          mComponentName = taskInfo.get(0).topActivity;
+          mPackageName = mComponentName.getPackageName();
+          try {
+              mApplicationInfo = mPackageManager.getApplicationInfo(mPackageName, 0);
+          } catch (NameNotFoundException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+          }
+          mCurrentAppName = (String) mPackageManager.getApplicationLabel(mApplicationInfo);
+          return mCurrentAppName != mPreviousAppName;
+
+    }
+    
+    private boolean isNeedToHandleMusicClose(){
+    	return !isMusicPlaying() && mIsMusicStarted;
+    }
+    
+    private void doHandleForMusicClose(){
+    	  mMusicStopTime = System.nanoTime();
+          mMusicStopTimeStamp = System.currentTimeMillis();
+          mMusicListenTime += (TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
+          mIsMusicStarted = false;
+
+          // As music has been stopped add resulting interval to list.
+          UsageInfo usageInfoMusic = new UsageInfo();
+          usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
+          usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
+          usageInfoMusic.setmIntervalDuration(TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
+          mListMusicPlayTimes.add(usageInfoMusic);
+          
+          // Insert data to database for previous application.
+          mDatabase.insertMusicEntry(usageInfoMusic);
+
+    }
+    
 
     private final class newThreadForForeground implements Runnable {
         public HashMap<String, Long> getMap() {
@@ -252,67 +306,26 @@ public class UsageTrackingService extends Service {
             // If any foreground application is running or background application (music is playing).
             while (mIsRunningForegroundAppsThread || mIsRunningBackgroundApps) {
                 
-                mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
-                mPackageManager = mContext.getPackageManager();
-                List<ActivityManager.RunningTaskInfo> taskInfo = mActivityManager.getRunningTasks(1);
-
-                mComponentName = taskInfo.get(0).topActivity;
-                mPackageName = mComponentName.getPackageName();
-                try {
-                    mApplicationInfo = mPackageManager.getApplicationInfo(mPackageName, 0);
-                } catch (NameNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                mCurrentAppName = (String) mPackageManager.getApplicationLabel(mApplicationInfo);
-
-                // If the present application is different from the previous application, update the previous app time.
-                if (mCurrentAppName != mPreviousAppName) {
-                    mPreviousAppExitTimeStamp = System.currentTimeMillis();
+                              // If the present application is different from the previous application, update the previous app time.
+                if (isTopApplicationchange()) {
                     long time = System.nanoTime();
-
-                    // As application has changed, we need to dump data to DB.
-                    UsageInfo usageInfoApp = new UsageInfo();
-                    usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
-                    usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-                    usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-
-                    Log.v (LOG_TAG, "Previous App name not equal:" + mPreviousAppName);
-                    Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
-                    // Insert data to database for previous application.
-                    mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
-
-                    // Update mPreviousAppStartTimeStamp.
-                    mPreviousAppStartTimeStamp = System.currentTimeMillis();
-
+                
+                	doHandlingOnApplicationClose();
                     if (foregroundMap.containsKey(mPreviousAppName)) {
                         foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
                     } else {
                         foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
                     }
 
-                    // Start time for current app.
-                    Log.v(LOG_TAG, "I AM CALLED APP NAME CHANGED");
-                    mPreviousStartTime = time;
+                    // Update mPreviousAppStartTimeStamp.
+                	doHandlingForApplicationStarted();
+                	
                 }
                 mPreviousAppName = mCurrentAppName;
 
                 // If music is not playing but it was started after tracking started, then update music time.
-                if (!isMusicPlaying() && mIsMusicStarted) {
-                    mMusicStopTime = System.nanoTime();
-                    mMusicStopTimeStamp = System.currentTimeMillis();
-                    mMusicListenTime += (TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
-                    mIsMusicStarted = false;
-
-                    // As music has been stopped add resulting interval to list.
-                    UsageInfo usageInfoMusic = new UsageInfo();
-                    usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
-                    usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
-                    usageInfoMusic.setmIntervalDuration(TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
-                    mListMusicPlayTimes.add(usageInfoMusic);
-                    
-                    // Insert data to database for previous application.
-                    mDatabase.insertMusicEntry(usageInfoMusic);
+                if (isNeedToHandleMusicClose()) {
+                  doHandleForMusicClose();
 
                 } else if (isMusicPlaying() && !mIsMusicStarted) {
                     // If music has been started after tracking started.
