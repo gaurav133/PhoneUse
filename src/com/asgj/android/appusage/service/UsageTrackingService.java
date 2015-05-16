@@ -34,6 +34,7 @@ import android.util.Log;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.database.PhoneUsageDbHelper;
@@ -183,6 +184,7 @@ public class UsageTrackingService extends Service {
                 getText(R.string.hello_world), pendingIntent);
         startForeground(1, noti);
 
+        UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
         Log.v(LOG_TAG, "Service 1 created");
     }
 
@@ -409,41 +411,52 @@ public class UsageTrackingService extends Service {
         // Display list. 
         ListIterator<UsageInfo> iterator = mListMusicPlayTimes.listIterator();
         mDatabase.exportDatabse(PhoneUsageDbHelper.getInstance(mContext).getDatabaseName());
-
+        UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
         super.onDestroy();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+    	if(intent != null && intent.hasExtra("isStartingAfterReboot")){
+    	    boolean isStartFromReboot = intent.getBooleanExtra("isStartingAfterReboot", false);
+    		if(isStartFromReboot){
+    			initThread(false);
+    		}
+    	}
         // TODO Auto-generated method stub
         return START_NOT_STICKY;
     }
+    
+    private void initThread(boolean isFirstTime){
+    	 mIsRunningForegroundAppsThread = true;
+    	 if(isFirstTime)
+         mIsFirstTimeStartForgroundAppService = true;
+         
+         mDatabase = new PhoneUsageDatabase(mContext);
+         mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+         mStartTimestamp = System.currentTimeMillis();
 
+         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
+            isPermissionGranted();
+         } else {
+
+         startThread();
+         // If music is already playing when tracking started.
+         if (isMusicPlaying()) {
+             mIsMusicStarted = true;
+             mIsRunningBackgroundApps = true;
+             mMusicStartTimeStamp = System.currentTimeMillis();
+             mMusicStartTime = System.nanoTime();
+             }
+         }
+
+    }
+    
     @Override
     public IBinder onBind(Intent intent) {
-
+    	initThread(true);
         Log.v(LOG_TAG, "onBind Call");
-        mIsRunningForegroundAppsThread = true;
-        mIsFirstTimeStartForgroundAppService = true;
-        
-        mDatabase = new PhoneUsageDatabase(mContext);
-        mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-        mStartTimestamp = System.currentTimeMillis();
-
-        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
-           isPermissionGranted();
-        } else {
-
-        startThread();
-        // If music is already playing when tracking started.
-        if (isMusicPlaying()) {
-            mIsMusicStarted = true;
-            mIsRunningBackgroundApps = true;
-            mMusicStartTimeStamp = System.currentTimeMillis();
-            mMusicStartTime = System.nanoTime();
-            }
-        }
-        return mBinder;
+               return mBinder;
     }
 
     /**
