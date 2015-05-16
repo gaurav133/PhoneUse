@@ -7,7 +7,4 @@
         android:id="@+id/action_start"
         android:title="@string/string_start"/>
 
-     <item
-        android:id="@+id/action_stop"
-        android:title="@string/string_stop"/>
 </menu>
