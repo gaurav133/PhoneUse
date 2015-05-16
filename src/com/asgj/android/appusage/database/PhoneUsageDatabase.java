@@ -77,7 +77,7 @@ public class PhoneUsageDatabase {
 			UsageInfo mValues) {
 		ContentValues cv = new ContentValues();
 		cv.put(Columns.COLUMN_APP_NAME, pkgname);
-		String date = Utils.getDateFromMiliSeconds(mValues.getmIntervalStartTime()/1000);
+		String date = Utils.getDateFromMiliSeconds(mValues.getmIntervalStartTime());
 		cv.put(Columns.COLUMN_DATE, date);
 		cv.put(Columns.COLUMN_START_INTERVAL_TIME,
 				mValues.getmIntervalStartTime());
@@ -186,8 +186,5 @@ public class PhoneUsageDatabase {
 			} while (cursor.moveToNext());
 		}
 		return mPackList;
-
 	}
-
-	
 }

@@ -127,8 +127,8 @@ public class UsageListMainActivity extends Activity {
         Log.v(LOG_TAG, "onDestroy activity");
         if (mMainService != null) {
 
-            Toast.makeText(mContext, "Phone used for: " + mMainService.phoneUsedTime() + "seconds",
-                    Toast.LENGTH_LONG).show();
+            /*Toast.makeText(mContext, "Phone used for: " + mMainService.phoneUsedTime() + "seconds",
+                    Toast.LENGTH_LONG).show();*/
         }
 
         super.onDestroy();
