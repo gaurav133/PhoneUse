@@ -34,6 +34,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
@@ -126,8 +127,8 @@ public class UsageListMainActivity extends Activity {
         Log.v(LOG_TAG, "onDestroy activity");
         if (mMainService != null) {
 
-            Toast.makeText(mContext, "Phone used for: " + mMainService.phoneUsedTime() + "seconds",
-                    Toast.LENGTH_LONG).show();
+            /*Toast.makeText(mContext, "Phone used for: " + mMainService.phoneUsedTime() + "seconds",
+                    Toast.LENGTH_LONG).show();*/
         }
 
         super.onDestroy();
@@ -242,31 +243,20 @@ public class UsageListMainActivity extends Activity {
         // TODO Auto-generated method stub
         switch (item.getItemId()) {
         case R.id.action_start:
-            startTrackingService();
+        	if(!UsageSharedPrefernceHelper.isServiceRunning(this)){
+        		startTrackingService();
+        		item.setTitle("stop");
+        		UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
+        	}else{
+        		stopTrackingService();
+        		item.setTitle("start");
+        		UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
+        		finish();
+        	}
+            
             break;
 
-        case R.id.action_stop:
-            /**
-             * When user presses stop button, service should be stopped, and
-             * data inserted to database.
-             */
-            // Insert into DB.
-            // insertIntoDB();
-
-            // Destroy the service, as no longer needed.
-            stopTrackingService();
-
-            // TODO Show results in a listview instead of finishing activity.
-            // Launch app usage list activity.
-            /*
-             * Intent usageIntent = new Intent();
-             * usageIntent.setAction("com.example.phoneuse.USAGE_LIST");
-             * startActivity(usageIntent);
-             */
-
-            finish();
-            break;
-        }
+               }
         return super.onOptionsItemSelected(item);
     }
 }

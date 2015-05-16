@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -31,9 +32,12 @@ import android.os.IBinder;
 import android.provider.CallLog;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.database.PhoneUsageDbHelper;
 
@@ -55,15 +59,17 @@ public class UsageTrackingService extends Service {
     public ArrayList<UsageInfo> mListMusicPlayTimes;
 
     int mIndex = 0;
-    newThreadForForeground mThread;
+    BackgroundTrackingTask mBgTrackingTask;
 
     private boolean mIsRunningForegroundAppsThread = false,
             mIsRunningBackgroundApps = false,
             mIsFirstTimeStartForgroundAppService = false, isScreenOn = false,
             mIsMusicPlaying = false,
             mIsMusicStarted = false,
+            mIsKeyguardLocked = false,
             mIsEndTracking = false;
 
+    private KeyguardManager mKeyguardManager;
     private ActivityManager mActivityManager;
     private PackageManager mPackageManager;
     private ApplicationInfo mApplicationInfo;
@@ -85,14 +91,48 @@ public class UsageTrackingService extends Service {
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
             if (intent.getAction().equals("android.intent.action.SCREEN_ON")) {
+                
+                // Check whether keyguard is locked or not.
+                if (mKeyguardManager.isKeyguardLocked()) {
+                 // Bypass to screenUserPresent receiver.
+                    mIsKeyguardLocked = true;
+                } else {
+                    
+                    mIsRunningForegroundAppsThread = true;
+                    isScreenOn = true;
+                    
+                    // Update mPreviousStartTime and start timestamp.
+                    mPreviousStartTime = System.nanoTime();
+                    mPreviousAppStartTimeStamp = System.currentTimeMillis();
+                    
+                    // If thread isn't already running. Start it again.
+                    if (mIsRunningBackgroundApps == false) {
+                        startThread();
+                    }
+                }
+                
+                Log.v(LOG_TAG, "Screen is on");
+            }
+        }
+    };
+    
+ // Broadcast receiver to receive screen wake up events.
+    private BroadcastReceiver screenUserPresent = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // TODO Auto-generated method stub
+            if (intent.getAction().equals("android.intent.action.USER_PRESENT")) {
                 mIsRunningForegroundAppsThread = true;
-                isScreenOn = true;
+                
+                // Update mPrevioustime and start time-stamp.
+                mPreviousStartTime = System.nanoTime();
+                mPreviousAppStartTimeStamp = System.currentTimeMillis();
                 
                 // If thread isn't already running. Start it again.
-                if (mIsRunningBackgroundApps == false && mIsRunningForegroundAppsThread == false) {
+                if (mIsRunningBackgroundApps == false) {
                     startThread();
                 }
-                Log.v(LOG_TAG, "Screen is on");
+                Log.v(LOG_TAG, "Screen user present");
             }
         }
     };
@@ -105,22 +145,28 @@ public class UsageTrackingService extends Service {
             if (intent.getAction().equals("android.intent.action.SCREEN_OFF")) {
                 Log.v(LOG_TAG, "SCREEN IS OFF");
                 isScreenOn = false;
-                mIsRunningForegroundAppsThread = false;
-                long time = System.nanoTime();
-                mPreviousAppExitTimeStamp = System.currentTimeMillis();
                 
-                // As application has changed, we need to dump data to DB.
-                UsageInfo usageInfoApp = new UsageInfo();
-                usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
-                usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-                usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+                // Update data, only if we're getting screen dim state from foreground apps running state.
+                // Corner case - Screen on and locked, again screen turns dim. Avoid data update for this.
+                if (mIsRunningForegroundAppsThread == true) {
+                    doHandlingOnApplicationClose();
+                    storeMap(mBgTrackingTask.foregroundMap);
+                    
+                    // Reinitialize map.
+                    initializeMap(mBgTrackingTask.foregroundMap);
+                    
+                    Log.v (LOG_TAG, "screen Dim -- mForegroundMap after reinitializtion is : " + mBgTrackingTask.foregroundMap);
+                    
+                    long time = System.nanoTime();
+                    if (mForegroundActivityMap.containsKey(mPreviousAppName)) {
+                        mForegroundActivityMap.put(mPreviousAppName, mForegroundActivityMap.get(mPreviousAppName) + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+                    } else {
+                        mForegroundActivityMap.put(mPreviousAppName, Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+                    }
+                    
+                    Log.v (LOG_TAG, "screen Dim -- mForeground activity Map after updation is : " + mForegroundActivityMap);
+                }
                 
-                Log.v (LOG_TAG, "Previous App name:" + mPreviousAppName);
-                Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
-                // Insert data to database for previous application.
-                mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
-
-                storeMap(mThread.foregroundMap);
                 // If screen dim, and user isn't listening to songs or talking, then update boolean variables.
                 if (mTelephonyManager.getCallState() == TelephonyManager.CALL_STATE_IDLE && !isMusicPlaying()) {
                     mIsRunningBackgroundApps = false;
@@ -128,6 +174,8 @@ public class UsageTrackingService extends Service {
                 } else if (!isMusicPlaying()) {
                     mIsMusicStarted = false;
                 }
+                mIsRunningForegroundAppsThread = false;
+                
             }
         }
     };
@@ -174,6 +222,8 @@ public class UsageTrackingService extends Service {
         // Set up broadcast receivers that this service uses.
         setUpReceivers(true);
 
+        mKeyguardManager = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
+        
         // Initialize hash-maps to hold time values.
         mForegroundActivityMap = new HashMap<String, Long>();
         mCallDetailsMap = new HashMap<String, Integer>();
@@ -195,6 +245,7 @@ public class UsageTrackingService extends Service {
                 getText(R.string.hello_world), pendingIntent);
         startForeground(1, noti);
 
+        UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
         Log.v(LOG_TAG, "Service 1 created");
     }
 
@@ -202,117 +253,141 @@ public class UsageTrackingService extends Service {
         if (register) {
             IntentFilter wakeUpFilter = new IntentFilter("android.intent.action.SCREEN_ON");
             IntentFilter dimFilter = new IntentFilter("android.intent.action.SCREEN_OFF");
-
+            IntentFilter userPresentFilter = new IntentFilter("android.intent.action.USER_PRESENT");
+            
             // Register receivers.
             registerReceiver(screenWakeUp, wakeUpFilter);
             registerReceiver(screenDim, dimFilter);
+            registerReceiver(screenUserPresent, userPresentFilter);
         } else {
+            unregisterReceiver(screenUserPresent);
             unregisterReceiver(screenWakeUp);
             unregisterReceiver(screenDim);
         }
     }
 
-    private final class newThreadForForeground implements Runnable {
-        public HashMap<String, Long> getMap() {
-            return foregroundMap;
+    private void doHandlingOnApplicationClose(){
+    	 mPreviousAppExitTimeStamp = System.currentTimeMillis();
+         long time = System.nanoTime();
+
+         // As application has changed, we need to dump data to DB.
+         UsageInfo usageInfoApp = new UsageInfo();
+         usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
+         usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
+         usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+
+         Log.v (LOG_TAG, "Previous App name not equal:" + mPreviousAppName);
+         Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
+         // Insert data to database for previous application.
+         mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
+    }
+
+    private void doHandlingForApplicationStarted() {
+        long time = System.nanoTime();
+        mPreviousAppStartTimeStamp = System.currentTimeMillis();
+        Log.v(LOG_TAG, "I AM CALLED APP NAME CHANGED");
+        mPreviousStartTime = time;
+    }
+    
+    private boolean isTopApplicationchange(){
+    	  mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
+          mPackageManager = mContext.getPackageManager();
+          List<ActivityManager.RunningTaskInfo> taskInfo = mActivityManager.getRunningTasks(1);
+
+          mComponentName = taskInfo.get(0).topActivity;
+          mPackageName = mComponentName.getPackageName();
+          try {
+              mApplicationInfo = mPackageManager.getApplicationInfo(mPackageName, 0);
+          } catch (NameNotFoundException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+          }
+          mCurrentAppName = (String) mPackageManager.getApplicationLabel(mApplicationInfo);
+          return mCurrentAppName != mPreviousAppName;
+
+    }
+    
+    private boolean isNeedToHandleMusicClose(){
+    	return !isMusicPlaying() && mIsMusicStarted;
+    }
+    
+    private void doHandleForMusicClose(){
+    	  mMusicStopTime = System.nanoTime();
+          mMusicStopTimeStamp = System.currentTimeMillis();
+          mMusicListenTime += (TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
+          mIsMusicStarted = false;
+
+          // As music has been stopped add resulting interval to list.
+          UsageInfo usageInfoMusic = new UsageInfo();
+          usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
+          usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
+          usageInfoMusic.setmIntervalDuration(TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
+          mListMusicPlayTimes.add(usageInfoMusic);
+          
+          // Insert data to database for previous application.
+          mDatabase.insertMusicEntry(usageInfoMusic);
+
+    }
+    
+    private void initializeMap( HashMap<String, Long> foregroundMap) {
+        for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
+            entry.setValue(0L);
         }
+    }
+
+
+    
+    private void initLocalMapForThread( HashMap<String, Long> foregroundMap){
+    	     initializeMap(foregroundMap);
+             mPreviousStartTime = mStartTime;
+             Log.v ("gaurav", "mPreviousStartTime: " + mPreviousStartTime);
+
+             // Initially, when service is started, application name would be Phone Use.
+             mPreviousAppName = mContext.getString(R.string.app_name);
+           //  foregroundMap.put(mPreviousAppName, 0L);
+             mIsFirstTimeStartForgroundAppService = false;
+    }
+    
+
+    private final class BackgroundTrackingTask implements Runnable {
 
         HashMap<String, Long> foregroundMap = new HashMap<String, Long>();
-        
-        // Initialize foreground map to 0 values.
-        private void initializeMap() {
-            for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
-                entry.setValue(0L);
-            }
-        }
-
-        @SuppressWarnings("deprecation")
         @Override
         public void run() {
+            
             if (mIsFirstTimeStartForgroundAppService) {
-                initializeMap();
-                Log.v (LOG_TAG, "Hashmap: " + foregroundMap);
-                mPreviousStartTime = mStartTime;
-                Log.v ("gaurav", "mPreviousStartTime: " + mPreviousStartTime);
-
-                // Initially, when service is started, application name would be Phone Use.
-                mPreviousAppName = mContext.getString(R.string.app_name);
-              //  foregroundMap.put(mPreviousAppName, 0L);
-                mIsFirstTimeStartForgroundAppService = false;
+                initLocalMapForThread(foregroundMap);
             }
-
-            // Next time when screen becomes ON again, update foreground map to hold previous values. 
-            if (isScreenOn) {
+            /*if (isScreenOn) {
 
                 // Update start time.
                 mPreviousStartTime = System.nanoTime();
                 foregroundMap = mForegroundActivityMap;
             }
-
+*/
             // If any foreground application is running or background application (music is playing).
             while (mIsRunningForegroundAppsThread || mIsRunningBackgroundApps) {
                 
-                mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
-                mPackageManager = mContext.getPackageManager();
-                List<ActivityManager.RunningTaskInfo> taskInfo = mActivityManager.getRunningTasks(1);
-
-                mComponentName = taskInfo.get(0).topActivity;
-                mPackageName = mComponentName.getPackageName();
-                try {
-                    mApplicationInfo = mPackageManager.getApplicationInfo(mPackageName, 0);
-                } catch (NameNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                mCurrentAppName = (String) mPackageManager.getApplicationLabel(mApplicationInfo);
-
-                // If the present application is different from the previous application, update the previous app time.
-                if (mCurrentAppName != mPreviousAppName) {
-                    mPreviousAppExitTimeStamp = System.currentTimeMillis();
+                              // If the present application is different from the previous application, update the previous app time.
+                if (isTopApplicationchange()) {
                     long time = System.nanoTime();
-
-                    // As application has changed, we need to dump data to DB.
-                    UsageInfo usageInfoApp = new UsageInfo();
-                    usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
-                    usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-                    usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-
-                    Log.v (LOG_TAG, "Previous App name not equal:" + mPreviousAppName);
-                    Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
-                    // Insert data to database for previous application.
-                    mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
-
-                    // Update mPreviousAppStartTimeStamp.
-                    mPreviousAppStartTimeStamp = System.currentTimeMillis();
-
+                
+                	doHandlingOnApplicationClose();
                     if (foregroundMap.containsKey(mPreviousAppName)) {
                         foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
                     } else {
                         foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
                     }
 
-                    // Start time for current app.
-                    Log.v(LOG_TAG, "I AM CALLED APP NAME CHANGED");
-                    mPreviousStartTime = time;
+                    // Update mPreviousAppStartTimeStamp.
+                	doHandlingForApplicationStarted();
+                	
                 }
                 mPreviousAppName = mCurrentAppName;
 
                 // If music is not playing but it was started after tracking started, then update music time.
-                if (!isMusicPlaying() && mIsMusicStarted) {
-                    mMusicStopTime = System.nanoTime();
-                    mMusicStopTimeStamp = System.currentTimeMillis();
-                    mMusicListenTime += (TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
-                    mIsMusicStarted = false;
-
-                    // As music has been stopped add resulting interval to list.
-                    UsageInfo usageInfoMusic = new UsageInfo();
-                    usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
-                    usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
-                    usageInfoMusic.setmIntervalDuration(TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
-                    mListMusicPlayTimes.add(usageInfoMusic);
-                    
-                    // Insert data to database for previous application.
-                    mDatabase.insertMusicEntry(usageInfoMusic);
+                if (isNeedToHandleMusicClose()) {
+                  doHandleForMusicClose();
 
                 } else if (isMusicPlaying() && !mIsMusicStarted) {
                     // If music has been started after tracking started.
@@ -320,64 +395,44 @@ public class UsageTrackingService extends Service {
                     mMusicStartTimeStamp = System.currentTimeMillis();
                     mMusicStartTime = System.nanoTime();
                 }
-
             }
-            
             // If tracking has ended, store last application.
-            if (mIsEndTracking == true) {
-                long time = System.nanoTime();
-                if (foregroundMap.containsKey(mPreviousAppName)) {
-                    foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-                } else {
-                    foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-                }
-            }
+            //doHandlingOnEndthread(foregroundMap);
         }
     }
 
-    private void storeMap(HashMap<String, Long> h) {
-        mForegroundActivityMap.putAll(h);
+    private void storeMap(HashMap<String, Long> foregroundMap) {
         
-    }
-
-    /**
-     * Get call logs for a particular duration.
-     * @param startTime Starting time from which call logs are desired (Inclusive).
-     * @param endTime End time upto which call logs are desired (Exclusive).
-     * @return HashMap containing filtered call log entries for given time interval.
-     */
-    private HashMap<String, Integer> getCallDetails(long startTime, long endTime) {
-
-        Cursor managedCursor = mContext.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
-                null, null, CallLog.Calls.DATE + " DESC");
-
-        int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
-        int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-
-        while (managedCursor.moveToNext()) {
-
-            String callDate = managedCursor.getString(date);
-            
-              // Only add if the call times overlap with tracking times.
-            if ((Long.parseLong(callDate) <= startTime && (Long.parseLong(callDate) + duration) >= startTime)
-                    || (Long.parseLong(callDate) > startTime && Long.parseLong(callDate) < endTime)) {
-
-                // Add the details in hash-map.
-                Log.v (LOG_TAG, "callDate: " + callDate);
-                Log.v (LOG_TAG, "Duration: " + duration);
-                
-                mCallDetailsMap.put(callDate, duration);
+        // For each entry in foreground map, update the entry in mForegroundMap
+        for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
+            String key = entry.getKey();
+            if (mForegroundActivityMap.containsKey(key)) {
+                mForegroundActivityMap.put(key, mForegroundActivityMap.get(key) + entry.getValue());
+            } else {
+                mForegroundActivityMap.put(key, entry.getValue());
             }
         }
-        return mCallDetailsMap;
+        Log.v (LOG_TAG, "mForegroundActivityMap is : " + mForegroundActivityMap);
+    }
+    
+    private void doHandlingOnEndthread(HashMap<String, Long> foregroundMap){
+    	if (mIsEndTracking == true) {
+            long time = System.nanoTime();
+            if (foregroundMap.containsKey(mPreviousAppName)) {
+                foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+            } else {
+                foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+            }
+        }
     }
 
+       /**
     /**
      * Starts a new thread to track foreground and background application time.
      */
     public void startThread() {
-         mThread = new newThreadForForeground();
-         (new Thread(mThread)).start();
+         mBgTrackingTask = new BackgroundTrackingTask();
+         (new Thread(mBgTrackingTask)).start();
     }
 
     /**
@@ -402,93 +457,86 @@ public class UsageTrackingService extends Service {
         mIsEndTracking = true;
         
         long time = System.nanoTime();
-        storeMap(mThread.foregroundMap);
-        mForegroundActivityMap.put(mPreviousAppName, TimeUnit.SECONDS.convert(time - mPreviousStartTime, TimeUnit.NANOSECONDS));
-
+        Log.v (LOG_TAG, "onDestroy -- mForegroundMap in onDestroy is : " + mBgTrackingTask.foregroundMap);
+        
+        storeMap(mBgTrackingTask.foregroundMap);
+        if (mForegroundActivityMap.containsKey(mPreviousAppName)) {
+            mForegroundActivityMap.put(mPreviousAppName, mForegroundActivityMap.get(mPreviousAppName) + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+        } else {
+            mForegroundActivityMap.put(mPreviousAppName, Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+        }
+        
+        Log.v (LOG_TAG, "Destroy Service -- mForeground Map after updation is : " + mForegroundActivityMap);
+        
         mEndTimestamp = System.currentTimeMillis();
         
         // Check whether music playing in background while we are stopping
         // tracking.
         if (isMusicPlaying()) {
             Log.v (LOG_TAG, "Music is playing");
-            mMusicStopTimeStamp = System.currentTimeMillis();
-            mMusicListenTime += (TimeUnit.SECONDS.convert(time - mMusicStartTime, TimeUnit.NANOSECONDS));
-
-         // As music has been stopped add resulting interval to list.
-            UsageInfo usageInfoMusic = new UsageInfo();
-            usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
-            usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
-            usageInfoMusic.setmIntervalDuration(TimeUnit.SECONDS.convert(time - mMusicStartTime, TimeUnit.NANOSECONDS));
-            mListMusicPlayTimes.add(usageInfoMusic);
-            
-         // Insert music entry to DB.
-            mDatabase.insertMusicEntry(usageInfoMusic);
+          doHandleForMusicClose();
         }
 
         // As application has changed, we need to dump data to DB.
-        UsageInfo usageInfoApp = new UsageInfo();
-        usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
-        usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-        usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-
-        Log.v (LOG_TAG, "Previous App name:" + mPreviousAppName);
-        Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
-        // Insert data to database for previous application.
-        mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
-
+        doHandlingOnApplicationClose();
         // Get call details for given time-stamps.
-        mCallDetailsMap = getCallDetails(mStartTimestamp, mEndTimestamp);
+        mCallDetailsMap = Utils.getCallDetails(mContext, mStartTimestamp, mEndTimestamp,mCallDetailsMap);
         
         // Unregister receivers.
         //setUpReceivers(false);
         
         // Display list. 
         ListIterator<UsageInfo> iterator = mListMusicPlayTimes.listIterator();
-        
-        while (iterator.hasNext()) {
-            UsageInfo node = iterator.next();
-
-            Log.v (LOG_TAG, "startTime : " + new Date((long) node.getmIntervalStartTime()));
-            Log.v (LOG_TAG, "endTime : " + new Date((long) node.getmIntervalEndTime()));
-            Log.v (LOG_TAG, "duration : " + node.getmIntervalDuration());
-        }
-
         mDatabase.exportDatabse(PhoneUsageDbHelper.getInstance(mContext).getDatabaseName());
-
+        UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
         super.onDestroy();
+        
+        Toast.makeText(mContext, "Phone used for: " + phoneUsedTime() + "seconds",
+                Toast.LENGTH_LONG).show();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+    	if(intent != null && intent.hasExtra("isStartingAfterReboot")){
+    	    boolean isStartFromReboot = intent.getBooleanExtra("isStartingAfterReboot", false);
+    		if(isStartFromReboot){
+    			initThread(false);
+    		}
+    	}
         // TODO Auto-generated method stub
         return START_NOT_STICKY;
     }
+    
+    private void initThread(boolean isFirstTime){
+    	 mIsRunningForegroundAppsThread = true;
+    	 if(isFirstTime)
+         mIsFirstTimeStartForgroundAppService = true;
+         
+         mDatabase = new PhoneUsageDatabase(mContext);
+         mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+         mStartTimestamp = System.currentTimeMillis();
 
+         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
+            isPermissionGranted();
+         } else {
+
+         startThread();
+         // If music is already playing when tracking started.
+         if (isMusicPlaying()) {
+             mIsMusicStarted = true;
+             mIsRunningBackgroundApps = true;
+             mMusicStartTimeStamp = System.currentTimeMillis();
+             mMusicStartTime = System.nanoTime();
+             }
+         }
+
+    }
+    
     @Override
     public IBinder onBind(Intent intent) {
-
+    	initThread(true);
         Log.v(LOG_TAG, "onBind Call");
-        mIsRunningForegroundAppsThread = true;
-        mIsFirstTimeStartForgroundAppService = true;
-        
-        mDatabase = new PhoneUsageDatabase(mContext);
-        mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-        mStartTimestamp = System.currentTimeMillis();
-
-        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
-           isPermissionGranted();
-        } else {
-
-        startThread();
-        // If music is already playing when tracking started.
-        if (isMusicPlaying()) {
-            mIsMusicStarted = true;
-            mIsRunningBackgroundApps = true;
-            mMusicStartTimeStamp = System.currentTimeMillis();
-            mMusicStartTime = System.nanoTime();
-            }
-        }
-        return mBinder;
+               return mBinder;
     }
 
     /**
