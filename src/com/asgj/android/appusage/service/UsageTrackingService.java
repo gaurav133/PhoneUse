@@ -333,6 +333,7 @@ public class UsageTrackingService extends Service {
         for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
             entry.setValue(0L);
     }
+    }
 
 
     
