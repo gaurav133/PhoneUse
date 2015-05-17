@@ -366,16 +366,8 @@ public class UsageTrackingService extends Service {
     	  mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
           mPackageManager = mContext.getPackageManager();
           List<ActivityManager.RunningTaskInfo> taskInfo = mActivityManager.getRunningTasks(1);
-
           mComponentName = taskInfo.get(0).topActivity;
-          mPackageName = mComponentName.getPackageName();
-          try {
-              mApplicationInfo = mPackageManager.getApplicationInfo(mPackageName, 0);
-          } catch (NameNotFoundException e) {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
-          }
-          mCurrentAppName = (String) mPackageManager.getApplicationLabel(mApplicationInfo);
+          mCurrentAppName = mComponentName.getPackageName();
           return mCurrentAppName != mPreviousAppName;
 
     }
@@ -414,7 +406,7 @@ public class UsageTrackingService extends Service {
              Log.v ("gaurav", "mPreviousStartTime: " + mPreviousStartTime);
 
              // Initially, when service is started, application name would be Phone Use.
-             mPreviousAppName = mContext.getString(R.string.app_name);
+             mPreviousAppName = mContext.getPackageName();
            //  foregroundMap.put(mPreviousAppName, 0L);
              mIsFirstTimeStartForgroundAppService = false;
     }
