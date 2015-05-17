@@ -224,10 +224,15 @@ public class UsageTrackingService extends Service {
         if (mBgTrackingTask != null) {
             currentDataForToday = (HashMap<String, Long>) mBgTrackingTask.foregroundMap.clone();
         }
-        
+
         for (Map.Entry<String, Long> dataEntry : mForegroundActivityMap.entrySet()) {
             String key = dataEntry.getKey();
-            currentDataForToday.put(key, dataEntry.getValue() + currentDataForToday.get(key));
+
+            if (currentDataForToday.containsKey(key)) {
+                currentDataForToday.put(key, dataEntry.getValue() + currentDataForToday.get(key));
+            } else {
+                currentDataForToday.put(key, dataEntry.getValue());
+            }
         }
         
         HashMap<String, Long> tempMap = new HashMap<>();
@@ -402,10 +407,7 @@ public class UsageTrackingService extends Service {
             entry.setValue(0L);
         }
     }
-    
 
-
-    
     private void initLocalMapForThread( HashMap<String, Long> foregroundMap){
     	     initializeMap(foregroundMap);
              mPreviousStartTime = mStartTime;
