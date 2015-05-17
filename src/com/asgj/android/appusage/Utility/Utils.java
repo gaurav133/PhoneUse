@@ -68,22 +68,9 @@ public class Utils {
      * @return Application icon for pkgName, null in case pkgName is empty.
      */
     public static Drawable getApplicationIcon(Context context, String pkgName) {
-
-        PackageManager packageManager;
         Drawable appIcon = null;
             try {
-                packageManager = context.getPackageManager();
-                List<ApplicationInfo> list = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
-                
-                for (ApplicationInfo info : list) {
-                     String label = (String) packageManager.getApplicationLabel(info);
-                     
-                     if (label.equals(pkgName)) {
-                         appIcon = context.getPackageManager().getApplicationIcon(info.packageName);
-                         break;
-                     }
-                }
-                
+                         appIcon = context.getPackageManager().getApplicationIcon(pkgName);
             } catch (NameNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
