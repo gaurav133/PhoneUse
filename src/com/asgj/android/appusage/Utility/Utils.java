@@ -33,11 +33,25 @@ public class Utils {
         int hour = (int) nanoSec / 3600;
         nanoSec = nanoSec % 3600;
         int min = (int) nanoSec / 60;
-        int sec = (int) nanoSec % 60;
-        if(format.equals(TIME_FORMAT_HHMMSS))
-        return hour + ":" + min + ":" + sec;
-        else
-        return hour + " hr "+ min + " min "+ sec + " sec";
+		int sec = (int) nanoSec % 60;
+		String time = "";
+		if (format.equals(TIME_FORMAT_HHMMSS)) {
+			if (hour > 0) {
+				time = time + hour + ":";
+			}
+			if (min > 0) {
+				time = time + min + ";";
+			}
+			return time + sec;
+		} else {
+			if (hour > 0) {
+				time = time + hour + " hr ";
+			}
+			if (min > 0) {
+				time = time + min + " min ";
+			}
+			return time + sec + " sec";
+		}
 
     }
 
