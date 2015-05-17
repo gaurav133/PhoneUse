@@ -6,14 +6,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 public class UsageSharedPrefernceHelper {
-
     private static String PREFERNCE_NAME = "phone.usage";
     private static final String LOG_TAG = UsageSharedPrefernceHelper.class.getSimpleName();
     private static String PREF_NAME_USAGE_INFO = "phone.usgae.info";
@@ -143,7 +141,4 @@ public class UsageSharedPrefernceHelper {
             insertTotalDurationInPref(context, dataEntry.getKey(), dataEntry.getValue()
                     + getTotalDurationInPref(context, dataEntry.getKey()));
         }
-
-        Log.v(LOG_TAG, "Data in xml: " + prefs.getAll());
-    }
 }
