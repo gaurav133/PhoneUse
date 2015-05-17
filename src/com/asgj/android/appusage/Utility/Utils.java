@@ -11,60 +11,94 @@ import java.util.concurrent.TimeUnit;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.provider.CallLog;
-import android.util.Log;
+
 public class Utils {
-	
-	public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
-	public static long getTimeInSecFromNano(long nanoSec){
-		return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
-	}
-	
-	public static String getTimeFromNanoSeconds(long nanoSec, String format)
-			throws Exception {
-		if (!format.equals(TIME_FORMAT_HHMMSS)) {
-			throw new Exception("given time format not supported");
-		}
-		nanoSec = nanoSec / 1000;
-		int hour = (int) nanoSec / 3600;
-		nanoSec = nanoSec % 3600;
-		int min = (int) nanoSec / 60;
-		int sec = (int) nanoSec % 60;
-		return hour + ":" + min + ":" + sec;
 
-	}
-	
-	public static long getMiliSecFromDate(String date){
-		SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy");
-		Date dateIns = null;
-		try {
-			dateIns = sdf.parse(date);
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return dateIns.getTime();
-	}
-	
-	public static ArrayList<ApplicationInfo> getAllApplicationsInDevice(Context context){
-		final PackageManager pm = context.getPackageManager();
-		ArrayList<ApplicationInfo> packages = (ArrayList<ApplicationInfo>) pm.getInstalledApplications(PackageManager.GET_META_DATA);
-		return packages;
-	}
+    public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
 
-	public static String getDateFromMiliSeconds(long miliSec) {
-		SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy");
-		Date resultdate = new Date(miliSec);
-		return sdf.format(resultdate);
-	}
-	 /**
-     * Get call logs for a particular duration.
-     * @param startTime Starting time from which call logs are desired (Inclusive).
-     * @param endTime End time upto which call logs are desired (Exclusive).
-     * @return HashMap containing filtered call log entries for given time interval.
+    public static long getTimeInSecFromNano(long nanoSec) {
+        return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
+    }
+
+    public static String getTimeFromNanoSeconds(long nanoSec, String format) throws Exception {
+        if (!format.equals(TIME_FORMAT_HHMMSS)) {
+            throw new Exception("given time format not supported");
+        }
+        nanoSec = nanoSec / 1000;
+        int hour = (int) nanoSec / 3600;
+        nanoSec = nanoSec % 3600;
+        int min = (int) nanoSec / 60;
+        int sec = (int) nanoSec % 60;
+        return hour + ":" + min + ":" + sec;
+
+    }
+
+    public static long getMiliSecFromDate(String date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy");
+        Date dateIns = null;
+        try {
+            dateIns = sdf.parse(date);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return dateIns.getTime();
+    }
+
+    public static ArrayList<ApplicationInfo> getAllApplicationsInDevice(Context context) {
+        final PackageManager pm = context.getPackageManager();
+        ArrayList<ApplicationInfo> packages = (ArrayList<ApplicationInfo>) pm
+                .getInstalledApplications(PackageManager.GET_META_DATA);
+        return packages;
+    }
+
+    public static String getDateFromMiliSeconds(long miliSec) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy");
+        Date resultdate = new Date(miliSec);
+        return sdf.format(resultdate);
+    }
+    
+    /**
+     * Returns application icon corresponding to given package.
+     * @param pkgName Package name for which icon is needed.
+     * @return Application icon for pkgName, null in case pkgName is empty.
      */
-    public static HashMap<String, Integer> getCallDetails(Context context,long startTime, long endTime,HashMap<String, Integer> mCallDetailsMap) {
+    public static Drawable getApplicationIcon(Context context, String pkgName) {
+
+        PackageManager packageManager;
+        Drawable appIcon = null;
+            try {
+                packageManager = context.getPackageManager();
+                List<ApplicationInfo> list = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
+                
+                for (ApplicationInfo info : list) {
+                     String label = (String) packageManager.getApplicationLabel(info);
+                     
+                     if (label.equals(pkgName)) {
+                         appIcon = context.getPackageManager().getApplicationIcon(info.packageName);
+                         break;
+                     }
+                }
+                
+            } catch (NameNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        return appIcon;
+    }
+    
+    /**
+    * Get call logs for a particular duration.
+    * @param startTime Starting time from which call logs are desired (Inclusive).
+    * @param endTime End time upto which call logs are desired (Exclusive).
+    * @return HashMap containing filtered call log entries for given time interval.
+    */
+    public static HashMap<String, Integer> getCallDetails(Context context, long startTime,
+            long endTime, HashMap<String, Integer> mCallDetailsMap) {
 
         Cursor managedCursor = context.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
                 null, null, CallLog.Calls.DATE + " DESC");
@@ -75,18 +109,17 @@ public class Utils {
         while (managedCursor.moveToNext()) {
 
             String callDate = managedCursor.getString(date);
-            
-              // Only add if the call times overlap with tracking times.
+
+            // Only add if the call times overlap with tracking times.
             if ((Long.parseLong(callDate) <= startTime && (Long.parseLong(callDate) + duration) >= startTime)
                     || (Long.parseLong(callDate) > startTime && Long.parseLong(callDate) < endTime)) {
 
                 // Add the details in hash-map.
-                
+
                 mCallDetailsMap.put(callDate, duration);
             }
         }
         return mCallDetailsMap;
     }
-
 
 }
