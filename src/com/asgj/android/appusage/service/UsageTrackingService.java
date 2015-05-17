@@ -402,7 +402,7 @@ public class UsageTrackingService extends Service {
             entry.setValue(0L);
         }
     }
-    }
+    
 
 
     
@@ -562,7 +562,7 @@ public class UsageTrackingService extends Service {
         
         // Dump data to xml shared preference.
         UsageSharedPrefernceHelper.updateTodayData(mContext, mForegroundActivityMap);
-        mDatabase.exportPreferences("phone.usage");
+        //mDatabase.exportPreferences("phone.usage");
         
         Toast.makeText(mContext, "Phone used for: " + phoneUsedTime() + "seconds",
                 Toast.LENGTH_LONG).show();
