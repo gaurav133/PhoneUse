@@ -35,6 +35,7 @@ import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
@@ -45,7 +46,8 @@ public class UsageListMainActivity extends Activity {
     private UsageStatsManager mUsageStatsManager;
     private List<UsageStats> mQueryUsageStats;
     private long mStartServiceTime;
-    private boolean isServiceStarted = false;
+    private boolean mIsCreated = false;
+    private boolean mIsBound = false;
     private PhoneUsageDatabase mDatabase;
     private SlidingTabsBasicFragment<HashMap, ArrayList, ArrayList> mFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
@@ -59,6 +61,7 @@ public class UsageListMainActivity extends Activity {
         mContext = this;
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
+        mIsCreated = true;
 
         // Check whether binding is needed.
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -67,7 +70,7 @@ public class UsageListMainActivity extends Activity {
             Intent startServiceIntent = new Intent();
             startServiceIntent.setClass(this, UsageTrackingService.class);
             startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
-            startService(startServiceIntent);
+            //startService(startServiceIntent);
             bindService(startServiceIntent, mConnection, 0);
         }
     }
@@ -89,6 +92,12 @@ public class UsageListMainActivity extends Activity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mMainService = ((LocalBinder) service).getInstance();
+            mIsBound = true;
+
+            if (mIsCreated) {
+                mFragment.setmUsageAppData(mMainService.getCurrentMap());
+                mFragment.setmMusicData(mMainService.mListMusicPlayTimes);
+            }
             Log.v(LOG_TAG, "Service connected, mMainService is: " + mMainService);
         }
     };
@@ -101,14 +110,18 @@ public class UsageListMainActivity extends Activity {
         // TODO Auto-generated method stub
         super.onResume();
 
-        Log.v(LOG_TAG, "mainService is: " + mMainService);
-        // Show data dynamically.
-        if (mMainService != null) {
-            mFragment.setmUsageAppData(mMainService.mForegroundActivityMap);
-            mFragment.setmMusicData(mMainService.mListMusicPlayTimes);
-            for (Map.Entry<String, Long> entry : mMainService.mForegroundActivityMap.entrySet()) {
-                Log.v(LOG_TAG, " App name : " + entry.getKey() + " Time used: " + entry.getValue()
-                        / 1000000000);
+        Log.v(LOG_TAG, "mainService onResume is: " + mMainService);
+
+        // IF service not running, show data from xml.
+        if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+            mFragment.setmUsageAppData(UsageSharedPrefernceHelper.getAllKeyValuePairs(mContext));
+        } else {
+
+            // Show data dynamically.
+            if (mMainService != null) {
+                Log.v(LOG_TAG, "Data : " + mMainService.getCurrentMap());
+                mFragment.setmUsageAppData(mMainService.getCurrentMap());
+                mFragment.setmMusicData(mMainService.mListMusicPlayTimes);
             }
         }
     }
@@ -117,29 +130,37 @@ public class UsageListMainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.list_activity_menu, menu);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (preferences.getBoolean("ServiceStart", false) == true) {
+            MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_start);
+            menuItem.setTitle(getString(R.string.string_stop));
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     protected void onDestroy() {
         // TODO Auto-generated method stub
-
         Log.v(LOG_TAG, "onDestroy activity");
-        if (mMainService != null) {
 
-            /*Toast.makeText(mContext, "Phone used for: " + mMainService.phoneUsedTime() + "seconds",
-                    Toast.LENGTH_LONG).show();*/
+        // Unbind from service to prevent service connection leak.
+        if (mIsBound) {
+            unbindService(mConnection);
         }
-
+        
         super.onDestroy();
     }
 
     private void startTrackingService() {
         mStartServiceTime = System.currentTimeMillis();
-        Log.v(LOG_TAG, "Time: " + mStartServiceTime);
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");
-        Date resultdate = new Date(mStartServiceTime);
-        Log.v(LOG_TAG, sdf.format(resultdate));
+
+        SharedPreferences preferences1 = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor1 = preferences1.edit();
+        editor1.putBoolean("ServiceStart", true);
+        editor1.commit();
+
         if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
 
             // Here you bind to the service.
@@ -169,7 +190,6 @@ public class UsageListMainActivity extends Activity {
         stopServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
         stopService(stopServiceIntent);
 
-        isServiceStarted = false;
         SharedPreferences preferences1 = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor1 = preferences1.edit();
         editor1.putBoolean("ServiceStart", false);
@@ -243,20 +263,27 @@ public class UsageListMainActivity extends Activity {
         // TODO Auto-generated method stub
         switch (item.getItemId()) {
         case R.id.action_start:
-        	if(!UsageSharedPrefernceHelper.isServiceRunning(this)){
-        		startTrackingService();
-        		item.setTitle("stop");
-        		UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
-        	}else{
-        		stopTrackingService();
-        		item.setTitle("start");
-        		UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
-        		finish();
-        	}
-            
+            if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
+                startTrackingService();
+                item.setTitle(getString(R.string.string_stop));
+                UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
+                
+                // Get current date and compare to check whether preferences need to be cleared.
+                String currentDate = Utils.getDateFromMiliSeconds(System.currentTimeMillis());
+                if (!currentDate.equals(UsageSharedPrefernceHelper.getDateStoredInPref(mContext))) {
+                    UsageSharedPrefernceHelper.clearPreference(mContext);
+                }
+
+            } else {
+                stopTrackingService();
+                item.setTitle(getString(R.string.string_start));
+                UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
+                finish();
+            }
+
             break;
 
-               }
+        }
         return super.onOptionsItemSelected(item);
     }
 }
