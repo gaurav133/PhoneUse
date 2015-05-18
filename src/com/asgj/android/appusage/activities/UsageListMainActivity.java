@@ -13,6 +13,7 @@ import java.util.TreeMap;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -20,6 +21,7 @@ import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -27,6 +29,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -120,7 +123,10 @@ public class UsageListMainActivity extends Activity {
             // Show data dynamically.
             if (mMainService != null) {
                 Log.v(LOG_TAG, "Data : " + mMainService.getCurrentMap());
+                if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) 
                 mFragment.setmUsageAppData(mMainService.getCurrentMap());
+                else
+                mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(this));
                 mFragment.setmMusicData(mMainService.mListMusicPlayTimes);
             }
         }
@@ -161,7 +167,6 @@ public class UsageListMainActivity extends Activity {
         editor1.putBoolean("ServiceStart", true);
         editor1.commit();
 
-        if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
 
             // Here you bind to the service.
             Intent startServiceIntent = new Intent();
@@ -179,7 +184,6 @@ public class UsageListMainActivity extends Activity {
             Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_LONG)
                     .show();
             startActivity(intentGoToHomeScreen);
-        }
 
     }
 
@@ -264,6 +268,26 @@ public class UsageListMainActivity extends Activity {
         switch (item.getItemId()) {
         case R.id.action_start:
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
+            	if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+            	if(!Utils.isPermissionGranted(this)){
+            		AlertDialog.Builder builder = new AlertDialog.Builder(this).
+            				setTitle(R.string.string_error_title).
+            				setMessage(R.string.string_error_msg).
+            				setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener(){
+            					@Override
+            					public void onClick(DialogInterface dialog,
+            							int which) {
+            						Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            			        	startActivity(intent);
+            			        	
+            						
+            					}
+            				});
+            		AlertDialog dialog = builder.create();
+            		dialog.show();
+                    }
+            	}
+            	
                 startTrackingService();
                 item.setTitle(getString(R.string.string_stop));
                 UsageSharedPrefernceHelper.setServiceRunning(mContext, true);

@@ -9,5 +9,7 @@
     <string name="screen_user_present">User Present</string>
     <string name="string_start">Start</string>
     <string name="string_stop">Stop</string>
+     <string name="string_error_title">Permission Error</string>
+     <string name="string_error_msg">Oops!! You need to set usage setting enable for our application. Press OK to go to Setting Screen.</string>
 
 </resources>

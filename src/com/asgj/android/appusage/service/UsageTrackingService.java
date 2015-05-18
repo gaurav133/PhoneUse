@@ -431,6 +431,7 @@ public class UsageTrackingService extends Service {
             // If any foreground application is running or background application (music is playing).
             while (mIsRunningForegroundAppsThread || mIsRunningBackgroundApps) {
                 
+            	if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
                               // If the present application is different from the previous application, update the previous app time.
                 if (isTopApplicationchange()) {
                     long time = System.nanoTime();
@@ -447,6 +448,7 @@ public class UsageTrackingService extends Service {
                 	
                 }
                 mPreviousAppName = mCurrentAppName;
+            	}
 
                 // If music is not playing but it was started after tracking started, then update music time.
                 if (isNeedToHandleMusicClose()) {
@@ -582,11 +584,6 @@ public class UsageTrackingService extends Service {
          mDatabase = new PhoneUsageDatabase(mContext);
          mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
          mStartTimestamp = System.currentTimeMillis();
-
-         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) { 
-            isPermissionGranted();
-         } else {
-
          startThread();
          // If music is already playing when tracking started.
          if (isMusicPlaying()) {
@@ -596,7 +593,7 @@ public class UsageTrackingService extends Service {
              mMusicStartTime = System.nanoTime();
              }
          }
-    }
+    
     
     @Override
     public IBinder onBind(Intent intent) {
@@ -604,18 +601,5 @@ public class UsageTrackingService extends Service {
         Log.v(LOG_TAG, "onBind Call");
                return mBinder;
     }
-
-    /**
-     * Check whether permission has been granted for accessing Usage stats manager.
-     * @return true if permission has been granted, false otherwise.
-     */
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public boolean isPermissionGranted() {
-
-        final UsageStatsManager usageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
-        final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0,  System.currentTimeMillis());
-
-       // Log.v (LOG_TAG, "Query stats: " + queryUsageStats);
-        return !queryUsageStats.isEmpty();
     }
 }
