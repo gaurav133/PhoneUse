@@ -24,6 +24,14 @@ public class Utils {
     public static long getTimeInSecFromNano(long nanoSec) {
         return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
     }
+    public static String getTimeFromTimeStamp(long timestamp){
+    	Date date = new Date(timestamp);
+    	SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
+    	String time1 = sdf.format(date);
+    	time1 = time1.replaceFirst(":", " hr ");
+    	time1 = time1.replaceFirst(":", " min ");
+    	return time1 + " sec";
+    }
 
     public static String getTimeFromNanoSeconds(long nanoSec, String format) throws Exception {
         if (!format.equals(TIME_FORMAT_HHMMSS) || (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
@@ -40,7 +48,7 @@ public class Utils {
 				time = time + hour + ":";
 			}
 			if (min > 0) {
-				time = time + min + ";";
+				time = time + min + ":";
 			}
 			return time + sec;
 		} else {
