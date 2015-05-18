@@ -82,7 +82,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
             text_middle.setText("" + mList.get(position).getmIntervalEndTime());
             text_right.setText("" + mList.get(position).getmIntervalDuration());
         } else if (mMap != null) {
-            text_left.setText(keys.get(position));
+            text_left.setText(Utils.getApplicationLabelName(mContext, keys.get(position)));
             text_right.setText("" + mMap.get(keys.get(position)));
             image_view_app_icon.setImageDrawable(Utils.getApplicationIcon(mContext, keys.get(position)));
             image_view_app_icon.setVisibility(View.VISIBLE);

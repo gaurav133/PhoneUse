@@ -19,21 +19,41 @@ import android.provider.CallLog;
 public class Utils {
 
     public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
+    public static String TIME_FORMAT_HH_HR_MM_MIN_SS_SEC = "hh hr mm min ss sec";
 
     public static long getTimeInSecFromNano(long nanoSec) {
         return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
     }
+    
+     
 
     public static String getTimeFromNanoSeconds(long nanoSec, String format) throws Exception {
-        if (!format.equals(TIME_FORMAT_HHMMSS)) {
+        if (!format.equals(TIME_FORMAT_HHMMSS) || (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
             throw new Exception("given time format not supported");
         }
         nanoSec = nanoSec / 1000;
         int hour = (int) nanoSec / 3600;
         nanoSec = nanoSec % 3600;
         int min = (int) nanoSec / 60;
-        int sec = (int) nanoSec % 60;
-        return hour + ":" + min + ":" + sec;
+		int sec = (int) nanoSec % 60;
+		String time = "";
+		if (format.equals(TIME_FORMAT_HHMMSS)) {
+			if (hour > 0) {
+				time = time + hour + ":";
+			}
+			if (min > 0) {
+				time = time + min + ":";
+			}
+			return time + sec;
+		} else {
+			if (hour > 0) {
+				time = time + hour + " hr ";
+			}
+			if (min > 0) {
+				time = time + min + " min ";
+			}
+			return time + sec + " sec";
+		}
 
     }
 
@@ -78,6 +98,19 @@ public class Utils {
         return appIcon;
     }
     
+	public static String getApplicationLabelName(Context context,
+			String packageName) {
+		ApplicationInfo mApplicationInfo = null;
+		try {
+			mApplicationInfo = context.getPackageManager().getApplicationInfo(
+					packageName, 0);
+		} catch (NameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return (String) context.getPackageManager().getApplicationLabel(
+				mApplicationInfo);
+	}
     /**
     * Get call logs for a particular duration.
     * @param startTime Starting time from which call logs are desired (Inclusive).
