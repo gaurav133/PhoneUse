@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -26,7 +28,22 @@ public class Utils {
     }
     
      
+    public static boolean isPermissionGranted(Context context) {
+        final UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService("usagestats");
+        final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0,  System.currentTimeMillis());
+        return !queryUsageStats.isEmpty();
+    }
 
+    
+    public static HashMap<String,Long> getAppUsageFromLAndroidDb(Context context){
+    	 UsageStatsManager usm = (UsageStatsManager) context.getSystemService("usagestats");
+    	 List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,0,System.currentTimeMillis());
+    	 HashMap<String,Long> map = new HashMap<String, Long>();
+    	 for(UsageStats stat : usageStatsList){
+    		 map.put(stat.getPackageName(), Utils.getTimeInSecFromNano(stat.getTotalTimeInForeground()));
+    	 }
+    	 return map;
+    }
     public static String getTimeFromNanoSeconds(long nanoSec, String format) throws Exception {
         if (!format.equals(TIME_FORMAT_HHMMSS) || (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
             throw new Exception("given time format not supported");
@@ -141,5 +158,17 @@ public class Utils {
         }
         return mCallDetailsMap;
     }
+    public static HashMap<String,String> getDataFromSystemL(List<UsageStats> queryUsageStats){
+		HashMap<String,String> map = new HashMap<String, String>();
+		for(UsageStats stat : queryUsageStats){
+			try {
+				map.put(stat.getPackageName(), Utils.getTimeFromNanoSeconds(stat.getTotalTimeInForeground(),Utils.TIME_FORMAT_HH_HR_MM_MIN_SS_SEC));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return map;
+	}
 
 }
