@@ -648,4 +648,4 @@ public class UsageTrackingService extends Service {
                return mBinder;
     }
   }
-}
+
