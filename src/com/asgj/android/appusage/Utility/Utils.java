@@ -92,6 +92,29 @@ public class Utils {
         return dateIns.getTime();
     }
     
+    /**
+     * Calculate the time from given seconds
+     * @param seconds Input seconds to be converted.
+     * @return Time in given format.
+     * @throws 
+     */
+    public static String getTimeFromSeconds(long seconds) {
+        String time = "";
+        int hour = (int) seconds / 3600;
+        seconds = seconds % 3600;
+        int min = (int) seconds / 60;
+        int sec = (int) seconds % 60;
+        
+        if (seconds < 60) {
+            time = sec + " sec ";
+        } else if (seconds >= 60 && seconds < 3600) {
+            time = min + " min " + sec + " sec ";
+        } else if (seconds >= 3600) {
+            time = hour + " hr " + min + " min " + sec + " sec ";
+        }
+        return time;
+    }
+
     public static String getTimeFromTimeStamp(Context context, long timeStamp) {
         
         java.text.DateFormat dateFormat = SimpleDateFormat.getTimeInstance();

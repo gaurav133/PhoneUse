@@ -6,7 +6,7 @@
 
     <com.asgj.android.appusage.ui.widgets.SlidingTabLayout
           android:id="@+id/sliding_tabs"
-          android:background="#ff1ca8f4"
+          android:background="@color/color_action_bar_background"
           android:layout_width="match_parent"
           android:layout_height="wrap_content" />
 
