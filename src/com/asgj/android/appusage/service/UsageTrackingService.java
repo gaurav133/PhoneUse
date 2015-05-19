@@ -234,6 +234,24 @@ public class UsageTrackingService extends Service {
      */
     public HashMap<String, Long> getCurrentMap() {
         HashMap<String, Long> currentDataForToday = new HashMap<>();
+		if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+				mContext.getString(R.string.string_Today))) {
+			HashMap<String, Long> mPreviousDaysData = mDatabase
+					.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+							UsageSharedPrefernceHelper.getShowByType(mContext));
+
+			for (Map.Entry<String, Long> dataEntry : mPreviousDaysData
+					.entrySet()) {
+				String key = dataEntry.getKey();
+
+				if (currentDataForToday.containsKey(key)) {
+					currentDataForToday.put(key, dataEntry.getValue()
+							+ currentDataForToday.get(key));
+				} else {
+					currentDataForToday.put(key, dataEntry.getValue());
+				}
+			}
+		}
         
         if (mBgTrackingTask != null) {
             currentDataForToday = (HashMap<String, Long>) mBgTrackingTask.foregroundMap.clone();
@@ -287,6 +305,14 @@ public class UsageTrackingService extends Service {
             info.setmIntervalEndTime(System.currentTimeMillis());
             info.setmIntervalDuration(Utils.getTimeInSecFromNano(time - mMusicStartTime));
             currentDataForMusic.add(info);
+        }
+        
+		if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+				mContext.getString(R.string.string_Today))) {
+			currentDataForMusic
+					.addAll(mDatabase.getMusicEntryForMentionedTimeBeforeToday(
+							mContext,
+							UsageSharedPrefernceHelper.getShowByType(mContext)));
         }
         return currentDataForMusic;
     }
