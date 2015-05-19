@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
+import com.asgj.android.appusage.R;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -36,6 +37,20 @@ public class UsageSharedPrefernceHelper {
         Editor editor = prefs.edit();
         editor.putBoolean("isServiceRunning", isServiceRunning);
         editor.commit();
+    }
+    
+    public static void setShowByUsage(Context context, String isServiceRunning) {
+        SharedPreferences prefs = context
+                .getSharedPreferences(PREFERNCE_NAME, Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putString("showBy", isServiceRunning);
+        editor.commit();
+    }
+    
+    public static String getShowByType(Context context) {
+        SharedPreferences prefs = context
+                .getSharedPreferences(PREFERNCE_NAME, Context.MODE_PRIVATE);
+        return prefs.getString("showBy", context.getString(R.string.string_Today));
     }
 
     public static boolean isServiceRunning(Context context) {

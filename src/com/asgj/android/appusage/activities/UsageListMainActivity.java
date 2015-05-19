@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import android.animation.Animator;
+import android.animation.Animator.AnimatorListener;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -22,6 +24,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -34,7 +37,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.util.DisplayMetrics;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
@@ -43,7 +50,7 @@ import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 
-public class UsageListMainActivity extends Activity {
+public class UsageListMainActivity extends Activity implements View.OnClickListener{
     private Context mContext;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
@@ -54,6 +61,32 @@ public class UsageListMainActivity extends Activity {
     private PhoneUsageDatabase mDatabase;
     private SlidingTabsBasicFragment<HashMap, ArrayList, ArrayList> mFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
+    private String[] mShowList = null;
+    private TextView mShowByOptionsMain = null;
+    private TextView mShowByOptions2 = null;
+    private TextView mShowByOptions3 = null;
+    private TextView mShowByOptions4 = null;
+    private TextView mShowByOptions5 = null;
+    private float mNormalYPosition = -1f;
+    private float mSecondFabPos = -1f;
+    private float mThirdFabPos = -1f;
+    private float mForthFabPos = -1f;
+    private float mFifthFabPos = -1f;
+    private boolean isFabPositionSet = false;
+    private int mFabPosParameter = 50;
+    private void setFabPositions(){
+    	if(isFabPositionSet){
+    		return;
+    	}
+    	DisplayMetrics metrics = getResources().getDisplayMetrics();
+    	float height = metrics.heightPixels;
+    	mSecondFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 3);
+    	mThirdFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 6);
+    	mForthFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 9);
+    	mFifthFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 12);
+    	mNormalYPosition = mShowByOptions2.getY();
+    	isFabPositionSet = true;
+    }
 
     // UI elements.
 
@@ -62,10 +95,14 @@ public class UsageListMainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.usage_list_main_layout);
         mContext = this;
+        mShowList = new String[]{getString(R.string.string_Today),
+        		getString(R.string.string_Weekly),getString(R.string.string_Monthly)
+        		,getString(R.string.string_Yearly),getString(R.string.string_Custom)};
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
         mIsCreated = true;
 
+        initFabTextView();
         // Check whether binding is needed.
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         if (preferences.getBoolean("ServiceStart", false) == true) {
@@ -75,6 +112,40 @@ public class UsageListMainActivity extends Activity {
             startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
             //startService(startServiceIntent);
             bindService(startServiceIntent, mConnection, 0);
+        }
+    }
+    
+    private void initFabTextView(){
+    	mShowByOptionsMain = (TextView)findViewById(R.id.showByOptions1);
+    	mShowByOptions2 = (TextView)findViewById(R.id.showByOptions2);
+    	mShowByOptions3 = (TextView)findViewById(R.id.showByOptions3);
+    	mShowByOptions4 = (TextView)findViewById(R.id.showByOptions4);
+    	mShowByOptions5 = (TextView)findViewById(R.id.showByOptions5);
+        
+    	mShowByOptionsMain.setOnClickListener(this);
+    	mShowByOptions2.setOnClickListener(this);
+    	mShowByOptions3.setOnClickListener(this);
+    	mShowByOptions4.setOnClickListener(this);
+    	mShowByOptions5.setOnClickListener(this);
+    	if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+    		mShowByOptionsMain.setVisibility(View.GONE);
+    	}else{
+    		mShowByOptionsMain.setText(UsageSharedPrefernceHelper.getShowByType(mContext));
+    		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mShowByOptionsMain.getLayoutParams();
+    		DisplayMetrics metrics = getResources().getDisplayMetrics();
+        	float height = metrics.heightPixels;
+        	params.bottomMargin = (int)(height / mFabPosParameter);
+        	params.rightMargin = (int)(height / mFabPosParameter);
+        	mShowByOptionsMain.setLayoutParams(params);
+        	mShowByOptions2.setLayoutParams(params);
+        	mShowByOptions3.setLayoutParams(params);
+        	mShowByOptions4.setLayoutParams(params);
+        	mShowByOptions5.setLayoutParams(params);
+    		mShowByOptionsMain.setElevation(20f);
+    		mShowByOptions2.setElevation(20f);
+    		mShowByOptions3.setElevation(20f);
+    		mShowByOptions4.setElevation(20f);
+    		mShowByOptions5.setElevation(20f);
         }
     }
 
@@ -123,10 +194,11 @@ public class UsageListMainActivity extends Activity {
             // Show data dynamically.
             if (mMainService != null) {
                 Log.v(LOG_TAG, "Data : " + mMainService.getCurrentMap());
-                if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) 
+                if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
                 mFragment.setmUsageAppData(mMainService.getCurrentMap());
-                else
+                } else {
                 mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(this));
+                }
                 mFragment.setmMusicData(mMainService.mListMusicPlayTimes);
             }
         }
@@ -142,6 +214,11 @@ public class UsageListMainActivity extends Activity {
         if (preferences.getBoolean("ServiceStart", false) == true) {
             MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_start);
             menuItem.setTitle(getString(R.string.string_stop));
+        }
+        
+        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        	 MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_showBy);
+        	 menuItem.setVisible(false);
         }
         return super.onCreateOptionsMenu(menu);
     }
@@ -306,8 +383,151 @@ public class UsageListMainActivity extends Activity {
             }
 
             break;
+        case R.id.action_showBy:
+        	AlertDialog.Builder builder = new AlertDialog.Builder(this).
+        	                          setTitle(getString(R.string.string_showBy)).
+        	                          setAdapter(new ArrayAdapter<String>(this, 
+        	                        		  android.R.layout.simple_list_item_1,mShowList), new OnClickListener(){
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(), mShowList[which]);
+										}
+        	                          });
+        	AlertDialog dialog = builder.create();
+        	dialog.show();
+        	break;
 
         }
         return super.onOptionsItemSelected(item);
     }
+    private void showFabOptions(){
+		mShowByOptions2.animate().y(mSecondFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();
+		mShowByOptions3.animate().y(mThirdFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();;
+		mShowByOptions4.animate().y(mForthFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();
+		mShowByOptions5.animate().y(mFifthFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();
+    }
+    
+    private void hideFabOption(){
+		mShowByOptions2.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
+		mShowByOptions3.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
+		mShowByOptions4.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
+		mShowByOptions5.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
+    	
+    }
+    
+ class ShowAnimationListner implements AnimatorListener {
+		
+		@Override
+		public void onAnimationStart(Animator animation) {
+			mShowByOptionsMain.setClickable(false);
+			mShowByOptions2.setClickable(false);
+			mShowByOptions3.setClickable(false);
+			mShowByOptions4.setClickable(false);
+			mShowByOptions5.setClickable(false);
+			mShowByOptions2.setVisibility(View.VISIBLE);
+			mShowByOptions3.setVisibility(View.VISIBLE);
+			mShowByOptions4.setVisibility(View.VISIBLE);
+			mShowByOptions5.setVisibility(View.VISIBLE);
+		}
+		
+		@Override
+		public void onAnimationRepeat(Animator animation) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onAnimationEnd(Animator animation) {
+			mShowByOptionsMain.setClickable(true);
+			mShowByOptions2.setClickable(true);
+			mShowByOptions3.setClickable(true);
+			mShowByOptions4.setClickable(true);
+			mShowByOptions5.setClickable(true);
+			
+		}
+		
+		@Override
+		public void onAnimationCancel(Animator animation) {
+			// TODO Auto-generated method stub
+			
+		}
+	}
+    
+    class HideAnimationListner implements AnimatorListener {
+		
+		@Override
+		public void onAnimationStart(Animator animation) {
+			mShowByOptionsMain.setClickable(false);
+			mShowByOptions2.setClickable(false);
+			mShowByOptions3.setClickable(false);
+			mShowByOptions4.setClickable(false);
+			mShowByOptions5.setClickable(false);
+			
+		}
+		
+		@Override
+		public void onAnimationRepeat(Animator animation) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void onAnimationEnd(Animator animation) {
+			
+			mShowByOptions2.setVisibility(View.INVISIBLE);
+			mShowByOptions3.setVisibility(View.INVISIBLE);
+			mShowByOptions4.setVisibility(View.INVISIBLE);
+			mShowByOptions5.setVisibility(View.INVISIBLE);
+			mShowByOptionsMain.setClickable(true);
+			mShowByOptions2.setClickable(true);
+			mShowByOptions3.setClickable(true);
+			mShowByOptions4.setClickable(true);
+			mShowByOptions5.setClickable(true);
+			
+		}
+		
+		@Override
+		public void onAnimationCancel(Animator animation) {
+			// TODO Auto-generated method stub
+			
+		}
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch(v.getId()){
+		case R.id.showByOptions1:
+			setFabPositions();
+			if(mShowByOptions2.getVisibility() == View.INVISIBLE){
+			    showFabOptions();
+			    mShowByOptionsMain.setText(mShowList[0]);
+			}else{
+				UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[0]);
+				hideFabOption();
+				mShowByOptionsMain.setText(mShowList[0]);
+			}
+			break;
+		case R.id.showByOptions2:
+			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[1]);
+			hideFabOption();
+			mShowByOptionsMain.setText(mShowList[1]);
+			break;
+		case R.id.showByOptions3:
+			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[2]);
+			hideFabOption();
+			mShowByOptionsMain.setText(mShowList[2]);
+			break;
+		case R.id.showByOptions4:
+			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[3]);
+			hideFabOption();
+			mShowByOptionsMain.setText(mShowList[3]);
+			break;
+		case R.id.showByOptions5:
+			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[4]);
+			hideFabOption();
+			mShowByOptionsMain.setText(mShowList[4]);
+			break;
+		}
+		
+	}
 }

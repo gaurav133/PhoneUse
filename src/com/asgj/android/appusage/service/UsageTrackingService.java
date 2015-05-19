@@ -601,5 +601,5 @@ public class UsageTrackingService extends Service {
         Log.v(LOG_TAG, "onBind Call");
                return mBinder;
     }
-    }
+  }
 }

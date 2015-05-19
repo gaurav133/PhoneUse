@@ -158,5 +158,17 @@ public class Utils {
         }
         return mCallDetailsMap;
     }
+    public static HashMap<String,String> getDataFromSystemL(List<UsageStats> queryUsageStats){
+		HashMap<String,String> map = new HashMap<String, String>();
+		for(UsageStats stat : queryUsageStats){
+			try {
+				map.put(stat.getPackageName(), Utils.getTimeFromNanoSeconds(stat.getTotalTimeInForeground(),Utils.TIME_FORMAT_HH_HR_MM_MIN_SS_SEC));
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return map;
+	}
 
 }
