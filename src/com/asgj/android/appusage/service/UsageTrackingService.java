@@ -93,7 +93,7 @@ public class UsageTrackingService extends Service {
             // TODO Auto-generated method stub
             if (intent.getAction().equals("android.intent.action.SCREEN_ON")) {
                 
-                // Check whether keyguard is locked or not.
+                // Check whether key-guard is locked or not.
                 if (mKeyguardManager.isKeyguardLocked()) {
                  // Bypass to screenUserPresent receiver.
                     mIsKeyguardLocked = true;
@@ -130,9 +130,11 @@ public class UsageTrackingService extends Service {
                 Log.v(LOG_TAG, "Time is: " + time);
                 
                 String timeToCompare12Hour = "12:00:00 AM";
+                String timeToCompare24Hour = "00:00:00";
                 
-                if (time.equals(timeToCompare12Hour))
+                if (time.equals(timeToCompare12Hour) || time.equals(timeToCompare24Hour))
                 {
+                    // APPS DATA.
                     Log.v(LOG_TAG, "It's midnight, dump data to DB.");
                     UsageSharedPrefernceHelper.clearPreference(mContext);
                     long currentTime = System.nanoTime();
@@ -146,6 +148,17 @@ public class UsageTrackingService extends Service {
                     mPreviousStartTime = currentTime;
                     mPreviousAppStartTimeStamp = System.currentTimeMillis();
                     initializeMap(mBgTrackingTask.foregroundMap);
+                    
+                    // MUSIC DATA.
+                    if (isMusicPlaying()) {
+                        doHandleForMusicClose();
+                        
+                        mIsMusicStarted = true;
+                        mMusicStartTime = System.nanoTime();
+                        mMusicStartTimeStamp = System.currentTimeMillis();
+                        
+                        mListMusicPlayTimes.clear();
+                    }
                 }
             }
         }
@@ -216,7 +229,8 @@ public class UsageTrackingService extends Service {
     };
     
     /**
-     * Method to get current tracking map for displaying in main screen. 
+     * Method to get current tracking map for applications for displaying in main screen.
+     * @return Map of entries, with pkg name as key and duration as value. 
      */
     public HashMap<String, Long> getCurrentMap() {
         HashMap<String, Long> currentDataForToday = new HashMap<>();
@@ -236,7 +250,7 @@ public class UsageTrackingService extends Service {
         }
         
         HashMap<String, Long> tempMap = new HashMap<>();
-        tempMap = UsageSharedPrefernceHelper.getAllKeyValuePairs(mContext);
+        tempMap = UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext);
         
         for (Map.Entry<String, Long> dataEntry : tempMap.entrySet()) {
             String key = dataEntry.getKey();
@@ -250,6 +264,33 @@ public class UsageTrackingService extends Service {
     
         return currentDataForToday;
     }
+    
+    /**
+     * Method to return current data for music (for today) for displaying in Music tab.
+     * @return ArrayList containing objects of {@code UsageInfo} types.
+     */
+    public ArrayList<UsageInfo> getCurrentDataForMusic() {
+        
+        ArrayList<UsageInfo> currentDataForMusic = new ArrayList<UsageInfo>();
+        currentDataForMusic = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
+
+        currentDataForMusic.addAll(mListMusicPlayTimes);
+        
+        if (UsageSharedPrefernceHelper.isServiceRunning(mContext) && isMusicPlaying()) {
+            
+            // Add an entry from start time of music to present time.
+            long time = System.nanoTime();
+            
+            // Add this interval to list.
+            UsageInfo info = new UsageInfo();
+            info.setmIntervalStartTime(mMusicStartTimeStamp);
+            info.setmIntervalEndTime(System.currentTimeMillis());
+            info.setmIntervalDuration(Utils.getTimeInSecFromNano(time - mMusicStartTime));
+            currentDataForMusic.add(info);
+        }
+        return currentDataForMusic;
+    }
+    
     /**
      * Method to check whether music is playing.
      * @return true, if music is playing, false otherwise.
@@ -362,13 +403,13 @@ public class UsageTrackingService extends Service {
         mPreviousStartTime = time;
     }
     
-    private boolean isTopApplicationchange(){
-    	  mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
+    private boolean isTopApplicationchange() {
+          mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
           mPackageManager = mContext.getPackageManager();
-          List<ActivityManager.RunningTaskInfo> taskInfo = mActivityManager.getRunningTasks(1);
-          mComponentName = taskInfo.get(0).topActivity;
-          mCurrentAppName = mComponentName.getPackageName();
-          return mCurrentAppName != mPreviousAppName;
+          mPackageName = mActivityManager.getRunningTasks(1).get(0).topActivity.getPackageName();
+
+          mCurrentAppName = mPackageName;
+          return !mCurrentAppName.equals(mPreviousAppName);
 
     }
     
@@ -377,16 +418,18 @@ public class UsageTrackingService extends Service {
     }
     
     private void doHandleForMusicClose(){
-    	  mMusicStopTime = System.nanoTime();
+          mMusicStopTime = System.nanoTime();
           mMusicStopTimeStamp = System.currentTimeMillis();
-          mMusicListenTime += (TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
+
+          
+          mMusicListenTime += (Utils.getTimeInSecFromNano(mMusicStopTime - mMusicStartTime));
           mIsMusicStarted = false;
 
           // As music has been stopped add resulting interval to list.
           UsageInfo usageInfoMusic = new UsageInfo();
           usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
           usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
-          usageInfoMusic.setmIntervalDuration(TimeUnit.SECONDS.convert(mMusicStopTime - mMusicStartTime, TimeUnit.NANOSECONDS));
+          usageInfoMusic.setmIntervalDuration(Utils.getTimeInSecFromNano(mMusicStopTime - mMusicStartTime));
           mListMusicPlayTimes.add(usageInfoMusic);
           
           // Insert data to database for previous application.
@@ -403,7 +446,7 @@ public class UsageTrackingService extends Service {
     private void initLocalMapForThread( HashMap<String, Long> foregroundMap){
     	     initializeMap(foregroundMap);
              mPreviousStartTime = mStartTime;
-             Log.v ("gaurav", "mPreviousStartTime: " + mPreviousStartTime);
+             Log.v (LOG_TAG, "mPreviousStartTime: " + mPreviousStartTime);
 
              // Initially, when service is started, application name would be Phone Use.
              mPreviousAppName = mContext.getPackageName();
@@ -557,8 +600,11 @@ public class UsageTrackingService extends Service {
         super.onDestroy();
         
         // Dump data to xml shared preference.
-        UsageSharedPrefernceHelper.updateTodayData(mContext, mForegroundActivityMap);
-        //mDatabase.exportPreferences("phone.usage");
+        UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mForegroundActivityMap);
+        
+        if (!mListMusicPlayTimes.isEmpty()) {
+            UsageSharedPrefernceHelper.updateTodayDataForMusic(mContext, mListMusicPlayTimes);
+        }
         
         Toast.makeText(mContext, "Phone used for: " + phoneUsedTime() + "seconds",
                 Toast.LENGTH_LONG).show();
