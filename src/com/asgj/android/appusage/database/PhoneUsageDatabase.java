@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -13,6 +14,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Environment;
 
+import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDbHelper.Columns;
@@ -85,7 +87,88 @@ public class PhoneUsageDatabase {
 		cv.put(Columns.COLUMN_INTERVAL_DURATION, mValues.getmIntervalDuration());
 		mDatabase.insert(Table.TABLE_NAME, null, cv);
 	}
+	public HashMap<String, Long> getApplicationEntryForMentionedTimeBeforeToday(Context context, String showType){
+		long currentTime = System.currentTimeMillis();
+		String yesterdayDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000));
+		String startDate = null;
+		if(showType.equals(context.getString(R.string.string_Weekly))){
+			startDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000*7));
+		}else if(showType.equals(context.getString(R.string.string_Monthly))){
+			startDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000 * 30));
+		}else if(showType.equals(context.getString(R.string.string_Yearly))){
+			startDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000 * 365));
+		}
+		
+		long start_time = Utils.getMiliSecFromDate(startDate);
+		long end_time = Utils.getMiliSecFromDate(yesterdayDate);
+		
+		String selection = Columns.COLUMN_APP_NAME + "<>" + MUSIC_PACKAGE_NAME
+				+ " AND "
+				+ Columns.COLUMN_START_INTERVAL_TIME + ">" + start_time;
+			selection = selection + " AND " + Columns.COLUMN_END_INTERVAL_TIME
+			+ "<" + end_time;
+			
+		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
+				null, null, null);
+		HashMap<String, Long> map = new HashMap<String, Long>();
+		
+		if (cursor != null && cursor.getCount() > 0) {
+			cursor.moveToFirst();
+			do {
+				String pkgName = cursor.getString(cursor
+						.getColumnIndex(Columns.COLUMN_APP_NAME));
+				long duration = cursor.getLong(cursor
+						.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION));
+				if(map.containsKey(pkgName)){
+					duration = duration + map.get(pkgName);
+				}
+				map.put(pkgName, duration);
+			} while (cursor.moveToNext());
+		}
+		return map;
 
+	}
+    
+	public ArrayList<UsageInfo> getMusicEntryForMentionedTimeBeforeToday(Context context, String showType){
+		long currentTime = System.currentTimeMillis();
+		String yesterdayDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000));
+		String startDate = null;
+		if(showType.equals(context.getString(R.string.string_Weekly))){
+			startDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000*7));
+		}else if(showType.equals(context.getString(R.string.string_Monthly))){
+			startDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000 * 30));
+		}else if(showType.equals(context.getString(R.string.string_Yearly))){
+			startDate = Utils.getDateFromMiliSeconds(currentTime - (24*3600*1000 * 365));
+		}
+		
+		long start_time = Utils.getMiliSecFromDate(startDate);
+		long end_time = Utils.getMiliSecFromDate(yesterdayDate);
+		
+		String selection = Columns.COLUMN_APP_NAME + "=" + MUSIC_PACKAGE_NAME
+				+ " AND "
+				+ Columns.COLUMN_START_INTERVAL_TIME + ">" + start_time;
+			selection = selection + " AND " + Columns.COLUMN_END_INTERVAL_TIME
+			+ "<" + end_time;
+			
+		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
+				null, null, null);
+		ArrayList<UsageInfo> mInfoList = new ArrayList<UsageInfo>();
+		if (cursor != null && cursor.getCount() > 0) {
+			cursor.moveToFirst();
+			do {
+				UsageInfo info = new UsageInfo();
+				info.setmIntervalStartTime(cursor.getLong(cursor
+						.getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME)));
+				info.setmIntervalEndTime(cursor.getLong(cursor
+						.getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME)));
+				info.setmIntervalDuration(cursor.getLong(cursor
+						.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION)));
+				mInfoList.add(info);
+			} while (cursor.moveToNext());
+		}
+		return mInfoList;
+
+	}
 	public ArrayList<UsageInfo> getApplicationEntryInInterval(
 			String packageName, String date,
 			long start_time, long end_time,
