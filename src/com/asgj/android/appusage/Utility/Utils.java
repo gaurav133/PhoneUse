@@ -99,17 +99,18 @@ public class Utils {
      * @throws 
      */
     public static String getTimeFromSeconds(long seconds) {
+        long duration = seconds;
         String time = "";
         int hour = (int) seconds / 3600;
         seconds = seconds % 3600;
         int min = (int) seconds / 60;
         int sec = (int) seconds % 60;
         
-        if (seconds < 60) {
+        if (duration < 60) {
             time = sec + " sec ";
-        } else if (seconds >= 60 && seconds < 3600) {
+        } else if (duration >= 60 && duration < 3600) {
             time = min + " min " + sec + " sec ";
-        } else if (seconds >= 3600) {
+        } else if (duration >= 3600) {
             time = hour + " hr " + min + " min " + sec + " sec ";
         }
         return time;

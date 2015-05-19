@@ -79,7 +79,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
 
         if (mList != null) {
 
-            text_left.setText("" + Utils.getTimeFromTimeStamp(mContext, mList.get(position).getmIntervalStartTime()) + " - ");
+            text_left.setText("" + Utils.getTimeFromTimeStamp(mContext, mList.get(position).getmIntervalStartTime()) + "-");
             text_middle.setText("" + Utils.getTimeFromTimeStamp(mContext, mList.get(position).getmIntervalEndTime()));
             text_right.setText("" + Utils.getTimeFromSeconds(mList.get(position).getmIntervalDuration()));
         } else if (mMap != null) {
