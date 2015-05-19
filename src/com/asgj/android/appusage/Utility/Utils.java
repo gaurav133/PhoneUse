@@ -3,6 +3,7 @@ package com.asgj.android.appusage.Utility;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -15,8 +16,13 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.provider.CallLog;
+import android.text.format.DateFormat;
+import android.util.Log;
 
 public class Utils {
 
@@ -85,6 +91,12 @@ public class Utils {
         }
         return dateIns.getTime();
     }
+    
+    public static String getTimeFromTimeStamp(Context context, long timeStamp) {
+        
+        java.text.DateFormat dateFormat = SimpleDateFormat.getTimeInstance();
+        return dateFormat.format(timeStamp);
+    }
 
     public static ArrayList<ApplicationInfo> getAllApplicationsInDevice(Context context) {
         final PackageManager pm = context.getPackageManager();
@@ -102,17 +114,23 @@ public class Utils {
     /**
      * Returns application icon corresponding to given package.
      * @param pkgName Package name for which icon is needed.
+     * @param context Context to access application resources.
      * @return Application icon for pkgName, null in case pkgName is empty.
      */
-    public static Drawable getApplicationIcon(Context context, String pkgName) {
+    public static Bitmap getApplicationIcon(Context context, String pkgName) {
+
+        Bitmap resizedBitmap = null;
         Drawable appIcon = null;
             try {
-                         appIcon = context.getPackageManager().getApplicationIcon(pkgName);
+                appIcon = context.getPackageManager().getApplicationIcon(pkgName);
+                Bitmap bmp = ((BitmapDrawable) appIcon).getBitmap();
+                
+                resizedBitmap = Bitmap.createScaledBitmap(bmp, 100, 100, false);
             } catch (NameNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-        return appIcon;
+        return resizedBitmap;
     }
     
 	public static String getApplicationLabelName(Context context,

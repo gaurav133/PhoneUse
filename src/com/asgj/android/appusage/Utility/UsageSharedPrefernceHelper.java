@@ -1,9 +1,10 @@
 package com.asgj.android.appusage.Utility;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import com.asgj.android.appusage.R;
@@ -15,18 +16,19 @@ import android.util.Log;
 public class UsageSharedPrefernceHelper {
     private static String PREFERNCE_NAME = "phone.usage";
     private static final String LOG_TAG = UsageSharedPrefernceHelper.class.getSimpleName();
-    private static String PREF_NAME_USAGE_INFO = "phone.usgae.info";
+    private static String PREF_NAME_APP_USAGE_INFO = "phone.usage.app.info";
+    private static String PREF_NAME_MUSIC_USAGE_INFO = "phone.usage.music.info";
 
-    public static void insertTotalDurationInPref(Context context, String pkgName, long time) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_USAGE_INFO,
+    public static void insertTotalDurationAppInPref(Context context, String pkgName, long time) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
                 Context.MODE_PRIVATE);
         Editor editor = prefs.edit();
         editor.putLong(pkgName, time);
         editor.commit();
     }
 
-    public static long getTotalDurationInPref(Context context, String pkgName) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_USAGE_INFO,
+    public static long getTotalDurationAppInPref(Context context, String pkgName) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
                 Context.MODE_PRIVATE);
         return prefs.getLong(pkgName, 0);
     }
@@ -68,7 +70,7 @@ public class UsageSharedPrefernceHelper {
     }
 
     public static void setCurrentDate(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_USAGE_INFO,
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
                 Context.MODE_PRIVATE);
         Editor editor = prefs.edit();
         editor.putString("date", Utils.getDateFromMiliSeconds(System.currentTimeMillis()));
@@ -77,7 +79,7 @@ public class UsageSharedPrefernceHelper {
 
     public static String getDateStoredInPref(Context context) {
 
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_USAGE_INFO,
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
                 Context.MODE_PRIVATE);
         String date = prefs.getString("date",
                 Utils.getDateFromMiliSeconds(System.currentTimeMillis()));
@@ -87,18 +89,31 @@ public class UsageSharedPrefernceHelper {
 
     public static void clearPreference(Context context) {
 
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_USAGE_INFO,
+        SharedPreferences appPrefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
                 Context.MODE_PRIVATE);
-        Editor editor = prefs.edit();
+        SharedPreferences musicPrefs = context.getSharedPreferences(PREF_NAME_MUSIC_USAGE_INFO,
+                Context.MODE_PRIVATE);
+        
+        Log.v(LOG_TAG, "Clearing preference, preference data is: " + appPrefs.getAll());
+        Editor editor = appPrefs.edit();
         editor.clear();
         editor.commit();
 
+        editor = musicPrefs.edit();
+        editor.clear();
+        editor.commit();
     }
 
-    public static HashMap<String, Long> getAllKeyValuePairs(Context context) {
+    public static HashMap<String, Long> getAllKeyValuePairsApp(Context context) {
         SharedPreferences prefs = context
-                .getSharedPreferences(PREF_NAME_USAGE_INFO, Context.MODE_PRIVATE);
+                .getSharedPreferences(PREF_NAME_APP_USAGE_INFO, Context.MODE_PRIVATE);
         return (HashMap<String, Long>) prefs.getAll();
+    }
+    
+    public static HashMap<String, HashSet<String>> getAllKeyValuePairsMusic(Context context) {
+        SharedPreferences prefs = context
+                .getSharedPreferences(PREF_NAME_MUSIC_USAGE_INFO, Context.MODE_PRIVATE);
+        return (HashMap<String, HashSet<String>>) prefs.getAll();
     }
 
     public static boolean isNeedToServiceOnReboot(Context context) {
@@ -108,19 +123,21 @@ public class UsageSharedPrefernceHelper {
     }
 
     public static ArrayList<UsageInfo> getTotalInfoOfMusic(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_USAGE_INFO,
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_MUSIC_USAGE_INFO,
                 Context.MODE_PRIVATE);
         Set<String> mInfoList = prefs.getStringSet("music", null);
         ArrayList<UsageInfo> mInfo = new ArrayList<>();
-        for (String s : mInfoList) {
-            mInfo.add(getMusicInfo(s));
+        if (mInfoList != null) {
+            for (String s : mInfoList) {
+                mInfo.add(getMusicInfo(s));
+            }
         }
         return mInfo;
 
     }
 
     public static void setTotalIntervalsOfMusic(Context context, UsageInfo info) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_USAGE_INFO,
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_MUSIC_USAGE_INFO,
                 Context.MODE_PRIVATE);
         Editor editor = prefs.edit();
         Set<String> mInfoList = new HashSet<>();
@@ -128,7 +145,7 @@ public class UsageSharedPrefernceHelper {
             mInfoList.addAll(prefs.getStringSet("music", null));
         }
         mInfoList.add(getFormattedStringFromMusicInfo(info));
-        editor.putStringSet("musicinfo", mInfoList);
+        editor.putStringSet("music", mInfoList);
         editor.commit();
     }
 
@@ -146,15 +163,37 @@ public class UsageSharedPrefernceHelper {
         return infoIns;
     }
 
-    public static void updateTodayData(Context context, HashMap<String, Long> dataMap) {
-
-        SharedPreferences prefs = context
-                .getSharedPreferences(PREFERNCE_NAME, Context.MODE_PRIVATE);
+    public static void updateTodayDataForApps(Context context, HashMap<String, Long> dataMap) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO, Context.MODE_PRIVATE);
 
         for (Map.Entry<String, Long> dataEntry : dataMap.entrySet()) {
-
-            insertTotalDurationInPref(context, dataEntry.getKey(), dataEntry.getValue()
-                    + getTotalDurationInPref(context, dataEntry.getKey()));
+            insertTotalDurationAppInPref(context, dataEntry.getKey(), dataEntry.getValue()
+                    + getTotalDurationAppInPref(context, dataEntry.getKey()));
+        }
+        Log.v(LOG_TAG, "Data in xml: " + prefs.getAll());
+    }
+    
+    /**
+     * Method to write music data for today to XML.
+     * @param context Context to access application resources.
+     * @param musicList List containing {@code UsageInfo} objects which hold music details.
+     * @throws NullPointerException if musicList is null.
+     * @throws IllegalArgumentException if musicList is empty.
+     */
+    public static void updateTodayDataForMusic(Context context, ArrayList<UsageInfo> musicList) throws NullPointerException, IllegalArgumentException {
+        
+        if (musicList == null) {
+            throw new NullPointerException("Music list is null");
+        } else if (musicList.isEmpty()) {
+            throw new IllegalArgumentException("Music list is empty");
+        } else {
+            ListIterator<UsageInfo> iterator = musicList.listIterator();
+            
+            while (iterator.hasNext()) {
+                setTotalIntervalsOfMusic(context, iterator.next());
+            }
+            
+            Log.v (LOG_TAG, "Music data prefs: " + getTotalInfoOfMusic(context));
         }
 }
 }

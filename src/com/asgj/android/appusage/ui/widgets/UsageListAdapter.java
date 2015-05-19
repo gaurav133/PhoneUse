@@ -78,13 +78,14 @@ public class UsageListAdapter<Data> extends BaseAdapter {
         ImageView image_view_app_icon = (ImageView) convertView.findViewById(R.id.app_icon);
 
         if (mList != null) {
-            text_left.setText("" + mList.get(position).getmIntervalStartTime());
-            text_middle.setText("" + mList.get(position).getmIntervalEndTime());
-            text_right.setText("" + mList.get(position).getmIntervalDuration());
+
+            text_left.setText("" + Utils.getTimeFromTimeStamp(mContext, mList.get(position).getmIntervalStartTime()) + " - ");
+            text_middle.setText("" + Utils.getTimeFromTimeStamp(mContext, mList.get(position).getmIntervalEndTime()));
+            text_right.setText("" + Utils.getTimeFromSeconds(mList.get(position).getmIntervalDuration()));
         } else if (mMap != null) {
             text_left.setText(Utils.getApplicationLabelName(mContext, keys.get(position)));
-            text_right.setText("" + mMap.get(keys.get(position)));
-            image_view_app_icon.setImageDrawable(Utils.getApplicationIcon(mContext, keys.get(position)));
+            text_right.setText("" + Utils.getTimeFromSeconds(mMap.get(keys.get(position))));
+            image_view_app_icon.setImageBitmap(Utils.getApplicationIcon(mContext, keys.get(position)));
             image_view_app_icon.setVisibility(View.VISIBLE);
             text_middle.setVisibility(View.GONE);
         }

@@ -170,7 +170,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
             if (mIsCreated) {
                 mFragment.setmUsageAppData(mMainService.getCurrentMap());
-                mFragment.setmMusicData(mMainService.mListMusicPlayTimes);
+                mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
             }
             Log.v(LOG_TAG, "Service connected, mMainService is: " + mMainService);
         }
@@ -188,7 +188,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
         // IF service not running, show data from xml.
         if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
-            mFragment.setmUsageAppData(UsageSharedPrefernceHelper.getAllKeyValuePairs(mContext));
+            try {
+                mFragment.setmUsageAppData(UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext));
+                mFragment.setmMusicData(UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext));
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
         } else {
 
             // Show data dynamically.
@@ -199,7 +204,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 } else {
                 mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(this));
                 }
-                mFragment.setmMusicData(mMainService.mListMusicPlayTimes);
+                mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
             }
         }
     }
