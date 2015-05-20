@@ -68,6 +68,7 @@ public class UsageTrackingService extends Service {
             mIsMusicPlaying = false,
             mIsMusicStarted = false,
             mIsKeyguardLocked = false,
+            mIsMusicPlayingAtStart = false,
             mIsEndTracking = false;
 
     private KeyguardManager mKeyguardManager;
@@ -424,6 +425,7 @@ public class UsageTrackingService extends Service {
           
           mMusicListenTime += (Utils.getTimeInSecFromNano(mMusicStopTime - mMusicStartTime));
           mIsMusicStarted = false;
+          mIsMusicPlayingAtStart = false;
 
           // As music has been stopped add resulting interval to list.
           UsageInfo usageInfoMusic = new UsageInfo();
@@ -497,12 +499,12 @@ public class UsageTrackingService extends Service {
                 if (isNeedToHandleMusicClose()) {
                   doHandleForMusicClose();
 
-                } else if (isMusicPlaying() && !mIsMusicStarted) {
+                } else if (isMusicPlaying() && mIsMusicPlayingAtStart == false) {
                     // If music has been started after tracking started.
                     mIsMusicStarted = true;
                     mMusicStartTimeStamp = System.currentTimeMillis();
                     mMusicStartTime = System.nanoTime();
-                }
+                } 
             }
             // If tracking has ended, store last application.
             //doHandlingOnEndthread(foregroundMap);
@@ -633,6 +635,7 @@ public class UsageTrackingService extends Service {
          startThread();
          // If music is already playing when tracking started.
          if (isMusicPlaying()) {
+             mIsMusicPlayingAtStart = true;
              mIsMusicStarted = true;
              mIsRunningBackgroundApps = true;
              mMusicStartTimeStamp = System.currentTimeMillis();
