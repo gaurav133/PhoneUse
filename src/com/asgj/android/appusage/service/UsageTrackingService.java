@@ -499,7 +499,7 @@ public class UsageTrackingService extends Service {
                 if (isNeedToHandleMusicClose()) {
                   doHandleForMusicClose();
 
-                } else if (isMusicPlaying() && mIsMusicPlayingAtStart == false) {
+                } else if (isMusicPlaying() && mIsMusicPlayingAtStart == false && mIsMusicStarted == false) {
                     // If music has been started after tracking started.
                     mIsMusicStarted = true;
                     mMusicStartTimeStamp = System.currentTimeMillis();
