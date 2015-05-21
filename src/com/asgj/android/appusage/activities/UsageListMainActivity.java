@@ -407,12 +407,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 startTrackingService();
                 item.setTitle(getString(R.string.string_stop));
                 UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
-                
-                // Get current date and compare to check whether preferences need to be cleared.
-                String currentDate = Utils.getDateFromMiliSeconds(System.currentTimeMillis());
-                if (!currentDate.equals(UsageSharedPrefernceHelper.getDateStoredInPref(mContext))) {
-                    UsageSharedPrefernceHelper.clearPreference(mContext);
-                }
 
             } else {
                 stopTrackingService();
