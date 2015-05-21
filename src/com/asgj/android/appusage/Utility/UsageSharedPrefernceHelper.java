@@ -70,19 +70,19 @@ public class UsageSharedPrefernceHelper {
     }
 
     public static void setCurrentDate(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
+        SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
                 Context.MODE_PRIVATE);
         Editor editor = prefs.edit();
-        editor.putString("date", Utils.getDateFromMiliSeconds(System.currentTimeMillis()));
+        editor.putLong("date", System.currentTimeMillis());
         editor.commit();
     }
 
-    public static String getDateStoredInPref(Context context) {
+    public static long getDateStoredInPref(Context context) {
 
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
+        SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
                 Context.MODE_PRIVATE);
-        String date = prefs.getString("date",
-                Utils.getDateFromMiliSeconds(System.currentTimeMillis()));
+        long date = prefs.getLong("date",
+                System.currentTimeMillis());
         return date;
 
     }

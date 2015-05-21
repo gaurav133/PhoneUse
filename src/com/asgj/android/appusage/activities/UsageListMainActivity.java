@@ -54,10 +54,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private Context mContext;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
+    private long mTimeStamp;
     private List<UsageStats> mQueryUsageStats;
     private long mStartServiceTime;
     private boolean mIsCreated = false;
     private boolean mIsBound = false;
+    private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
     private SlidingTabsBasicFragment<HashMap, ArrayList, ArrayList> mFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
@@ -104,8 +106,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
         initFabTextView();
         // Check whether binding is needed.
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        if (preferences.getBoolean("ServiceStart", false) == true) {
+        if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
             Log.v(LOG_TAG, "Service restrart from activity");
             Intent startServiceIntent = new Intent();
             startServiceIntent.setClass(this, UsageTrackingService.class);
@@ -188,6 +189,47 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
         // IF service not running, show data from xml.
         if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+           
+            if (mIsDateInPref == true) {
+                
+                // Fetch date from preferences and compare.
+                
+                Date presentDate = new Date(System.currentTimeMillis());
+                Date prefsDate = new Date(UsageSharedPrefernceHelper.getDateStoredInPref(mContext));
+
+                Calendar c1 = Calendar.getInstance();
+                c1.setTime(presentDate);
+                
+                Calendar c2 = Calendar.getInstance();
+                c2.setTime(prefsDate);
+
+                // Compare with present time.
+                if (Utils.compareDates(c1, c2) == 1) {
+                    // Clear preference.
+                    UsageSharedPrefernceHelper.clearPreference(mContext);
+                }
+                mIsDateInPref = false;
+
+                // Store timestamp to check if day has changed.
+                mTimeStamp = System.currentTimeMillis();
+            } else {
+                Date presentDate = new Date(System.currentTimeMillis());
+                Date prevDate = new Date(mTimeStamp);
+
+                Calendar c1 = Calendar.getInstance();
+                c1.setTime(presentDate);
+
+                Calendar c2 = Calendar.getInstance();
+                c2.setTime(prevDate);
+
+                if (Utils.compareDates(c1, c2) == 1) {
+                    // Clear prefs.
+                    UsageSharedPrefernceHelper.clearPreference(mContext);
+                }
+                
+                mTimeStamp = System.currentTimeMillis();
+            }
+
             try {
                 mFragment.setmUsageAppData(UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext));
                 mFragment.setmMusicData(UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext));
@@ -214,9 +256,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.list_activity_menu, menu);
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        if (preferences.getBoolean("ServiceStart", false) == true) {
+        if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
             MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_start);
             menuItem.setTitle(getString(R.string.string_stop));
         }
@@ -238,17 +278,14 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             unbindService(mConnection);
         }
         
+        UsageSharedPrefernceHelper.setCurrentDate(mContext);
         super.onDestroy();
     }
 
     private void startTrackingService() {
         mStartServiceTime = System.currentTimeMillis();
 
-        SharedPreferences preferences1 = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor1 = preferences1.edit();
-        editor1.putBoolean("ServiceStart", true);
-        editor1.commit();
-
+        UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
 
             // Here you bind to the service.
             Intent startServiceIntent = new Intent();
@@ -276,10 +313,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         stopServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
         stopService(stopServiceIntent);
 
-        SharedPreferences preferences1 = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor1 = preferences1.edit();
-        editor1.putBoolean("ServiceStart", false);
-        editor1.commit();
+       UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
 
         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             mUsageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
@@ -373,12 +407,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 startTrackingService();
                 item.setTitle(getString(R.string.string_stop));
                 UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
-                
-                // Get current date and compare to check whether preferences need to be cleared.
-                String currentDate = Utils.getDateFromMiliSeconds(System.currentTimeMillis());
-                if (!currentDate.equals(UsageSharedPrefernceHelper.getDateStoredInPref(mContext))) {
-                    UsageSharedPrefernceHelper.clearPreference(mContext);
-                }
 
             } else {
                 stopTrackingService();

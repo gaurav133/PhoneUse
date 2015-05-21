@@ -634,6 +634,9 @@ public class UsageTrackingService extends Service {
             UsageSharedPrefernceHelper.updateTodayDataForMusic(mContext, mListMusicPlayTimes);
         }
         
+        // Store current date to preferences.
+        UsageSharedPrefernceHelper.setCurrentDate(mContext);
+        
         Toast.makeText(mContext, "Phone used for: " + phoneUsedTime() + "seconds",
                 Toast.LENGTH_LONG).show();
     }

@@ -157,6 +157,40 @@ public class Utils {
         return resizedBitmap;
     }
     
+    /**
+     * Method to compare 2 dates in Java based on input calendar objects.
+     * @param cal1 Calendar object 1.
+     * @param cal2 Calendar object 2.
+     * @return 1 if cal1 > cal2, 0 if equal, -1 otherwise.
+     */
+    public static int compareDates(Calendar cal1, Calendar cal2) {
+
+        int comp1, comp2;
+        
+        comp1 = cal1.get(Calendar.YEAR);
+        comp2 = cal2.get(Calendar.YEAR);
+        
+        if (comp1 != comp2) {
+            return (comp1 > comp2) ? 1 : -1; 
+        }
+        
+        comp1 = cal1.get(Calendar.MONTH);
+        comp2 = cal2.get(Calendar.MONTH);
+        
+        if (comp1 != comp2) {
+            return (comp1 > comp2) ? 1 : -1; 
+        }
+        
+        comp1 = cal1.get(Calendar.DAY_OF_MONTH);
+        comp2 = cal2.get(Calendar.DAY_OF_MONTH);
+        
+        if (comp1 != comp2) {
+            return (comp1 > comp2) ? 1 : -1; 
+        }
+        
+        return 0;
+    }
+    
 	public static String getApplicationLabelName(Context context,
 			String packageName) {
 		ApplicationInfo mApplicationInfo = null;
@@ -174,6 +208,7 @@ public class Utils {
     * Get call logs for a particular duration.
     * @param startTime Starting time from which call logs are desired (Inclusive).
     * @param endTime End time upto which call logs are desired (Exclusive).
+    * @param context Context to access resources.
     * @return HashMap containing filtered call log entries for given time interval.
     */
     public static HashMap<String, Integer> getCallDetails(Context context, long startTime,
