@@ -410,15 +410,19 @@ public class UsageTrackingService extends Service {
     private void doHandlingOnApplicationClose(){
     	 mPreviousAppExitTimeStamp = System.currentTimeMillis();
          long time = System.nanoTime();
+         long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
+
+         // In case application usage duration is 0 seconds, just return.
+         if (duration == 0) {
+             return;
+         }
 
          // As application has changed, we need to dump data to DB.
          UsageInfo usageInfoApp = new UsageInfo();
          usageInfoApp.setmIntervalStartTime(mPreviousAppStartTimeStamp);
          usageInfoApp.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-         usageInfoApp.setmIntervalDuration(TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+         usageInfoApp.setmIntervalDuration(duration);
 
-         Log.v (LOG_TAG, "Previous App name not equal:" + mPreviousAppName);
-         Log.v (LOG_TAG, "UsageInfo duration: " + usageInfoApp.getmIntervalDuration());
          // Insert data to database for previous application.
          mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
     }
@@ -453,16 +457,22 @@ public class UsageTrackingService extends Service {
           mIsMusicStarted = false;
           mIsMusicPlayingAtStart = false;
 
-          // As music has been stopped add resulting interval to list.
-          UsageInfo usageInfoMusic = new UsageInfo();
-          usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
-          usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
-          usageInfoMusic.setmIntervalDuration(Utils.getTimeInSecFromNano(mMusicStopTime - mMusicStartTime));
-          mListMusicPlayTimes.add(usageInfoMusic);
+          long duration = Utils.getTimeInSecFromNano(mMusicStopTime - mMusicStartTime);
           
-          // Insert data to database for previous application.
-          mDatabase.insertMusicEntry(usageInfoMusic);
+          if (duration > 0) {
+              mMusicListenTime += (duration);
 
+              // As music has been stopped add resulting interval to list.
+              UsageInfo usageInfoMusic = new UsageInfo();
+              usageInfoMusic.setmIntervalStartTime(mMusicStartTimeStamp);
+              usageInfoMusic.setmIntervalEndTime(mMusicStopTimeStamp);
+              usageInfoMusic.setmIntervalDuration(duration);
+
+              mListMusicPlayTimes.add(usageInfoMusic);
+
+              // Insert data to database for previous application.
+              mDatabase.insertMusicEntry(usageInfoMusic);
+          }
     }
     
     private void initializeMap( HashMap<String, Long> foregroundMap) {
@@ -506,12 +516,15 @@ public class UsageTrackingService extends Service {
                               // If the present application is different from the previous application, update the previous app time.
                 if (isTopApplicationchange()) {
                     long time = System.nanoTime();
+                    long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
                 
-                	doHandlingOnApplicationClose();
-                    if (foregroundMap.containsKey(mPreviousAppName)) {
-                        foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
-                    } else {
-                        foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+                    doHandlingOnApplicationClose();
+                    if (duration > 0) {
+                        if (foregroundMap.containsKey(mPreviousAppName)) {
+                            foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+                        } else {
+                            foregroundMap.put(mPreviousAppName, TimeUnit.SECONDS.convert((time - mPreviousStartTime), TimeUnit.NANOSECONDS));
+                        }
                     }
 
                     // Update mPreviousAppStartTimeStamp.
