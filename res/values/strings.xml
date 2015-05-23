@@ -17,5 +17,7 @@
     <string name="string_Monthly">Monthly</string>
     <string name="string_Yearly">Yearly</string>
     <string name="string_Custom">Custom</string>
+    <string name="string_start_date">Start Date</string>
+    <string name="string_end_date">End Date</string>
 
 </resources>

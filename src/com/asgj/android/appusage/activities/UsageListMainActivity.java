@@ -16,6 +16,8 @@ import android.animation.Animator.AnimatorListener;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.FragmentTransaction;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -38,6 +40,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,11 +50,13 @@ import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
+import com.asgj.android.appusage.dialogs.DatePickerFragment;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener{
     private Context mContext;
+    private DatePickerFragment startDateFragment, endDateFragment;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
     private long mTimeStamp;
@@ -384,23 +389,23 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         switch (item.getItemId()) {
         case R.id.action_start:
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
-            	if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
-            	if(!Utils.isPermissionGranted(this)){
-            		AlertDialog.Builder builder = new AlertDialog.Builder(this).
-            				setTitle(R.string.string_error_title).
-            				setMessage(R.string.string_error_msg).
-            				setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener(){
-            					@Override
-            					public void onClick(DialogInterface dialog,
-            							int which) {
-            						Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-            			        	startActivity(intent);
-            			        	
-            						
-            					}
-            				});
-            		AlertDialog dialog = builder.create();
-            		dialog.show();
+                if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    if (!Utils.isPermissionGranted(this)) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                                .setTitle(R.string.string_error_title)
+                                .setMessage(R.string.string_error_msg)
+                                .setPositiveButton(android.R.string.ok,
+                                        new DialogInterface.OnClickListener() {
+                                            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                Intent intent = new Intent(
+                                                        Settings.ACTION_USAGE_ACCESS_SETTINGS);
+                                                startActivity(intent);
+                                            }
+                                        });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
                     }
             	}
             	
@@ -417,18 +422,102 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
             break;
         case R.id.action_showBy:
-        	AlertDialog.Builder builder = new AlertDialog.Builder(this).
-        	                          setTitle(getString(R.string.string_showBy)).
-        	                          setAdapter(new ArrayAdapter<String>(this, 
-        	                        		  android.R.layout.simple_list_item_1,mShowList), new OnClickListener(){
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(), mShowList[which]);
-										}
-        	                          });
-        	AlertDialog dialog = builder.create();
-        	dialog.show();
-        	break;
+            AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(
+                    getString(R.string.string_showBy)).setAdapter(
+                    new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mShowList),
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(),
+                                    mShowList[which]);
+
+                            Calendar startCalendar;
+                            Calendar endCalendar;
+
+                            if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+                                mFragment.setmUsageAppData(mMainService.getCurrentMap());
+                                mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
+                            } else {
+
+                                // In case of custom, open up a date-picker.
+                                if (mShowList[which].equals(mContext
+                                        .getString(R.string.string_Custom))) {
+
+                                    startDateFragment = new DatePickerFragment(0);
+                                    startDateFragment.setOnDateSetListener(new OnDateSetListener() {
+                                        @Override
+                                        public void onDateSet(DatePicker view, int year,
+                                                int monthOfYear, int dayOfMonth) {
+                                            // TODO Auto-generated method stub
+                                            final Calendar cal1;
+                                            cal1 = Calendar.getInstance();
+                                            cal1.set(Calendar.YEAR, year);
+                                            cal1.set(Calendar.MONTH, monthOfYear);
+                                            cal1.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                                            endDateFragment = new DatePickerFragment(1);
+                                            endDateFragment.show(getFragmentManager(),
+                                                    "endDatePicker");
+
+                                            endDateFragment
+                                                    .setOnDateSetListener(new OnDateSetListener() {
+
+                                                        @Override
+                                                        public void onDateSet(DatePicker view,
+                                                                int year, int monthOfYear,
+                                                                int dayOfMonth) {
+                                                            // TODO
+                                                            // Auto-generated
+                                                            // method stub
+                                                            Calendar cal2 = Calendar.getInstance();
+                                                            cal2.set(Calendar.YEAR, year);
+                                                            cal2.set(Calendar.MONTH, monthOfYear);
+                                                            cal2.set(Calendar.DAY_OF_MONTH,
+                                                                    dayOfMonth);
+
+                                                            mFragment.setmMusicData(mDatabase
+                                                                    .getMusicEntryForMentionedTimeBeforeToday(
+                                                                            mContext, cal1, cal2));
+                                                            mFragment.setmUsageAppData(mDatabase
+                                                                    .getApplicationEntryForMentionedTimeBeforeToday(
+                                                                            mContext, cal1, cal2));
+
+                                                        }
+                                                    });
+                                        }
+                                    });
+                                    startDateFragment.show(getFragmentManager(), "startDatePicker");
+                                }
+
+                                switch (which) {
+                                case 0:
+                                    mFragment.setmUsageAppData(UsageSharedPrefernceHelper
+                                            .getAllKeyValuePairsApp(mContext));
+                                    mFragment.setmMusicData(UsageSharedPrefernceHelper
+                                            .getTotalInfoOfMusic(mContext));
+                                    break;
+                                case 1:
+                                case 2:
+                                case 3:
+                                    startCalendar = UsageSharedPrefernceHelper
+                                            .getCalendarByShowType(mContext);
+                                    endCalendar = Calendar.getInstance();
+
+                                    mFragment.setmMusicData(mDatabase
+                                            .getMusicEntryForMentionedTimeBeforeToday(mContext,
+                                                    startCalendar, endCalendar));
+                                    mFragment.setmUsageAppData(mDatabase
+                                            .getApplicationEntryForMentionedTimeBeforeToday(
+                                                    mContext, startCalendar, endCalendar));
+                                    break;
+                                default: break;
+                                }
+                            }
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            break;
 
         }
         return super.onOptionsItemSelected(item);
