@@ -82,8 +82,8 @@ public class PhoneUsageDatabase {
             String packageName, String date,
             long start_time, long end_time,
             boolean isShowExtendDurationIntervals) {
-        String selection = Columns.COLUMN_APP_NAME + "=" + packageName
-                + " AND " + Columns.COLUMN_DATE + "=" + date + " AND "
+        String selection = Columns.COLUMN_APP_NAME + "= '" + packageName
+                + "'  AND " + Columns.COLUMN_DATE + "= '" + date + "' AND "
                 + Columns.COLUMN_START_INTERVAL_TIME + ">" + start_time;
         if (!isShowExtendDurationIntervals)
             selection = selection + " AND " + Columns.COLUMN_END_INTERVAL_TIME

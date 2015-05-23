@@ -19,5 +19,7 @@
     <string name="string_Custom">Custom</string>
     <string name="string_start_date">Start Date</string>
     <string name="string_end_date">End Date</string>
+    <string name="string_error_end_date_greater_than_today">End date cannot be greater than Today date.</string>
+    <string name="string_error_end_date_lesser_than_start">End date cannot be lesser than Start date.</string>
 
 </resources>
