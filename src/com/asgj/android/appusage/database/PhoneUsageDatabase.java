@@ -78,6 +78,35 @@ public class PhoneUsageDatabase {
 				date, start_time, end_time, isShowExtendDurationIntervals);
 	}
 
+	public ArrayList<UsageInfo> getApplicationEntryInInterval(
+            String packageName, String date,
+            long start_time, long end_time,
+            boolean isShowExtendDurationIntervals) {
+        String selection = Columns.COLUMN_APP_NAME + "=" + packageName
+                + " AND " + Columns.COLUMN_DATE + "=" + date + " AND "
+                + Columns.COLUMN_START_INTERVAL_TIME + ">" + start_time;
+        if (!isShowExtendDurationIntervals)
+            selection = selection + " AND " + Columns.COLUMN_END_INTERVAL_TIME
+            + "<" + end_time;
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
+                null, null, null);
+        ArrayList<UsageInfo> mInfoList = new ArrayList<UsageInfo>();
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            do {
+                UsageInfo info = new UsageInfo();
+                info.setmIntervalStartTime(cursor.getLong(cursor
+                        .getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME)));
+                info.setmIntervalEndTime(cursor.getLong(cursor
+                        .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME)));
+                info.setmIntervalDuration(cursor.getLong(cursor
+                        .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION)));
+                mInfoList.add(info);
+            } while (cursor.moveToNext());
+        }
+        return mInfoList;
+
+    }
     public void insertApplicationEntry(String pkgname, UsageInfo mValues) {
         ContentValues cv = new ContentValues();
         cv.put(Columns.COLUMN_APP_NAME, pkgname);
