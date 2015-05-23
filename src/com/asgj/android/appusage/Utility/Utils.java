@@ -15,14 +15,12 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.provider.CallLog;
-import android.text.format.DateFormat;
-import android.util.Log;
 
 public class Utils {
 
@@ -81,7 +79,7 @@ public class Utils {
     }
 
     public static long getMiliSecFromDate(String date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date dateIns = null;
         try {
             dateIns = sdf.parse(date);
@@ -130,7 +128,7 @@ public class Utils {
     }
 
     public static String getDateFromMiliSeconds(long miliSec) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date resultdate = new Date(miliSec);
         return sdf.format(resultdate);
     }
@@ -149,7 +147,25 @@ public class Utils {
                 appIcon = context.getPackageManager().getApplicationIcon(pkgName);
                 Bitmap bmp = ((BitmapDrawable) appIcon).getBitmap();
                 
-                resizedBitmap = Bitmap.createScaledBitmap(bmp, 100, 100, false);
+                
+                float scaleScreenSize = 1;
+                
+                // Scale according to screen size.
+                int screenLayout = context.getResources().getConfiguration().screenLayout;
+                
+                switch (screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) {
+                case Configuration.SCREENLAYOUT_SIZE_LARGE : scaleScreenSize = 1.5f;
+                                                             break;
+                case Configuration.SCREENLAYOUT_SIZE_NORMAL : scaleScreenSize = 1;
+                                                             break;
+                case Configuration.SCREENLAYOUT_SIZE_SMALL : scaleScreenSize = 0.5f;
+                                                             break;
+                case Configuration.SCREENLAYOUT_SIZE_XLARGE : scaleScreenSize = 2;
+                                                             break;
+                }
+                
+                int p = (int) (80 * (scaleScreenSize) + 0.5f);
+                resizedBitmap = Bitmap.createScaledBitmap(bmp, p, p, true);
             } catch (NameNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
