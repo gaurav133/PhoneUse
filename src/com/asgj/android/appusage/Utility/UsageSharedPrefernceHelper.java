@@ -1,6 +1,7 @@
 package com.asgj.android.appusage.Utility;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ListIterator;
@@ -195,5 +196,32 @@ public class UsageSharedPrefernceHelper {
             
             Log.v (LOG_TAG, "Music data prefs: " + getTotalInfoOfMusic(context));
         }
-}
+    }
+    
+    /**
+     * Return a calendar object based on the showType stored in preferences.
+     * @param context Context to access application resources.
+     * @return calendar Calendar object with given date.
+     */
+    public static Calendar getCalendarByShowType(Context context) {
+        
+        SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME, Context.MODE_PRIVATE);
+        String showBy = prefs.getString("showBy", context.getResources().getString(R.string.string_Today));
+        
+        Calendar calendar = Calendar.getInstance();
+        int offset = 0;
+        
+        switch (showBy) {
+        case "Today" : break;
+        case "Weekly" : calendar.add(Calendar.DATE, -6);
+                        break;
+        case "Monthly" : calendar.add(Calendar.DATE, -29);
+                        break;
+        case "Yearly" : calendar.add(Calendar.DATE, -364);
+                        break;
+                
+        }
+        
+        return calendar;
+    }
 }
