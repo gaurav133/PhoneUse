@@ -451,7 +451,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
                                             if (Utils.compareDates(cal1, Calendar.getInstance()) == 1) {
                                                 Toast.makeText(mContext, "Start date cannot be greater than today date", Toast.LENGTH_LONG).show();
-                                                startDateFragment.dismiss();
                                                 return;
                                             }
                                             
@@ -477,11 +476,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
                                                             if (Utils.compareDates(cal2, Calendar.getInstance()) == 1) {
                                                                 Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_greater_than_today), Toast.LENGTH_LONG).show();
-                                                                endDateFragment.dismiss();
                                                                 return;
                                                             } else if (Utils.compareDates(cal1, cal2) == 1) {
                                                                 Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_lesser_than_start), Toast.LENGTH_LONG).show();
-                                                                endDateFragment.dismiss();
                                                                 return;
                                                             }
                                                             mFragment.setmMusicData(mDatabase
