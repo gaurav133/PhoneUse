@@ -16,25 +16,20 @@ import android.animation.Animator.AnimatorListener;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.FragmentTransaction;
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,7 +39,6 @@ import android.widget.DatePicker;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.DisplayMetrics;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
@@ -455,6 +449,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                                             cal1.set(Calendar.MONTH, monthOfYear);
                                             cal1.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
+                                            if (Utils.compareDates(cal1, Calendar.getInstance()) == 1) {
+                                                Toast.makeText(mContext, "Start date cannot be greater than today date", Toast.LENGTH_LONG).show();
+                                                return;
+                                            }
+                                            
                                             endDateFragment = new DatePickerFragment(1);
                                             endDateFragment.show(getFragmentManager(),
                                                     "endDatePicker");
@@ -475,6 +474,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                                                             cal2.set(Calendar.DAY_OF_MONTH,
                                                                     dayOfMonth);
 
+                                                            if (Utils.compareDates(cal2, Calendar.getInstance()) == 1) {
+                                                                Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_greater_than_today), Toast.LENGTH_LONG).show();
+                                                                return;
+                                                            } else if (Utils.compareDates(cal1, cal2) == 1) {
+                                                                Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_lesser_than_start), Toast.LENGTH_LONG).show();
+                                                                return;
+                                                            }
                                                             mFragment.setmMusicData(mDatabase
                                                                     .getMusicEntryForMentionedTimeBeforeToday(
                                                                             mContext, cal1, cal2));
