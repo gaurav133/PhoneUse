@@ -209,7 +209,6 @@ public class UsageSharedPrefernceHelper {
         String showBy = prefs.getString("showBy", context.getResources().getString(R.string.string_Today));
         
         Calendar calendar = Calendar.getInstance();
-        int offset = 0;
         
         switch (showBy) {
         case "Today" : break;
@@ -219,7 +218,7 @@ public class UsageSharedPrefernceHelper {
                         break;
         case "Yearly" : calendar.add(Calendar.DATE, -364);
                         break;
-                
+        default : break;
         }
         
         return calendar;
