@@ -2,23 +2,30 @@ package com.asgj.android.appusage.dialogs;
 
 import java.util.Calendar;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.os.Bundle;
+import android.widget.DatePicker;
 
 import com.asgj.android.appusage.R;
-//import android.view.View;
 
-public class DatePickerFragment extends DialogFragment {
 
-    private int dialogID;
+public class DatePickerFragment extends DialogFragment implements OnDateSetListener {
+
+    public interface DateInterface {
+        abstract void onDateSetComplete(int dialogID);
+    }
+
+    private int mDialogID;
     DatePickerDialog mDatePickerDialog;
-    OnDateSetListener listener;
+    DateInterface mInterface;
     int mDayOfMonth;
     int mMonth;
     int mYear;
+    Calendar mCalendar;
     String mDate;
     
     public int getYear() {
@@ -37,17 +44,28 @@ public class DatePickerFragment extends DialogFragment {
         return this.mDate;
     }
     
+    public Calendar getCalendar() {
+        return this.mCalendar;
+    }
+    
     public DatePickerDialog getDialog() {
         return this.mDatePickerDialog;
     }
-    public void setOnDateSetListener(OnDateSetListener listener) {
-        this.listener = listener;
-    }
-    
+  
     public DatePickerFragment(int dialogID) {
         
-        this.dialogID = dialogID;
-        //return mDatePickerDialog;
+        this.mDialogID = dialogID;
+    }
+    
+    @Override
+    public void onAttach(Activity activity) {
+        // TODO Auto-generated method stub
+        super.onAttach(activity);
+        try {
+            this.mInterface = (DateInterface) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString() + " must implement OnArticleSelectedListener");
+        }
     }
     
     @Override
@@ -59,9 +77,9 @@ public class DatePickerFragment extends DialogFragment {
         mMonth = calendar.get(Calendar.MONTH);
         mDayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
         
-        mDatePickerDialog = new DatePickerDialog(getActivity(), listener, mYear, mMonth, mDayOfMonth);
+        mDatePickerDialog = new DatePickerDialog(getActivity(), this, mYear, mMonth, mDayOfMonth);
         
-        switch (dialogID) {
+        switch (mDialogID) {
         case 0 : mDatePickerDialog.setTitle(R.string.string_start_date);
                 break;
         case 1 :  mDatePickerDialog.setTitle(R.string.string_end_date);
@@ -71,5 +89,18 @@ public class DatePickerFragment extends DialogFragment {
         return mDatePickerDialog;
     }
 
-
+    @Override
+    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+        // TODO Auto-generated method stub
+        mYear = year;
+        mMonth = monthOfYear;
+        mDayOfMonth = dayOfMonth;
+        
+        mCalendar = Calendar.getInstance();
+        mCalendar.set(Calendar.YEAR, mYear);
+        mCalendar.set(Calendar.MONTH, mMonth);
+        mCalendar.set(Calendar.DAY_OF_MONTH, mDayOfMonth);
+        
+        mInterface.onDateSetComplete(mDialogID);
+    }
 }

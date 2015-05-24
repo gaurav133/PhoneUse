@@ -3,30 +3,20 @@ package com.asgj.android.appusage.service;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.app.usage.UsageStats;
-import android.app.usage.UsageStatsManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.media.AudioManager;
 import android.os.Binder;
 import android.os.Build;
@@ -64,19 +54,15 @@ public class UsageTrackingService extends Service {
 
     private boolean mIsRunningForegroundAppsThread = false,
             mIsRunningBackgroundApps = false,
-            mIsFirstTimeStartForgroundAppService = false, isScreenOn = false,
+            mIsFirstTimeStartForgroundAppService = false,
             mIsMusicPlaying = false,
             mIsMusicStarted = false,
-            mIsKeyguardLocked = false,
             mIsMusicPlayingAtStart = false,
             mIsEndTracking = false;
 
     private KeyguardManager mKeyguardManager;
     private ActivityManager mActivityManager;
-    private PackageManager mPackageManager;
-    private ApplicationInfo mApplicationInfo;
-    private ComponentName mComponentName;
-
+    
     private long mPreviousStartTime;
     private String mPackageName;
     private String mCurrentAppName, mPreviousAppName;
@@ -97,11 +83,9 @@ public class UsageTrackingService extends Service {
                 // Check whether key-guard is locked or not.
                 if (mKeyguardManager.isKeyguardLocked()) {
                  // Bypass to screenUserPresent receiver.
-                    mIsKeyguardLocked = true;
                 } else {
                     
                     mIsRunningForegroundAppsThread = true;
-                    isScreenOn = true;
                     
                     // Update mPreviousStartTime and start timestamp.
                     mPreviousStartTime = System.nanoTime();
@@ -193,7 +177,6 @@ public class UsageTrackingService extends Service {
             // TODO Auto-generated method stub
             if (intent.getAction().equals("android.intent.action.SCREEN_OFF")) {
                 Log.v(LOG_TAG, "SCREEN IS OFF");
-                isScreenOn = false;
                 
                 // Update data, only if we're getting screen dim state from foreground apps running state.
                 // Corner case - Screen on and locked, again screen turns dim. Avoid data update for this.
@@ -233,16 +216,22 @@ public class UsageTrackingService extends Service {
      * Method to get current tracking map for applications for displaying in main screen.
      * @return Map of entries, with pkg name as key and duration as value. 
      */
-    public HashMap<String, Long> getCurrentMap() {
+    public HashMap<String, Long> getCurrentMap(Calendar calendar) {
         HashMap<String, Long> currentDataForToday = new HashMap<>();
 		if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
-                mContext.getString(R.string.string_Today)) && !UsageSharedPrefernceHelper.getShowByType(mContext).equals(mContext.getString(R.string.string_Custom))) {
+                mContext.getString(R.string.string_Today))) {
             Calendar endCalendar = Calendar.getInstance();
             endCalendar.add(Calendar.DATE, -1);
-		    HashMap<String, Long> mPreviousDaysData = mDatabase
+            
+            HashMap<String, Long> mPreviousDaysData; 
+            
+            if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(mContext.getString(R.string.string_Custom))) {
+		            mPreviousDaysData = mDatabase
                     .getApplicationEntryForMentionedTimeBeforeToday(mContext,
                             UsageSharedPrefernceHelper.getCalendarByShowType(mContext), endCalendar);
-
+            } else {
+                mPreviousDaysData = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext, calendar, endCalendar);
+            }
 			for (Map.Entry<String, Long> dataEntry : mPreviousDaysData
 					.entrySet()) {
 				String key = dataEntry.getKey();
@@ -268,7 +257,6 @@ public class UsageTrackingService extends Service {
                 }
             }
             }
-            //currentDataForToday. = (HashMap<String, Long>) mBgTrackingTask.foregroundMap.clone();
         }
 
         for (Map.Entry<String, Long> dataEntry : mForegroundActivityMap.entrySet()) {
@@ -296,7 +284,7 @@ public class UsageTrackingService extends Service {
     
         return currentDataForToday;
     }
-    
+
     /**
      * Method to return current data for music (for today) for displaying in Music tab.
      * @return ArrayList containing objects of {@code UsageInfo} types.
@@ -450,9 +438,9 @@ public class UsageTrackingService extends Service {
         mPreviousStartTime = time;
     }
     
+    @SuppressWarnings("deprecation")
     private boolean isTopApplicationchange() {
           mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
-          mPackageManager = mContext.getPackageManager();
           mPackageName = mActivityManager.getRunningTasks(1).get(0).topActivity.getPackageName();
 
           mCurrentAppName = mPackageName;
@@ -651,7 +639,6 @@ public class UsageTrackingService extends Service {
         //setUpReceivers(false);
         
         // Display list. 
-        ListIterator<UsageInfo> iterator = mListMusicPlayTimes.listIterator();
         mDatabase.exportDatabse(PhoneUsageDbHelper.getInstance(mContext).getDatabaseName());
         UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
         super.onDestroy();

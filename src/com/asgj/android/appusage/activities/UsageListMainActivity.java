@@ -10,13 +10,12 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
+
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.FragmentTransaction;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -35,27 +34,27 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.DatePicker;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.dialogs.DatePickerFragment;
+import com.asgj.android.appusage.dialogs.DatePickerFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 
-public class UsageListMainActivity extends Activity implements View.OnClickListener{
+public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface {
     private Context mContext;
     private DatePickerFragment startDateFragment, endDateFragment;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
     private long mTimeStamp;
     private List<UsageStats> mQueryUsageStats;
-    private long mStartServiceTime;
     private boolean mIsCreated = false;
     private boolean mIsBound = false;
     private boolean mIsDateInPref = true;
@@ -104,6 +103,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         mIsCreated = true;
 
         initFabTextView();
+        
+        UsageSharedPrefernceHelper.setShowByUsage(mContext, mContext.getString(R.string.string_Today));
+        
         // Check whether binding is needed.
         if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
             Log.v(LOG_TAG, "Service restrart from activity");
@@ -169,12 +171,96 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             mIsBound = true;
 
             if (mIsCreated) {
-                mFragment.setmUsageAppData(mMainService.getCurrentMap());
+                mFragment.setmUsageAppData(mMainService.getCurrentMap(UsageSharedPrefernceHelper.getCalendarByShowType(mContext)));
                 mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
             }
             Log.v(LOG_TAG, "Service connected, mMainService is: " + mMainService);
         }
     };
+    
+    /**
+     * Displays data as per different scenarios and preferences.
+     */
+    public void displayData() {
+
+        /**
+         * 2 cases, either service is running or stopped.
+         * In case of stopped, only static data is needed.
+         * In case of running, we need to add dynamic data (Custom's an exception if end date is lesser than today).
+         */
+
+        // Fetch static data for today.
+        HashMap<String, Long> dataMap = new HashMap<>();
+        ArrayList<UsageInfo> musicList = new ArrayList<>();
+
+        // Case 1.
+        if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+
+            // Check whether custom and end day not today.
+            if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                    mContext.getString(R.string.string_Custom))
+                    && endDateFragment != null
+                    && Utils.compareDates(endDateFragment.getCalendar(), Calendar.getInstance()) != 0) {
+
+                dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
+                musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
+            } else {
+
+                switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
+                case "Today":
+                    dataMap = UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext);
+                    musicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
+                    break;
+                case "Weekly":
+                case "Monthly":
+                case "Yearly":
+                    dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
+                            Calendar.getInstance());
+                    musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
+                            Calendar.getInstance());
+                    break;
+                case "Custom":
+                    dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                            startDateFragment.getCalendar(), Calendar.getInstance());
+                    musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                            startDateFragment.getCalendar(), Calendar.getInstance());
+                    break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            // Check whether custom and end day not today.
+            if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                    mContext.getString(R.string.string_Custom))
+                    && endDateFragment != null
+                    && Utils.compareDates(endDateFragment.getCalendar(), Calendar.getInstance()) != 0) {
+
+                dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
+                musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
+            } else {
+                if (mMainService != null)
+                    if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                            mContext.getString(R.string.string_Custom))) {
+                        dataMap = mMainService.getCurrentMap(UsageSharedPrefernceHelper
+                                .getCalendarByShowType(mContext));
+                        musicList = mMainService.getCurrentDataForMusic();
+                    } else {
+                        dataMap = mMainService.getCurrentMap(startDateFragment.getCalendar());
+                        musicList = mMainService.getCurrentDataForMusic();
+                    }
+            }
+        }
+        mFragment.setmUsageAppData(dataMap);
+        mFragment.setmMusicData(musicList);
+    }
+    
 
     /**
      * onResume method to dynamically show data as tracking progresses.
@@ -192,7 +278,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             if (mIsDateInPref == true) {
                 
                 // Fetch date from preferences and compare.
-                
                 Date presentDate = new Date(System.currentTimeMillis());
                 Date prefsDate = new Date(UsageSharedPrefernceHelper.getDateStoredInPref(mContext));
 
@@ -228,25 +313,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 
                 mTimeStamp = System.currentTimeMillis();
             }
-
-            try {
-                mFragment.setmUsageAppData(UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext));
-                mFragment.setmMusicData(UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext));
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            }
+        }
+        
+        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            mFragment.setmUsageAppData(mMainService.getCurrentMap(UsageSharedPrefernceHelper.getCalendarByShowType(mContext)));
         } else {
-
-            // Show data dynamically.
-            if (mMainService != null) {
-                Log.v(LOG_TAG, "Data : " + mMainService.getCurrentMap());
-                if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
-                mFragment.setmUsageAppData(mMainService.getCurrentMap());
-                } else {
-                mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(this));
-                }
-                mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
-            }
+            displayData();
         }
     }
 
@@ -282,9 +354,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     }
 
     private void startTrackingService() {
-        mStartServiceTime = System.currentTimeMillis();
-
-        UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
+            UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
 
             // Here you bind to the service.
             Intent startServiceIntent = new Intent();
@@ -422,104 +492,18 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(),
-                                    mShowList[which]);
-
-                            Calendar startCalendar;
-                            Calendar endCalendar;
-
-                            if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
-                                mFragment.setmUsageAppData(mMainService.getCurrentMap());
-                                mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
-                            } else {
-
-                                // In case of custom, open up a date-picker.
-                                if (mShowList[which].equals(mContext
-                                        .getString(R.string.string_Custom))) {
-
-                                    startDateFragment = new DatePickerFragment(0);
-                                    startDateFragment.setOnDateSetListener(new OnDateSetListener() {
-                                        @Override
-                                        public void onDateSet(DatePicker view, int year,
-                                                int monthOfYear, int dayOfMonth) {
-                                            // TODO Auto-generated method stub
-                                            final Calendar cal1;
-                                            cal1 = Calendar.getInstance();
-                                            cal1.set(Calendar.YEAR, year);
-                                            cal1.set(Calendar.MONTH, monthOfYear);
-                                            cal1.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-                                            if (Utils.compareDates(cal1, Calendar.getInstance()) == 1) {
-                                                Toast.makeText(mContext, "Start date cannot be greater than today date", Toast.LENGTH_LONG).show();
-                                                return;
-                                            }
-                                            
-                                            endDateFragment = new DatePickerFragment(1);
-                                            endDateFragment.show(getFragmentManager(),
-                                                    "endDatePicker");
-
-                                            endDateFragment
-                                                    .setOnDateSetListener(new OnDateSetListener() {
-
-                                                        @Override
-                                                        public void onDateSet(DatePicker view,
-                                                                int year, int monthOfYear,
-                                                                int dayOfMonth) {
-                                                            // TODO
-                                                            // Auto-generated
-                                                            // method stub
-                                                            Calendar cal2 = Calendar.getInstance();
-                                                            cal2.set(Calendar.YEAR, year);
-                                                            cal2.set(Calendar.MONTH, monthOfYear);
-                                                            cal2.set(Calendar.DAY_OF_MONTH,
-                                                                    dayOfMonth);
-
-                                                            if (Utils.compareDates(cal2, Calendar.getInstance()) == 1) {
-                                                                Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_greater_than_today), Toast.LENGTH_LONG).show();
-                                                                return;
-                                                            } else if (Utils.compareDates(cal1, cal2) == 1) {
-                                                                Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_lesser_than_start), Toast.LENGTH_LONG).show();
-                                                                return;
-                                                            }
-                                                            mFragment.setmMusicData(mDatabase
-                                                                    .getMusicEntryForMentionedTimeBeforeToday(
-                                                                            mContext, cal1, cal2));
-                                                            mFragment.setmUsageAppData(mDatabase
-                                                                    .getApplicationEntryForMentionedTimeBeforeToday(
-                                                                            mContext, cal1, cal2));
-
-                                                        }
-                                                    });
-                                        }
-                                    });
-                                    startDateFragment.show(getFragmentManager(), "startDatePicker");
-                                }
-
-                                switch (which) {
-                                case 0:
-                                    mFragment.setmUsageAppData(UsageSharedPrefernceHelper
-                                            .getAllKeyValuePairsApp(mContext));
-                                    mFragment.setmMusicData(UsageSharedPrefernceHelper
-                                            .getTotalInfoOfMusic(mContext));
-                                    break;
-                                case 1:
-                                case 2:
-                                case 3:
-                                    startCalendar = UsageSharedPrefernceHelper
-                                            .getCalendarByShowType(mContext);
-                                    endCalendar = Calendar.getInstance();
-
-                                    mFragment.setmMusicData(mDatabase
-                                            .getMusicEntryForMentionedTimeBeforeToday(mContext,
-                                                    startCalendar, endCalendar));
-                                    mFragment.setmUsageAppData(mDatabase
-                                            .getApplicationEntryForMentionedTimeBeforeToday(
-                                                    mContext, startCalendar, endCalendar));
-                                    break;
-                                default: break;
-                                }
+                            
+                            if (!mShowList[which].equals(mContext.getString(R.string.string_Custom))) {
+                                UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(),
+                                        mShowList[which]);
+                                displayData();
+                                return;
                             }
+
+                            startDateFragment = new DatePickerFragment(0);
+                            startDateFragment.show(getFragmentManager(), "startDatePicker");
                         }
+                        
                     });
             AlertDialog dialog = builder.create();
             dialog.show();
@@ -658,4 +642,41 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		}
 		
 	}
+
+    @Override
+    public void onDateSetComplete(int dialogID) {
+        // TODO Auto-generated method stub
+        
+        switch (dialogID) {
+        
+        case 0 : Calendar startCalendar = startDateFragment.getCalendar();
+                 if (Utils.compareDates(startCalendar, Calendar.getInstance()) == 1) {
+                    Toast.makeText(mContext, "Start date cannot be greater than today date",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                
+                endDateFragment = new DatePickerFragment(1);
+                endDateFragment.show(getFragmentManager(),
+                        "endDatePicker");
+                break;
+                
+        case 1 : Calendar endCalendar = endDateFragment.getCalendar();
+                 
+                if (Utils.compareDates(endCalendar, Calendar.getInstance()) == 1) {
+                    Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_greater_than_today), Toast.LENGTH_LONG).show();
+                    return;
+                } else if (Utils.compareDates(startDateFragment.getCalendar(), endCalendar) == 1) {
+                    Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_lesser_than_start), Toast.LENGTH_LONG).show();
+                    return;
+                }
+                
+                // Set in preference only after date from both pickers have been validated.
+                UsageSharedPrefernceHelper.setShowByUsage(mContext, mContext.getString(R.string.string_Custom));
+                
+                displayData();
+                break;
+
+        }
+    }
 }
