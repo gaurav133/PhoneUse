@@ -509,6 +509,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             AlertDialog dialog = builder.create();
             dialog.show();
             break;
+        case R.id.action_setting:
+        	Intent intent = new Intent(this, SettingActivity.class);
+        	startActivity(intent);
+        	break;
 
         }
         return super.onOptionsItemSelected(item);

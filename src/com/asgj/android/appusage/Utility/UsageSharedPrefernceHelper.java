@@ -150,6 +150,28 @@ public class UsageSharedPrefernceHelper {
         editor.commit();
     }
 
+    public static Set<String> getSelectedApplicationForTracking(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        return prefs.getStringSet("applicationtracking", null);
+        
+
+    }
+
+    public static void setApplicationForTracking(Context context,String info) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        Set<String> mInfoList = new HashSet<>();
+        if (prefs.contains("applicationtracking")) {
+            mInfoList.addAll(prefs.getStringSet("applicationtracking", null));
+        }
+        if(!mInfoList.contains(info)){
+        mInfoList.add(info);
+        editor.putStringSet("applicationtracking", mInfoList);
+        editor.commit();
+        }
+    }
     private static String getFormattedStringFromMusicInfo(UsageInfo info) {
         return info.getmIntervalStartTime() + "_" + info.getmIntervalEndTime() + "_"
                 + info.getmIntervalDuration();
