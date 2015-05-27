@@ -43,14 +43,15 @@ import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
-import com.asgj.android.appusage.dialogs.DatePickerFragment;
-import com.asgj.android.appusage.dialogs.DatePickerFragment.DateInterface;
+import com.asgj.android.appusage.dialogs.MonthViewFragment;
+import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface {
     private Context mContext;
-    private DatePickerFragment startDateFragment, endDateFragment;
+    private MonthViewFragment startDateFragment;
+    private Calendar cal1, cal2;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
     private long mTimeStamp;
@@ -646,36 +647,14 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     @Override
     public void onDateSetComplete(int dialogID) {
         // TODO Auto-generated method stub
-        
-        switch (dialogID) {
-        
-        case 0 : Calendar startCalendar = startDateFragment.getCalendar();
-                 if (Utils.compareDates(startCalendar, Calendar.getInstance()) == 1) {
-                    Toast.makeText(mContext, "Start date cannot be greater than today date",
-                            Toast.LENGTH_LONG).show();
-                    return;
-                }
-                
-                endDateFragment = new DatePickerFragment(1);
-                endDateFragment.show(getFragmentManager(),
-                        "endDatePicker");
-                break;
-                
-        case 1 : Calendar endCalendar = endDateFragment.getCalendar();
-                 
-                if (Utils.compareDates(endCalendar, Calendar.getInstance()) == 1) {
-                    Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_greater_than_today), Toast.LENGTH_LONG).show();
-                    return;
-                } else if (Utils.compareDates(startDateFragment.getCalendar(), endCalendar) == 1) {
-                    Toast.makeText(mContext, mContext.getString(R.string.string_error_end_date_lesser_than_start), Toast.LENGTH_LONG).show();
-                    return;
-                }
-                
-                // Set in preference only after date from both pickers have been validated.
-                UsageSharedPrefernceHelper.setShowByUsage(mContext, mContext.getString(R.string.string_Custom));
-                
-                displayData();
-                break;
+
+        this.cal1 = startCalendar;
+        this.cal2 = endCalendar;
+        // Set in preference only after date from both pickers have been validated.
+        UsageSharedPrefernceHelper.setShowByUsage(mContext,
+                mContext.getString(R.string.string_Custom));
+
+        displayData();
 
         }
     }
