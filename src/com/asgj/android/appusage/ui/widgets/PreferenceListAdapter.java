@@ -1,6 +1,7 @@
 package com.asgj.android.appusage.ui.widgets;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import android.content.Context;
@@ -10,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
@@ -18,32 +21,27 @@ import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 
 public class PreferenceListAdapter extends BaseAdapter implements
-		View.OnClickListener {
+		View.OnClickListener,OnSeekBarChangeListener {
 
 	private ArrayList<PackageInfo> mPackageList = null;
 	private Context mContext = null;
 	private int mSelectedCount = 0;
 	private static int MAXIMUN_APPLICATIONS = 5;
-	private ArrayList<String> mSelectionList = null;
 
 	PreferenceListAdapter(ArrayList<PackageInfo> packageList, Context context) {
 		mPackageList = packageList;
 		mContext = context;
-		mSelectionList = new ArrayList<String>();
 		Set<String> alreadySelectedList = UsageSharedPrefernceHelper
 				.getSelectedApplicationForTracking(mContext);
-		Log.d("anurag", "already selcted list.. :" + alreadySelectedList);
-		if (alreadySelectedList != null) {
-			Log.d("anurag",
-					"already selcted list.. :" + alreadySelectedList.size());
-		}
+		//TODO : need to get time also from prefernce to show on seekbar.
 		if (alreadySelectedList != null && alreadySelectedList.size() > 0) {
-			mSelectionList.addAll(alreadySelectedList);
-			mSelectedCount = mSelectionList.size();
-			for (String s : mSelectionList) {
+			mSelectedCount = alreadySelectedList.size();
+			String[] selectionlist = new String[mSelectedCount];
+			selectionlist = alreadySelectedList.toArray(selectionlist);
+			
+			for (int j =0; j< mSelectedCount ; j++) {
 				for(int i = 0; i< mPackageList.size() ; i++){
-					if(mPackageList.get(i).getmApplicationName().equals(s)){
-						Log.d("anurag", "already selcted list.set checked true. :" + s);
+					if(mPackageList.get(i).getmApplicationName().equals(selectionlist[j])){
 						mPackageList.get(i).setChecked(true);
 					}
 				}
@@ -53,8 +51,8 @@ public class PreferenceListAdapter extends BaseAdapter implements
 
 	}
 
-	public ArrayList<String> getSelectedPackages() {
-		return mSelectionList;
+	public ArrayList<PackageInfo> getSelectedPackages() {
+		return mPackageList;
 	}
 
 	@Override
@@ -87,6 +85,15 @@ public class PreferenceListAdapter extends BaseAdapter implements
 				.findViewById(R.id.checkBox_package);
 		checkbox.setTag(position);
 		checkbox.setChecked(mPackageList.get(position).isChecked());
+		SeekBar seekbar = (SeekBar)convertView.findViewById(R.id.seekBar1);
+		seekbar.setOnSeekBarChangeListener(this);
+		seekbar.setTag(position);
+		if(mPackageList.get(position).isChecked()){
+			seekbar.setProgress(mPackageList.get(position).getmInputtime());
+			seekbar.setVisibility(View.VISIBLE);
+		}else{
+			seekbar.setVisibility(View.GONE);
+		}
 		checkbox.setText(Utils.getApplicationLabelName(mContext, mPackageList
 				.get(position).getmApplicationName()));
 		checkbox.setOnClickListener(this);
@@ -97,14 +104,10 @@ public class PreferenceListAdapter extends BaseAdapter implements
 	public void onClick(View v) {
 		if (v instanceof CheckBox) {
 			int pos = (int)v.getTag();
-			String name = mPackageList.get(pos).getmApplicationName();
-			if (!mSelectionList.contains(name)) {
-				mSelectionList.add(name);
+			if (!mPackageList.get(pos).isChecked()) {
 				mPackageList.get(pos).setChecked(true);
 				if (mSelectedCount < MAXIMUN_APPLICATIONS) {
 					mSelectedCount++;
-					Log.d("anurag", "seelcted count increase to.. :"
-							+ mSelectedCount);
 
 				} else {
 					((CheckBox) v).setChecked(false);
@@ -114,11 +117,27 @@ public class PreferenceListAdapter extends BaseAdapter implements
 							Toast.LENGTH_LONG).show();
 				}
 			} else {
-				mSelectionList.remove(name);
 				mPackageList.get(pos).setChecked(false);
 				mSelectedCount--;
 			}
+			this.notifyDataSetChanged();
 		}
 
+	}
+	@Override
+	public void onProgressChanged(SeekBar seekBar, int progress,
+			boolean fromUser) {
+		int position = (int)seekBar.getTag();
+		mPackageList.get(position).setmInputtime(progress);
+	}
+
+	@Override
+	public void onStartTrackingTouch(SeekBar seekBar) {
+		
+	}
+
+	@Override
+	public void onStopTrackingTouch(SeekBar seekBar) {
+		
 	}
 }
