@@ -25,6 +25,7 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 class SlidingTabStrip extends LinearLayout {
 
@@ -78,14 +79,14 @@ class SlidingTabStrip extends LinearLayout {
 
         mBottomBorderThickness = (int) (DEFAULT_BOTTOM_BORDER_THICKNESS_DIPS * density);
         mBottomBorderPaint = new Paint();
-        mBottomBorderPaint.setColor(mDefaultBottomBorderColor);
+        mBottomBorderPaint.setColor(Color.TRANSPARENT);
 
         mSelectedIndicatorThickness = (int) (SELECTED_INDICATOR_THICKNESS_DIPS * density);
         mSelectedIndicatorPaint = new Paint();
 
         mDividerHeight = DEFAULT_DIVIDER_HEIGHT;
         mDividerPaint = new Paint();
-        mDividerPaint.setStrokeWidth((int) (DEFAULT_DIVIDER_THICKNESS_DIPS * density));
+        mDividerPaint.setStrokeWidth(0);
     }
 
     void setCustomTabColorizer(SlidingTabLayout.TabColorizer customTabColorizer) {
@@ -111,6 +112,17 @@ class SlidingTabStrip extends LinearLayout {
         mSelectedPosition = position;
         mSelectionOffset = positionOffset;
         invalidate();
+    }
+    void updateTitleColor(int selectedPos){
+    	for(int i =0; i< getChildCount() ; i++){
+       	 TextView title = (TextView)getChildAt(i);
+       	 if(i == selectedPos){
+       		 title.setTextColor(Color.WHITE);
+       	 }else{
+       		 title.setTextColor(Color.BLUE);
+       	 }
+       	 
+       }
     }
 
     @Override
@@ -143,23 +155,23 @@ class SlidingTabStrip extends LinearLayout {
                         (1.0f - mSelectionOffset) * right);
             }
 
-            mSelectedIndicatorPaint.setColor(color);
+            mSelectedIndicatorPaint.setColor(Color.WHITE);
 
             canvas.drawRect(left, height - mSelectedIndicatorThickness, right,
                     height, mSelectedIndicatorPaint);
         }
 
         // Thin underline along the entire bottom edge
-        canvas.drawRect(0, height - mBottomBorderThickness, getWidth(), height, mBottomBorderPaint);
+        //canvas.drawRect(0, height - mBottomBorderThickness, getWidth(), height, mBottomBorderPaint);
 
         // Vertical separators between the titles
         int separatorTop = (height - dividerHeightPx) / 2;
-        for (int i = 0; i < childCount - 1; i++) {
-            View child = getChildAt(i);
-            mDividerPaint.setColor(tabColorizer.getDividerColor(i));
-            canvas.drawLine(child.getRight(), separatorTop, child.getRight(),
-                    separatorTop + dividerHeightPx, mDividerPaint);
-        }
+//        for (int i = 0; i < childCount - 1; i++) {
+//            View child = getChildAt(i);
+//            mDividerPaint.setColor(tabColorizer.getDividerColor(i));
+//            canvas.drawLine(child.getRight(), separatorTop, child.getRight(),
+//                    separatorTop + dividerHeightPx, mDividerPaint);
+//        }
     }
 
     /**

@@ -23,7 +23,7 @@
     </style>
     
     <!-- Main screen action bar style. -->
-    <style name="mainActionBarStyle" parent="@android:style/Theme.Holo.Light">
+    <style name="mainActionBarStyle" parent="@android:style/Theme.DeviceDefault.Light">
         <item name="android:actionBarStyle">@style/mainActionBarBckgnd</item>
     </style>
 

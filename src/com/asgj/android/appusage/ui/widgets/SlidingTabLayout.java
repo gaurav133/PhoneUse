@@ -239,6 +239,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
         if (mViewPager != null) {
             scrollToTab(mViewPager.getCurrentItem(), 0);
         }
+        mTabStrip.updateTitleColor(0);
     }
 
     private void scrollToTab(int tabIndex, int positionOffset) {
@@ -299,7 +300,7 @@ public class SlidingTabLayout extends HorizontalScrollView {
                 mTabStrip.onViewPagerPageChanged(position, 0f);
                 scrollToTab(position, 0);
             }
-
+            mTabStrip.updateTitleColor(position);
             if (mViewPagerPageChangeListener != null) {
                 mViewPagerPageChangeListener.onPageSelected(position);
             }
