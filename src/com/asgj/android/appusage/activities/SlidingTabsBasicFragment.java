@@ -155,7 +155,7 @@ public class SlidingTabsBasicFragment<AppData, MusicData, CallData> extends
 	 */
 	class SamplePagerAdapter extends PagerAdapter {
 
-		String[] mList = new String[] { "Application", "Music", "Call" };
+		String[] mList = new String[] { "Apps", "Media", "Call" };
 
 		/**
 		 * @return the number of pages to display

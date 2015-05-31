@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.Utility.HttpImageLoader;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.Utils;
 
@@ -22,10 +23,12 @@ public class UsageListAdapter<Data> extends BaseAdapter {
     ArrayList<UsageInfo> mList = null;
     HashMap<String, Long> mMap = null;
     ArrayList<String> keys;
+    HttpImageLoader mImageLoader = null;
 
     public UsageListAdapter(Context context, Data data) throws Exception {
         mContext = context;
         mData = data;
+        mImageLoader = HttpImageLoader.getInstance(context);
         keys = new ArrayList<>();
         if (mData instanceof ArrayList) {
             mList = (ArrayList) mData;
@@ -85,7 +88,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
         } else if (mMap != null) {
             text_left.setText(Utils.getApplicationLabelName(mContext, keys.get(position)));
             text_right.setText("" + Utils.getTimeFromSeconds(mMap.get(keys.get(position))));
-            image_view_app_icon.setImageBitmap(Utils.getApplicationIcon(mContext, keys.get(position)));
+            mImageLoader.display(keys.get(position), image_view_app_icon, R.drawable.ic_launcher);
             image_view_app_icon.setVisibility(View.VISIBLE);
             text_middle.setVisibility(View.GONE);
         }

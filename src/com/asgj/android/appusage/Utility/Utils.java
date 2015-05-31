@@ -216,6 +216,7 @@ public class Utils {
 		} catch (NameNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return	null;
 		}
 		return (String) context.getPackageManager().getApplicationLabel(
 				mApplicationInfo);
