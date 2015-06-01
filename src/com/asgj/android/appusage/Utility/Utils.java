@@ -48,34 +48,47 @@ public class Utils {
     	 }
     	 return map;
     }
-    public static String getTimeFromNanoSeconds(long nanoSec, String format) throws Exception {
+
+    /**
+     * Returns time in required format from input nanoseconds for displaying.
+     * @param nanoSec Input no. of nanoseconds
+     * @param format Input format for displaying time
+     * @throws IllegalArgumentException in case input format doesn't match the stored format
+     * @return Time as per required format
+     */
+    public static String getTimeFromNanoSeconds(long nanoSec, String format) throws IllegalArgumentException {
         if (!format.equals(TIME_FORMAT_HHMMSS) || (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
-            throw new Exception("given time format not supported");
+            throw new IllegalArgumentException("given time format not supported");
         }
         nanoSec = nanoSec / 1000;
         int hour = (int) nanoSec / 3600;
         nanoSec = nanoSec % 3600;
         int min = (int) nanoSec / 60;
-		int sec = (int) nanoSec % 60;
-		String time = "";
-		if (format.equals(TIME_FORMAT_HHMMSS)) {
-			if (hour > 0) {
-				time = time + hour + ":";
-			}
-			if (min > 0) {
-				time = time + min + ":";
-			}
-			return time + sec;
-		} else {
-			if (hour > 0) {
-				time = time + hour + " hr ";
-			}
-			if (min > 0) {
-				time = time + min + " min ";
-			}
-			return time + sec + " sec";
-		}
-
+        int sec = (int) nanoSec % 60;
+        String time = "";
+        if (format.equals(TIME_FORMAT_HHMMSS)) {
+            if (hour > 0) {
+                time = time + hour + ":";
+            }
+            if (min > 0) {
+                time = time + min + ":";
+            }
+            if (sec > 0) {
+                time = time + sec + " sec";
+            }
+            return time;
+        } else {
+            if (hour > 0) {
+                time = time + hour + " hr ";
+            }
+            if (min > 0) {
+                time = time + min + " min ";
+            }
+            if (sec > 0) {
+                time = time + sec + " sec";
+            }
+            return time;
+        }
     }
 
     public static long getMiliSecFromDate(String date) {
