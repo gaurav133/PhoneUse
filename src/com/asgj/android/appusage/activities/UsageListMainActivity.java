@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -47,6 +48,7 @@ import com.asgj.android.appusage.dialogs.MonthViewFragment;
 import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
+import com.asgj.android.appusage.service.UsageTrackingService.provideData;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface {
     private Context mContext;
@@ -55,9 +57,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
     private long mTimeStamp;
+    private Handler mHandler;
+    private HashMap<String, Long> mDataMap;
+    private ArrayList<UsageInfo> mMusicList;
     private List<UsageStats> mQueryUsageStats;
     private boolean mIsCreated = false;
     private boolean mIsBound = false;
+    private LocalBinder mBinder;
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
     private SlidingTabsBasicFragment<HashMap, ArrayList, ArrayList> mFragment;
@@ -103,6 +109,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
         mIsCreated = true;
+
+        mHandler = new Handler();
 
         initFabTextView();
         
@@ -170,10 +178,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mMainService = ((LocalBinder) service).getInstance();
+            mBinder = (LocalBinder) service;
             mIsBound = true;
 
             if (mIsCreated) {
-                mFragment.setmUsageAppData(mMainService.getCurrentMap(UsageSharedPrefernceHelper.getCalendarByShowType(mContext)));
+                displayData();
                 mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
             }
             Log.v(LOG_TAG, "Service connected, mMainService is: " + mMainService);
@@ -192,8 +201,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
          */
 
         // Fetch static data for today.
-        HashMap<String, Long> dataMap = new HashMap<>();
-        ArrayList<UsageInfo> musicList = new ArrayList<>();
+        mDataMap = new HashMap<>();
+        mMusicList = new ArrayList<>();
 
         // Case 1.
         if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
@@ -201,35 +210,34 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             // Check whether custom and end day not today.
             if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                     mContext.getString(R.string.string_Custom))
-                    && endDateFragment != null
-                    && Utils.compareDates(endDateFragment.getCalendar(), Calendar.getInstance()) != 0) {
+                    && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
 
-                dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
-                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
-                musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
-                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
+                mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                        cal1, cal2);
+                mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                        cal1, cal2);
             } else {
 
                 switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
                 case "Today":
-                    dataMap = UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext);
-                    musicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
+                    mDataMap = UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext);
+                    mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
                     break;
                 case "Weekly":
                 case "Monthly":
                 case "Yearly":
-                    dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                    mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
                             UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
                             Calendar.getInstance());
-                    musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                    mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
                             UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
                             Calendar.getInstance());
                     break;
                 case "Custom":
-                    dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
-                            startDateFragment.getCalendar(), Calendar.getInstance());
-                    musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
-                            startDateFragment.getCalendar(), Calendar.getInstance());
+                    mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                            cal1, Calendar.getInstance());
+                    mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                            cal1, Calendar.getInstance());
                     break;
                 default:
                     break;
@@ -239,28 +247,58 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             // Check whether custom and end day not today.
             if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                     mContext.getString(R.string.string_Custom))
-                    && endDateFragment != null
-                    && Utils.compareDates(endDateFragment.getCalendar(), Calendar.getInstance()) != 0) {
+                    && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
 
-                dataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
-                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
-                musicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
-                        startDateFragment.getCalendar(), endDateFragment.getCalendar());
+                mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
+                        cal1, cal2);
+                mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                        cal1, cal2);
             } else {
-                if (mMainService != null)
+                if (mMainService != null) {
                     if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                             mContext.getString(R.string.string_Custom))) {
-                        dataMap = mMainService.getCurrentMap(UsageSharedPrefernceHelper
+                        mDataMap = mMainService.getCurrentMap(UsageSharedPrefernceHelper
                                 .getCalendarByShowType(mContext));
-                        musicList = mMainService.getCurrentDataForMusic();
+                        mMusicList = mMainService.getCurrentDataForMusic();
                     } else {
-                        dataMap = mMainService.getCurrentMap(startDateFragment.getCalendar());
-                        musicList = mMainService.getCurrentDataForMusic();
+                        mDataMap = mMainService.getCurrentMap(cal1);
+                        mMusicList = mMainService.getCurrentDataForMusic();
                     }
+
+                    // Need data from service, fire off a broadcast.
+                    Intent getDataIntent = new Intent();
+                    getDataIntent.setAction("com.android.asgj.appusage.action.DATA_PROVIDE");
+                    sendBroadcast(getDataIntent);
+
+                    mBinder.setInterface(new provideData() {
+
+                        @Override
+                        public void provideMap(HashMap<String, Long> map) {
+                            // TODO Auto-generated method stub
+                            Log.v ("gaurav", "Interface call");
+                            for (Map.Entry<String, Long> dataEntry : map.entrySet()) {
+                                String key = dataEntry.getKey();
+                                Log.v ("gaurav", "Data map before entry: " + mDataMap);
+                                if (mDataMap.containsKey(key)) {
+                                    mDataMap.put(key, dataEntry.getValue() + mDataMap.get(key));
+                                } else {
+                                    mDataMap.put(key, dataEntry.getValue());
+                                }
+                            }
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // TODO Auto-generated method stub
+                                    mFragment.setmUsageAppData(mDataMap);
+                                }
+                            });
+                        }
+                    });
+                }
             }
         }
-        mFragment.setmUsageAppData(dataMap);
-        mFragment.setmMusicData(musicList);
+        mFragment.setmUsageAppData(mDataMap);
+        mFragment.setmMusicData(mMusicList);
     }
     
 
@@ -502,8 +540,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                                 return;
                             }
 
-                            startDateFragment = new DatePickerFragment(0);
-                            startDateFragment.show(getFragmentManager(), "startDatePicker");
+                            startDateFragment = new MonthViewFragment();
+                            startDateFragment.show(getFragmentManager(), "startMonthViewPicker");
                         }
                         
                     });
@@ -650,7 +688,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 	}
 
     @Override
-    public void onDateSetComplete(int dialogID) {
+    public void onDateSetComplete(Calendar startCalendar, Calendar endCalendar) {
         // TODO Auto-generated method stub
 
         this.cal1 = startCalendar;
@@ -661,6 +699,5 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
         displayData();
 
-        }
     }
 }
