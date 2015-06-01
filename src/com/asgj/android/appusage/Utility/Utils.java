@@ -31,6 +31,9 @@ public class Utils {
         return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
     }
     
+    public static long getTimeInSecFromMili(long nanoSec) {
+        return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.MILLISECONDS);
+    }
      
     public static boolean isPermissionGranted(Context context) {
         final UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService("usagestats");
@@ -39,12 +42,12 @@ public class Utils {
     }
 
     
-    public static HashMap<String,Long> getAppUsageFromLAndroidDb(Context context){
+    public static HashMap<String,Long> getAppUsageFromLAndroidDb(Context context,String showBy){
     	 UsageStatsManager usm = (UsageStatsManager) context.getSystemService("usagestats");
     	 List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,0,System.currentTimeMillis());
     	 HashMap<String,Long> map = new HashMap<String, Long>();
     	 for(UsageStats stat : usageStatsList){
-    		 map.put(stat.getPackageName(), Utils.getTimeInSecFromNano(stat.getTotalTimeInForeground()));
+    		 map.put(stat.getPackageName(), Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()));
     	 }
     	 return map;
     }
@@ -229,7 +232,7 @@ public class Utils {
 		} catch (NameNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return	null;
+			return packageName;
 		}
 		return (String) context.getPackageManager().getApplicationLabel(
 				mApplicationInfo);
