@@ -356,7 +356,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         
         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            mFragment.setmUsageAppData(mMainService.getCurrentMap(UsageSharedPrefernceHelper.getCalendarByShowType(mContext)));
+            mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext)));
         } else {
             displayData();
         }
