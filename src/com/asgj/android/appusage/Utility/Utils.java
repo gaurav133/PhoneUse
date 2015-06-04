@@ -21,6 +21,8 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.provider.CallLog;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 public class Utils {
 
@@ -41,16 +43,43 @@ public class Utils {
         return !queryUsageStats.isEmpty();
     }
 
-    
-    public static HashMap<String,Long> getAppUsageFromLAndroidDb(Context context,String showBy){
-    	 UsageStatsManager usm = (UsageStatsManager) context.getSystemService("usagestats");
-    	 List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,0,System.currentTimeMillis());
-    	 HashMap<String,Long> map = new HashMap<String, Long>();
-    	 for(UsageStats stat : usageStatsList){
-    		 map.put(stat.getPackageName(), Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()));
-    	 }
-    	 return map;
-    }
+	public static HashMap<String, Long> getAppUsageFromLAndroidDb(
+			Context context, String showBy, long startTime, long endTime) {
+		UsageStatsManager usm = (UsageStatsManager) context
+				.getSystemService("usagestats");
+		List<UsageStats> usageStatsList = null;
+		int interval = 0;
+		switch (showBy) {
+		case "Today":
+			interval = UsageStatsManager.INTERVAL_DAILY;
+			break;
+		case "Weekly":
+			interval = UsageStatsManager.INTERVAL_WEEKLY;
+			break;
+		case "Monthly":
+			interval = UsageStatsManager.INTERVAL_MONTHLY;
+			break;
+		case "Yearly":
+			interval = UsageStatsManager.INTERVAL_YEARLY;
+			break;
+		case "Custom":
+			interval = UsageStatsManager.INTERVAL_BEST;
+			break;
+		}
+		if (interval != UsageStatsManager.INTERVAL_BEST) {
+			usageStatsList = usm.queryUsageStats(interval, 0,
+					System.currentTimeMillis());
+		} else {
+			usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime,
+					endTime == 0? System.currentTimeMillis() : endTime);
+		}
+		HashMap<String, Long> map = new HashMap<String, Long>();
+		for (UsageStats stat : usageStatsList) {
+			map.put(stat.getPackageName(),
+					Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()));
+		}
+		return map;
+	}
 
     /**
      * Returns time in required format from input nanoseconds for displaying.
@@ -155,39 +184,40 @@ public class Utils {
      * @param context Context to access application resources.
      * @return Application icon for pkgName, null in case pkgName is empty.
      */
-    public static Bitmap getApplicationIcon(Context context, String pkgName) {
+	public static void getScaledImageView(Context context, ImageView image) {
+		RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) image
+				.getLayoutParams();
+		Configuration conf = context.getResources().getConfiguration();
+		int screenLayout = conf.orientation == Configuration.ORIENTATION_LANDSCAPE ? conf.screenHeightDp
+				: conf.screenWidthDp;
+		int density = conf.densityDpi;
+		int p = (int) ((screenLayout * density) / 2000);
+		params.width = p;
+		params.height = p;
+		image.setLayoutParams(params);
 
-        Bitmap resizedBitmap = null;
-        Drawable appIcon = null;
-            try {
-                appIcon = context.getPackageManager().getApplicationIcon(pkgName);
-                Bitmap bmp = ((BitmapDrawable) appIcon).getBitmap();
-                
-                
-                float scaleScreenSize = 1;
-                
-                // Scale according to screen size.
-                int screenLayout = context.getResources().getConfiguration().screenLayout;
-                
-                switch (screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) {
-                case Configuration.SCREENLAYOUT_SIZE_LARGE : scaleScreenSize = 1.5f;
-                                                             break;
-                case Configuration.SCREENLAYOUT_SIZE_NORMAL : scaleScreenSize = 1;
-                                                             break;
-                case Configuration.SCREENLAYOUT_SIZE_SMALL : scaleScreenSize = 0.5f;
-                                                             break;
-                case Configuration.SCREENLAYOUT_SIZE_XLARGE : scaleScreenSize = 2;
-                                                             break;
-                }
-                
-                int p = (int) (80 * (scaleScreenSize) + 0.5f);
-                resizedBitmap = Bitmap.createScaledBitmap(bmp, p, p, true);
-            } catch (NameNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        return resizedBitmap;
-    }
+	}
+	public static Bitmap getApplicationIcon(Context context, String pkgName) {
+		Bitmap resizedBitmap = null;
+		Drawable appIcon = null;
+		try {
+			appIcon = context.getPackageManager().getApplicationIcon(pkgName);
+			Bitmap bmp = null;
+			if (appIcon instanceof BitmapDrawable)
+				bmp = ((BitmapDrawable) appIcon).getBitmap();
+			Configuration conf = context.getResources().getConfiguration();
+			int screenLayout = conf.orientation == Configuration.ORIENTATION_LANDSCAPE ? conf.screenHeightDp
+					: conf.screenWidthDp;
+			int density = conf.densityDpi;
+			int p = (int) ((screenLayout * density) / 2000);
+			// Scale according to screen size.
+			resizedBitmap = Bitmap.createScaledBitmap(bmp, p, p, true);
+		} catch (NameNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return resizedBitmap;
+	}
     
     /**
      * Method to compare 2 dates in Java based on input calendar objects.

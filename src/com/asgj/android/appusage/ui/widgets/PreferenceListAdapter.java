@@ -13,6 +13,7 @@ import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
@@ -94,8 +95,11 @@ public class PreferenceListAdapter extends BaseAdapter implements
 		}else{
 			seekbar.setVisibility(View.GONE);
 		}
-		checkbox.setText(Utils.getApplicationLabelName(mContext, mPackageList
+		TextView textview = (TextView)convertView.findViewById(R.id.title_package);
+		textview.setText(Utils.getApplicationLabelName(mContext, mPackageList
 				.get(position).getmApplicationName()));
+		textview.setOnClickListener(this);
+		textview.setTag(position);
 		checkbox.setOnClickListener(this);
 		return convertView;
 	}

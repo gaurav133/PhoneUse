@@ -356,7 +356,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         
         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext)));
+            mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
         } else {
             displayData();
         }
@@ -661,27 +661,31 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 				UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[0]);
 				hideFabOption();
 				mShowByOptionsMain.setText(mShowList[0]);
+				mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			}
 			break;
 		case R.id.showByOptions2:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[1]);
 			hideFabOption();
 			mShowByOptionsMain.setText(mShowList[1]);
+			 mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			break;
 		case R.id.showByOptions3:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[2]);
 			hideFabOption();
 			mShowByOptionsMain.setText(mShowList[2]);
+			 mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			break;
 		case R.id.showByOptions4:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[3]);
 			hideFabOption();
 			mShowByOptionsMain.setText(mShowList[3]);
+			mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			break;
 		case R.id.showByOptions5:
-			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[4]);
+			startDateFragment = new MonthViewFragment();
+            startDateFragment.show(getFragmentManager(), "startMonthViewPicker");
 			hideFabOption();
-			mShowByOptionsMain.setText(mShowList[4]);
 			break;
 		}
 		
@@ -696,8 +700,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         // Set in preference only after date from both pickers have been validated.
         UsageSharedPrefernceHelper.setShowByUsage(mContext,
                 mContext.getString(R.string.string_Custom));
-
-        displayData();
+        if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+            displayData();
+        }else{
+        	mShowByOptionsMain.setText(mShowList[4]);
+        	mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),
+        			startCalendar.getTimeInMillis(),endCalendar.getTimeInMillis()));
+        }
 
     }
 }
