@@ -30,16 +30,23 @@ public class HttpImageLoader implements ComponentCallbacks2 {
 	}
 
 	public void display(String url, ImageView imageview, int defaultresource) {
-		imageview.setImageResource(defaultresource);
-		Bitmap image = cache.get(url);
-		if (image != null) {
-			imageview.setImageBitmap(image);
-		} else {
-			image = Utils.getApplicationIcon(mContext, url);
-			cache.put(url, image);
-			imageview.setImageBitmap(image);
-		}
-	}
+        
+        
+        if (!url.equals("Total Time")) {
+            imageview.setImageResource(defaultresource);
+        Bitmap image = cache.get(url);
+        if (image != null) {
+            imageview.setImageBitmap(image);
+        } else {
+            image = Utils.getApplicationIcon(mContext, url);
+            
+            if (image != null) {
+            cache.put(url, image);
+            imageview.setImageBitmap(image);
+            }
+        }
+        }
+    }
 
 	private class TCLruCache extends LruCache<String, Bitmap> {
 

@@ -182,8 +182,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             mIsBound = true;
 
             if (mIsCreated) {
-                displayData();
-                mFragment.setmMusicData(mMainService.getCurrentDataForMusic());
+                if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    displayDataForApps();
+                } 
+                displayDataForMusic();
             }
             Log.v(LOG_TAG, "Service connected, mMainService is: " + mMainService);
         }
@@ -192,7 +194,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     /**
      * Displays data as per different scenarios and preferences.
      */
-    public void displayData() {
+    public void displayDataForApps() {
 
         /**
          * 2 cases, either service is running or stopped.
@@ -202,7 +204,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
         // Fetch static data for today.
         mDataMap = new HashMap<>();
-        mMusicList = new ArrayList<>();
 
         // Case 1.
         if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
@@ -214,14 +215,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
                 mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
                         cal1, cal2);
-                mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
-                        cal1, cal2);
             } else {
 
                 switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
                 case "Today":
                     mDataMap = UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext);
-                    mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
                     break;
                 case "Weekly":
                 case "Monthly":
@@ -229,14 +227,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                     mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
                             UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
                             Calendar.getInstance());
-                    mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
-                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
-                            Calendar.getInstance());
                     break;
                 case "Custom":
                     mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
-                            cal1, Calendar.getInstance());
-                    mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
                             cal1, Calendar.getInstance());
                     break;
                 default:
@@ -251,18 +244,14 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
                 mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
                         cal1, cal2);
-                mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
-                        cal1, cal2);
             } else {
                 if (mMainService != null) {
                     if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                             mContext.getString(R.string.string_Custom))) {
                         mDataMap = mMainService.getCurrentMap(UsageSharedPrefernceHelper
                                 .getCalendarByShowType(mContext));
-                        mMusicList = mMainService.getCurrentDataForMusic();
                     } else {
                         mDataMap = mMainService.getCurrentMap(cal1);
-                        mMusicList = mMainService.getCurrentDataForMusic();
                     }
 
                     // Need data from service, fire off a broadcast.
@@ -298,9 +287,66 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             }
         }
         mFragment.setmUsageAppData(mDataMap);
+    }
+
+   /**
+    * Display data for music as per user preferences.
+    */
+    public void displayDataForMusic() {
+        mMusicList = new ArrayList<>();
+
+        // Case 1.
+        if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+
+            // Check whether custom and end day not today.
+            if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                    mContext.getString(R.string.string_Custom))
+                    && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+
+                mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                        cal1, cal2);
+            } else {
+
+                switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
+                case "Today":
+                    mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
+                    break;
+                case "Weekly":
+                case "Monthly":
+                case "Yearly":
+                    mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
+                            Calendar.getInstance());
+                    break;
+                case "Custom":
+                    mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                            cal1, Calendar.getInstance());
+                    break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            // Check whether custom and end day not today.
+            if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                    mContext.getString(R.string.string_Custom))
+                    && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+
+                mMusicList = mDatabase.getMusicEntryForMentionedTimeBeforeToday(mContext,
+                        cal1, cal2);
+            } else {
+                if (mMainService != null) {
+                    if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                            mContext.getString(R.string.string_Custom))) {
+                        mMusicList = mMainService.getCurrentDataForMusic();
+                    } else {
+                        mMusicList = mMainService.getCurrentDataForMusic();
+                    }
+                }
+            }
+        }
         mFragment.setmMusicData(mMusicList);
     }
-    
 
     /**
      * onResume method to dynamically show data as tracking progresses.
@@ -358,8 +404,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
         } else {
-            displayData();
+            displayDataForApps();
         }
+        displayDataForMusic();
     }
 
     @Override
@@ -511,12 +558,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                         AlertDialog dialog = builder.create();
                         dialog.show();
                     }
-            	}
-            	
-                startTrackingService();
-                item.setTitle(getString(R.string.string_stop));
-                UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
-
+                } else {
+                        startTrackingService();
+                        item.setTitle(getString(R.string.string_stop));
+                        UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
+                    }
             } else {
                 stopTrackingService();
                 item.setTitle(getString(R.string.string_start));
@@ -536,8 +582,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                             if (!mShowList[which].equals(mContext.getString(R.string.string_Custom))) {
                                 UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(),
                                         mShowList[which]);
-                                displayData();
-                                return;
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                            displayDataForApps();
+                        } 
+                        displayDataForMusic();
+                        return;
                             }
 
                             startDateFragment = new MonthViewFragment();
@@ -701,11 +750,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         UsageSharedPrefernceHelper.setShowByUsage(mContext,
                 mContext.getString(R.string.string_Custom));
         if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
-            displayData();
+            displayDataForApps();
+            displayDataForMusic();
         }else{
         	mShowByOptionsMain.setText(mShowList[4]);
         	mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),
         			startCalendar.getTimeInMillis(),endCalendar.getTimeInMillis()));
+        	displayDataForMusic();
         }
 
     }
