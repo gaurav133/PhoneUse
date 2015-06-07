@@ -66,7 +66,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private LocalBinder mBinder;
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
-    private SlidingTabsBasicFragment<HashMap, ArrayList, ArrayList> mFragment;
+    private UsageListFragment<HashMap, ArrayList, ArrayList> mFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
     private TextView mShowByOptionsMain = null;
@@ -163,7 +163,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
     private void initListFragment() {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        mFragment = new SlidingTabsBasicFragment<HashMap, ArrayList, ArrayList>();
+        mFragment = new UsageListFragment<HashMap, ArrayList, ArrayList>();
         transaction.replace(R.id.usage_list_main_fragment, mFragment);
         transaction.commit();
     }
@@ -573,26 +573,23 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             break;
         case R.id.action_showBy:
             AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(
-                    getString(R.string.string_showBy)).setAdapter(
-                    new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mShowList),
+                    getString(R.string.string_showBy)).setSingleChoiceItems(
+                    new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice, mShowList),Utils.getIndexFromArray(mShowList, UsageSharedPrefernceHelper.getShowByType(mContext)),
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            
-                            if (!mShowList[which].equals(mContext.getString(R.string.string_Custom))) {
-                                UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(),
-                                        mShowList[which]);
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                            displayDataForApps();
-                        } 
-                        displayDataForMusic();
-                        return;
-                            }
-
-                            startDateFragment = new MonthViewFragment();
-                            startDateFragment.show(getFragmentManager(), "startMonthViewPicker");
+						    if (!mShowList[which].equals(mContext.getString(R.string.string_Custom))) {
+							    UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(),mShowList[which]);
+								if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+								    displayDataForApps();
+								}
+								displayDataForMusic();
+						    } else {
+         					    startDateFragment = new MonthViewFragment();
+								startDateFragment.show(getFragmentManager(),"startMonthViewPicker");
+							}
+						    dialog.dismiss();
                         }
-                        
                     });
             AlertDialog dialog = builder.create();
             dialog.show();

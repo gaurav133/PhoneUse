@@ -38,6 +38,14 @@ public class Utils {
     public static long getTimeInSecFromMili(long miliSec) {
         return TimeUnit.SECONDS.convert(miliSec, TimeUnit.MILLISECONDS);
     }
+    public  static <T> int getIndexFromArray(T[] arr,T element){
+    	for(int i =0; i< arr.length ; i++){
+    		if(arr[i] == element){
+    			return i;
+    		}
+    	}
+    	return -1;
+    }
      
     public static boolean isPermissionGranted(Context context) {
         final UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService("usagestats");
