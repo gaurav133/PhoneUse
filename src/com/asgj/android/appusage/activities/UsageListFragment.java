@@ -36,7 +36,7 @@ import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
  * {@link ViewPager} title strip which gives continuous feedback to the user
  * when scrolling.
  */
-public class SlidingTabsBasicFragment<AppData, MusicData, CallData> extends
+public class UsageListFragment<AppData, MusicData, CallData> extends
 		Fragment {
 
 	static final String LOG_TAG = "SlidingTabsBasicFragment";
