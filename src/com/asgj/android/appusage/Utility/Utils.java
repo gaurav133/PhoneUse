@@ -7,6 +7,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import android.app.usage.UsageStats;
@@ -33,8 +35,8 @@ public class Utils {
         return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
     }
     
-    public static long getTimeInSecFromMili(long nanoSec) {
-        return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.MILLISECONDS);
+    public static long getTimeInSecFromMili(long miliSec) {
+        return TimeUnit.SECONDS.convert(miliSec, TimeUnit.MILLISECONDS);
     }
      
     public static boolean isPermissionGranted(Context context) {
@@ -211,6 +213,7 @@ public class Utils {
 			int density = conf.densityDpi;
 			int p = (int) ((screenLayout * density) / 2000);
 			// Scale according to screen size.
+			if (bmp != null)
 			resizedBitmap = Bitmap.createScaledBitmap(bmp, p, p, true);
 		} catch (NameNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -218,6 +221,31 @@ public class Utils {
 		}
 		return resizedBitmap;
 	}
+	
+	public static long calculateMapSum (HashMap<String, Long> inputMap) {
+
+        long sum = 0;
+        
+        if (!inputMap.isEmpty()) {
+            for (Map.Entry<String, Long> entry : inputMap.entrySet()) {
+                sum += entry.getValue();
+            }
+        }
+        return sum;
+    }
+
+    public static long calculateListSum (ArrayList<UsageInfo> inputList) {
+
+        long sum = 0;
+        if (!inputList.isEmpty()) {
+            ListIterator<UsageInfo> listIterator = inputList.listIterator();
+            
+            while (listIterator.hasNext()) {
+               sum += listIterator.next().getmIntervalDuration(); 
+            }
+        }
+        return sum;
+    }
     
     /**
      * Method to compare 2 dates in Java based on input calendar objects.
