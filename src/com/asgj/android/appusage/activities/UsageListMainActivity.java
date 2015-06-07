@@ -557,12 +557,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                                         });
                         AlertDialog dialog = builder.create();
                         dialog.show();
-                    } else {
+                    }
+                } else {
                         startTrackingService();
                         item.setTitle(getString(R.string.string_stop));
                         UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
                     }
-                }
             } else {
                 stopTrackingService();
                 item.setTitle(getString(R.string.string_start));

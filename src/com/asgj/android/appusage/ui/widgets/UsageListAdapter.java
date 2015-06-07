@@ -114,7 +114,6 @@ public class UsageListAdapter<Data> extends BaseAdapter {
                 text_left.setTypeface(mBoldTypeface);
                 text_right.setText(("" + Utils.getTimeFromSeconds(mList.get(position)
                         .getmIntervalDuration())).toUpperCase());
-                Log.v ("gaurav", "Total time: " + Utils.getTimeFromSeconds(mList.get(position).getmIntervalDuration()));
                 text_right.setTypeface(mBoldTypeface);
             } else {
                 text_middle.setVisibility(View.VISIBLE);
