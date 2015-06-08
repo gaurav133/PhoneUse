@@ -41,6 +41,7 @@ import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.UsageInterval;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
@@ -50,7 +51,7 @@ import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
 
-public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface {
+public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener {
     private Context mContext;
     private MonthViewFragment startDateFragment;
     private Calendar cal1, cal2;
@@ -67,6 +68,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
     private UsageListFragment<HashMap, ArrayList, ArrayList> mFragment;
+    private UsageDetailFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
     private TextView mShowByOptionsMain = null;
@@ -108,6 +110,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         		,getString(R.string.string_Yearly),getString(R.string.string_Custom)};
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
+        mFragment.setOnUsageItemClickListener(this);
         mIsCreated = true;
 
         mHandler = new Handler();
@@ -165,6 +168,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         mFragment = new UsageListFragment<HashMap, ArrayList, ArrayList>();
         transaction.replace(R.id.usage_list_main_fragment, mFragment);
+        transaction.commit();
+    }
+    private void initDetailFragment(ArrayList<UsageInterval> intervalList,String applicationName) {
+    	FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        mDetailFragment = new UsageDetailFragment(intervalList,applicationName);
+        transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);
+        transaction.addToBackStack(null);
         transaction.commit();
     }
 
@@ -757,4 +767,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
 
     }
+	@Override
+	public void onUsageItemClick(int tabIndex, int listItem) {
+		initDetailFragment(null,"mdeia");
+		
+	}
 }
