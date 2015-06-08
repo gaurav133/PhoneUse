@@ -158,13 +158,15 @@ public class Utils {
         seconds = seconds % 3600;
         int min = (int) seconds / 60;
         int sec = (int) seconds % 60;
-        
-        if (duration < 60) {
-            time = sec + " sec ";
-        } else if (duration >= 60 && duration < 3600) {
-            time = min + " min " + sec + " sec ";
-        } else if (duration >= 3600) {
-            time = hour + " hr " + min + " min " + sec + " sec ";
+
+        if (hour > 0) {
+            time += hour + " hr";
+        }
+        if (min > 0) {
+            time += " " + min + " min"; 
+        }
+        if (sec > 0) {
+            time += " " + sec + " sec";
         }
         return time;
     }
@@ -221,7 +223,7 @@ public class Utils {
 			int density = conf.densityDpi;
 			int p = (int) ((screenLayout * density) / 2000);
 			// Scale according to screen size.
-			if (bmp != null)
+			if (bmp != null && p > 0)
 			resizedBitmap = Bitmap.createScaledBitmap(bmp, p, p, true);
 		} catch (NameNotFoundException e) {
 			// TODO Auto-generated catch block
