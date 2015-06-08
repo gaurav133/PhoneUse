@@ -369,6 +369,18 @@ public class UsageTrackingService extends Service {
             info.setmIntervalStartTime(mMusicStartTimeStamp);
             info.setmIntervalEndTime(System.currentTimeMillis());
             info.setmIntervalDuration(Utils.getTimeInSecFromNano(time - mMusicStartTime));
+
+            // Check whether this time-stamp already in list.
+            ListIterator<UsageInfo> iterator = currentDataForMusic.listIterator();
+
+            while (iterator.hasNext()) {
+                UsageInfo musicInfo = iterator.next();
+
+                if (musicInfo.getmIntervalStartTime() == mMusicStartTimeStamp) {
+                    iterator.remove();
+                    break;
+                }
+            }
             currentDataForMusic.add(info);
         }
         
