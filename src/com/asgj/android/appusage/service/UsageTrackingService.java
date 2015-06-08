@@ -53,6 +53,7 @@ public class UsageTrackingService extends Service {
 
     int mIndex = 0;
     BackgroundTrackingTask mBgTrackingTask;
+    BackgroundTrackingTask.TimerTs mTimerTask;
 
     private boolean mIsRunningForegroundAppsThread = false,
             mIsRunningBackgroundApps = false,
@@ -172,7 +173,10 @@ public class UsageTrackingService extends Service {
                     mPreviousStartTime = currentTime;
                     mPreviousAppStartTimeStamp = System.currentTimeMillis();
                     initializeMap(mBgTrackingTask.foregroundMap);
-                    
+
+                    UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mForegroundActivityMap);
+                    initializeMap(mForegroundActivityMap);
+
                     // MUSIC DATA.
                     if (isMusicPlaying()) {
                         doHandleForMusicClose();
@@ -655,7 +659,8 @@ public class UsageTrackingService extends Service {
 
          // Start timer.
          mTimer = new Timer();
-         mTimer.schedule(mBgTrackingTask.new TimerTs(), 0, 1000);
+         mTimerTask = mBgTrackingTask.new TimerTs();
+         mTimer.schedule(mTimerTask, 0, 1000);
     }
 
     /**
@@ -727,6 +732,10 @@ public class UsageTrackingService extends Service {
         // Store current date to preferences.
         UsageSharedPrefernceHelper.setCurrentDate(mContext);
         
+        if (mTimerTask != null) {
+            mTimerTask.cancel();
+        }
+
         Toast.makeText(mContext, "Phone used for: " + phoneUsedTime() + "seconds",
                 Toast.LENGTH_LONG).show();
     }
