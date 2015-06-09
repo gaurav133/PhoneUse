@@ -41,7 +41,6 @@ import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
-import com.asgj.android.appusage.Utility.UsageInterval;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
@@ -170,7 +169,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         transaction.replace(R.id.usage_list_main_fragment, mFragment);
         transaction.commit();
     }
-    private void initDetailFragment(ArrayList<UsageInterval> intervalList,String applicationName) {
+    private void initDetailFragment(ArrayList<UsageInfo> intervalList,String applicationName) {
     	FragmentTransaction transaction = getFragmentManager().beginTransaction();
         mDetailFragment = new UsageDetailFragment(intervalList,applicationName);
         transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);

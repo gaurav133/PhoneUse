@@ -24,6 +24,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.provider.CallLog;
+import android.util.DisplayMetrics;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -204,10 +205,11 @@ public class Utils {
 	public static void getScaledImageView(Context context, ImageView image) {
 		RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) image
 				.getLayoutParams();
+		DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
 		Configuration conf = context.getResources().getConfiguration();
 		int screenLayout = conf.orientation == Configuration.ORIENTATION_LANDSCAPE ? conf.screenHeightDp
 				: conf.screenWidthDp;
-		int density = conf.densityDpi;
+		int density = displayMetrics.densityDpi;
 		int p = (int) ((screenLayout * density) / 2000);
 		params.width = p;
 		params.height = p;
@@ -225,7 +227,8 @@ public class Utils {
 			Configuration conf = context.getResources().getConfiguration();
 			int screenLayout = conf.orientation == Configuration.ORIENTATION_LANDSCAPE ? conf.screenHeightDp
 					: conf.screenWidthDp;
-			int density = conf.densityDpi;
+			DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+			int density = displayMetrics.densityDpi;
 			int p = (int) ((screenLayout * density) / 2000);
 			// Scale according to screen size.
 			if (bmp != null && p > 0)
