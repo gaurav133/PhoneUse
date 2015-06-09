@@ -10,27 +10,37 @@ import android.view.View;
 public class GraphView extends View {
 
 	private Paint paint;
-	private float[] values;
-	private float[] startTime;
-	private float[] endtime;
-	private String[] horlabels;
-	private String[] verlabels;
-	private String title;
-	private static float horstart = 40;
-	private static float vertStart = 75;
+	private float[] mIntervalValues;
+	private float[] mIntervalStartTime;
+	private float[] mIntervalEndTime;
+	private String[] mHorizontalLabels;
+	private String[] mVerticalLabels;
+	private String mGraphTitle;
+	private static float mHorizontalGapParameter = 40;
+	private static float mVertialGapParameter = 75;
 	private static int[] mColorList = new int[] { Color.RED, Color.BLUE,
 			Color.GREEN, Color.CYAN };
 
+	/**
+	 * 
+	 * @param context context that used this view
+	 * @param values list of duration of intervals to be shown on list
+	 * @param title  title of the graph
+	 * @param horlabels arrays of labels shown on x-axis
+	 * @param verlabels arrays of label shown on y- axis
+	 * @param startime  arrays of start time of intervals
+	 * @param endtime   arrays of end time of intervals
+	 */
 	public GraphView(Context context, float[] values, String title,
 			String[] horlabels, String[] verlabels, float[] startime,
 			float[] endtime) {
 		super(context);
-		this.values = values;
-		this.startTime = startime;
-		this.endtime = endtime;
-		this.title = title;
-		this.horlabels = horlabels;
-		this.verlabels = verlabels;
+		this.mIntervalValues = values;
+		this.mIntervalStartTime = startime;
+		this.mIntervalEndTime = endtime;
+		this.mGraphTitle = title;
+		this.mHorizontalLabels = horlabels;
+		this.mVerticalLabels = verlabels;
 		paint = new Paint();
 		this.setHorizontalScrollBarEnabled(true);
 		this.setVerticalScrollBarEnabled(true);
@@ -38,8 +48,8 @@ public class GraphView extends View {
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		setMeasuredDimension((int) (horstart * (horlabels.length + 1) + 100),
-				(int) (vertStart * (verlabels.length + 1) + 200));
+		setMeasuredDimension((int) (mHorizontalGapParameter * (mHorizontalLabels.length + 1) + 100),
+				(int) (mVertialGapParameter * (mVerticalLabels.length + 1) + 200));
 	}
 
 	@Override
@@ -49,37 +59,37 @@ public class GraphView extends View {
 		paint.setColor(Color.BLUE);
 		paint.setStrokeWidth(3f);
 		paint.setTextSize(50f);
-		canvas.drawText(title, horstart, horstart * 2, paint);
+		canvas.drawText(mGraphTitle, mHorizontalGapParameter, mHorizontalGapParameter * 2, paint);
 		paint.setTextSize(20f);
 		paint.setStrokeWidth(1f);
-		for (int i = 0; i < horlabels.length; i++) {
+		for (int i = 0; i < mHorizontalLabels.length; i++) {
 			paint.setColor(Color.DKGRAY);
-			canvas.drawLine(horstart, getHeight() - horstart, horstart
-					* (horlabels.length), getHeight() - horstart, paint);
+			canvas.drawLine(mHorizontalGapParameter, getHeight() - mHorizontalGapParameter, mHorizontalGapParameter
+					* (mHorizontalLabels.length), getHeight() - mHorizontalGapParameter, paint);
 			paint.setColor(Color.BLACK);
-			canvas.drawText(horlabels[i], (i * horstart) + horstart,
-					getHeight() - horstart + 30, paint);
+			canvas.drawText(mHorizontalLabels[i], (i * mHorizontalGapParameter) + mHorizontalGapParameter,
+					getHeight() - mHorizontalGapParameter + 30, paint);
 		}
 
-		for (int i = 0; i < verlabels.length; i++) {
+		for (int i = 0; i < mVerticalLabels.length; i++) {
 			paint.setColor(Color.DKGRAY);
-			canvas.drawLine(horstart, getHeight() - horstart, horstart,
-					getHeight() - horstart - (vertStart * (verlabels.length)),
+			canvas.drawLine(mHorizontalGapParameter, getHeight() - mHorizontalGapParameter, mHorizontalGapParameter,
+					getHeight() - mHorizontalGapParameter - (mVertialGapParameter * (mVerticalLabels.length)),
 					paint);
 			paint.setTextAlign(Align.CENTER);
 			paint.setColor(Color.BLACK);
-			canvas.drawText(verlabels[i], horstart - 20, getHeight() - horstart
-					- (vertStart * (i + 1)), paint);
+			canvas.drawText(mVerticalLabels[i], mHorizontalGapParameter - 20, getHeight() - mHorizontalGapParameter
+					- (mVertialGapParameter * (i + 1)), paint);
 		}
 
-		for (int i = 0; i < values.length; i++) {
-			if (values[i] == 0)
+		for (int i = 0; i < mIntervalValues.length; i++) {
+			if (mIntervalValues[i] == 0)
 				continue;
 			paint.setColor(mColorList[(i + 1) % 4]);
-			canvas.drawRect(((startTime[i] * horstart) + horstart),
-					(getHeight() - horstart - (values[i] * vertStart)),
-					((endtime[i] * horstart) + horstart),
-					(getHeight() - horstart), paint);
+			canvas.drawRect(((mIntervalStartTime[i] * mHorizontalGapParameter) + mHorizontalGapParameter),
+					(getHeight() - mHorizontalGapParameter - (mIntervalValues[i] * mVertialGapParameter)),
+					((mIntervalEndTime[i] * mHorizontalGapParameter) + mHorizontalGapParameter),
+					(getHeight() - mHorizontalGapParameter), paint);
 		}
 
 	}

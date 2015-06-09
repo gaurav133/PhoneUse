@@ -12,76 +12,87 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ScrollView;
 
-import com.asgj.android.appusage.Utility.UsageInterval;
+import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.ui.widgets.GraphView;
 
 public class UsageDetailFragment extends Fragment {
 
-	float maxDuration;
-	ArrayList<UsageInterval> mIntervalList = null;
-	String[] verlabels = new String[10];
-	String[] horlabels = new String[] { "0", "1", "2", "3", "4", "5", "6", "7",
-			"8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18",
-			"19", "20", "21", "22", "23", "24" };
+	private float mMaxDuration;
+	private ArrayList<UsageInfo> mIntervalList = null;
+	private String[] mVerticalLabels = new String[10];
+	private String[] mHorizontalLabels = new String[] { "0", "1", "2", "3",
+			"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
+			"16", "17", "18", "19", "20", "21", "22", "23", "24" };
 
-	float[] durations = new float[24];
-	float[] startTime = new float[24];
-	float[] endTime = new float[24];
-	String mApplicationName;
+	private float[] mIntervalDurationList = new float[24];
+	private float[] mIntervalStartTimeList = new float[24];
+	private float[] mIntervalEndTimeList = new float[24];
+	private String mApplicationName;
 
-	UsageDetailFragment(ArrayList<UsageInterval> intervalList, String appName) {
+	UsageDetailFragment(ArrayList<UsageInfo> intervalList, String appName) {
 		mIntervalList = intervalList;
+		mApplicationName = appName;
 		try {
-			maxDuration = maxDuration();
+			prepareDataForGraph();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		for (int i = 0; i < 10; i++) {
-			verlabels[i] = "" + (maxDuration * (i + 1) / 10);
-		}
-		mApplicationName = appName;
 
 	}
 
-	private int maxDuration() throws Exception {
+	private void prepareDataForGraph() throws Exception {
 		if (mIntervalList == null || mIntervalList.size() == 0) {
 			throw new Exception("empty enterval list found..");
 		}
-		int maxDuration = mIntervalList.get(0).getDuration();
-		for (UsageInterval interval : mIntervalList) {
-			int starttime = interval.getStartTime();
-			for (int i = 0; i < horlabels.length - 1; i++) {
-				float horValue = (float) Integer.parseInt(horlabels[i]);
-				float horValue1 = (float) Integer.parseInt(horlabels[i + 1]);
+		long maxDuration = mIntervalList.get(0).getmIntervalDuration();
+		for (UsageInfo interval : mIntervalList) {
+			long starttime = interval.getmIntervalStartTime();
+			for (int i = 0; i < mHorizontalLabels.length - 1; i++) {
+				float horValue = (float) Integer.parseInt(mHorizontalLabels[i]);
+				float horValue1 = (float) Integer
+						.parseInt(mHorizontalLabels[i + 1]);
 				if (starttime >= horValue && starttime < horValue1) {
-					startTime[i] = starttime;
-					endTime[i] = interval.getEndTime();
-					durations[i] = interval.getDuration();
+					mIntervalStartTimeList[i] = starttime;
+					mIntervalEndTimeList[i] = interval.getmIntervalEndTime();
+					mIntervalDurationList[i] = interval.getmIntervalDuration();
 				}
 			}
-			if (maxDuration < interval.getDuration()) {
-				maxDuration = interval.getDuration();
+			if (maxDuration < interval.getmIntervalDuration()) {
+				maxDuration = interval.getmIntervalDuration();
 			}
 		}
-		return maxDuration;
+
+		mMaxDuration = maxDuration;
+		for (int i = 0; i < 10; i++) {
+			mVerticalLabels[i] = "" + (mMaxDuration * (i + 1) / 10);
+		}
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		LinearLayout ll = new LinearLayout(getActivity());
+		// parent layout
+		LinearLayout parentLayout = new LinearLayout(getActivity());
+
+		// scrollview for making view vertically scrollable
 		ScrollView scrollView = new ScrollView(getActivity());
+
+		// horizontal scrollview for making view horizontally scrollable
 		HorizontalScrollView horiScrollView = new HorizontalScrollView(
 				getActivity());
-		GraphView graph = new GraphView(getActivity(), durations,
-				mApplicationName, horlabels, verlabels, startTime, endTime);
+
+		// graph view used for showng bar chart.
+		GraphView graph = new GraphView(getActivity(), mIntervalDurationList,
+				mApplicationName, mHorizontalLabels, mVerticalLabels,
+				mIntervalStartTimeList, mIntervalEndTimeList);
+
 		LinearLayout.LayoutParams params = new LayoutParams(
 				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		horiScrollView.addView(graph);
 		scrollView.addView(horiScrollView);
 		scrollView.setLayoutParams(params);
-		ll.addView(scrollView);
-		return ll;
+		parentLayout.addView(scrollView);
+		return parentLayout;
 	}
 
 }
