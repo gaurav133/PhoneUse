@@ -24,6 +24,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
 import com.asgj.android.appusage.R;
@@ -63,6 +65,16 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 	private UsageListAdapter<AppData> mAppDataListAdapter = null;
 	private UsageListAdapter<MusicData> mMusicDataListAdapter = null;
 	private UsageListAdapter<CallData> mCallDataListAdapter = null;
+	private OnUsageItemClickListener mItemClickListener = null;
+	
+	public void setOnUsageItemClickListener(OnUsageItemClickListener listener){
+		mItemClickListener = listener;
+	}
+	
+	
+	public interface OnUsageItemClickListener {
+		public void onUsageItemClick(int tabIndex,int listItem);
+	}
 
 	/**
 	 * Inflates the {@link View} which will be displayed by this
@@ -153,7 +165,7 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 	 * {@link #getPageTitle(int)} method which controls what is displayed in the
 	 * {@link SlidingTabLayout}.
 	 */
-	class SamplePagerAdapter extends PagerAdapter {
+	class SamplePagerAdapter extends PagerAdapter implements OnItemClickListener{
 
 		String[] mList = new String[] { "Apps", "Media", "Call" };
 
@@ -222,6 +234,8 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 				title.setAdapter(mCallDataListAdapter);
 				mCallDataListAdapter.notifyDataSetChanged();
 			}
+			title.setTag(position);
+			title.setOnItemClickListener(this);
 
 			Log.i(LOG_TAG, "instantiateItem() [position: " + position + "]");
 
@@ -237,6 +251,14 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 		public void destroyItem(ViewGroup container, int position, Object object) {
 			container.removeView((View) object);
 			Log.i(LOG_TAG, "destroyItem() [position: " + position + "]");
+		}
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+				long arg3) {
+			if(mItemClickListener != null){
+				mItemClickListener.onUsageItemClick((int)arg0.getTag(), arg2);
+			}
+			
 		}
 
 	}
