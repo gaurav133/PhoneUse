@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
+import android.annotation.TargetApi;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
@@ -22,6 +22,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.provider.CallLog;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -47,13 +48,15 @@ public class Utils {
     	return -1;
     }
      
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public static boolean isPermissionGranted(Context context) {
         final UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService("usagestats");
         final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0,  System.currentTimeMillis());
         return !queryUsageStats.isEmpty();
     }
 
-	public static HashMap<String, Long> getAppUsageFromLAndroidDb(
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public static HashMap<String, Long> getAppUsageFromLAndroidDb(
 			Context context, String showBy, long startTime, long endTime) {
 		UsageStatsManager usm = (UsageStatsManager) context
 				.getSystemService("usagestats");
@@ -85,8 +88,10 @@ public class Utils {
 		}
 		HashMap<String, Long> map = new HashMap<String, Long>();
 		for (UsageStats stat : usageStatsList) {
-			map.put(stat.getPackageName(),
-					Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()));
+		    if (Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()) > 0) {
+		          map.put(stat.getPackageName(),
+		                    Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()));
+		    }
 		}
 		return map;
 	}
