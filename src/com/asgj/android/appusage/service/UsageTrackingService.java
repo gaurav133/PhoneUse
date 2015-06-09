@@ -132,10 +132,11 @@ public class UsageTrackingService extends Service {
                     mPreviousAppStartTimeStamp = System.currentTimeMillis();
                     
                     // If thread isn't already running. Start it again.
-                    if (mIsRunningBackgroundApps == false) {
-                        startThread();
-                    }
                     mIsScreenOff = false;
+                    mTimerTask.cancel();
+
+                    mTimerTask = mBgTrackingTask.new TimerTs();
+                    mTimer.schedule(mTimerTask, 0, 1000);
                 }
 
             }
@@ -162,19 +163,21 @@ public class UsageTrackingService extends Service {
                     // APPS DATA.
                     Log.v(LOG_TAG, "It's midnight, dump data to DB.");
                     UsageSharedPrefernceHelper.clearPreference(mContext);
-                    long currentTime = System.nanoTime();
-                    
-                    UsageInfo usageInfo = new UsageInfo();
-                    usageInfo.setmIntervalStartTime(mPreviousAppStartTimeStamp);
-                    usageInfo.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-                    usageInfo.setmIntervalDuration(Utils.getTimeInSecFromNano(currentTime - mPreviousStartTime));
-                    mDatabase.insertApplicationEntry(mPreviousAppName, usageInfo);
-                    
-                    mPreviousStartTime = currentTime;
-                    mPreviousAppStartTimeStamp = System.currentTimeMillis();
-                    initializeMap(mBgTrackingTask.foregroundMap);
 
-                    UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mForegroundActivityMap);
+                    if (mIsScreenOff == false) {
+                        long currentTime = System.nanoTime();
+
+                        UsageInfo usageInfo = new UsageInfo();
+                        usageInfo.setmIntervalStartTime(mPreviousAppStartTimeStamp);
+                        usageInfo.setmIntervalEndTime(mPreviousAppExitTimeStamp);
+                        usageInfo.setmIntervalDuration(Utils.getTimeInSecFromNano(currentTime - mPreviousStartTime));
+                        mDatabase.insertApplicationEntry(mPreviousAppName, usageInfo);
+
+                        mPreviousStartTime = currentTime;
+                        mPreviousAppStartTimeStamp = System.currentTimeMillis();
+                    }
+
+                    initializeMap(mBgTrackingTask.foregroundMap);
                     initializeMap(mForegroundActivityMap);
 
                     // MUSIC DATA.
@@ -204,11 +207,12 @@ public class UsageTrackingService extends Service {
                 // Update mPrevioustime and start time-stamp.
                 mPreviousStartTime = System.nanoTime();
                 mPreviousAppStartTimeStamp = System.currentTimeMillis();
-                
-                // If thread isn't already running. Start it again.
-                if (mIsRunningBackgroundApps == false) {
-                    startThread();
-                }
+
+                mTimerTask.cancel();
+
+                mTimerTask = mBgTrackingTask.new TimerTs();
+                mTimer.schedule(mTimerTask, 0, 1000);
+
                 mIsScreenOff = false;
             }
         }
@@ -249,11 +253,12 @@ public class UsageTrackingService extends Service {
                 }
                 
                 // If screen dim, and user isn't listening to songs or talking, then update boolean variables.
-                if (mTelephonyManager.getCallState() == TelephonyManager.CALL_STATE_IDLE && !isMusicPlaying()) {
-                    mIsRunningBackgroundApps = false;
+                if (!isMusicPlaying()) {
                     mIsMusicStarted = false;
-                } else if (!isMusicPlaying()) {
-                    mIsMusicStarted = false;
+
+                    mTimerTask.cancel();
+                    mTimerTask = mBgTrackingTask.new TimerTs();
+                    mTimer.schedule(mTimerTask, 0, 60000);
                 }
                 mIsRunningForegroundAppsThread = false;
                 
@@ -554,12 +559,16 @@ public class UsageTrackingService extends Service {
               }
               mListMusicPlayTimes.add(usageInfoMusic);
           }
+          
+          if (mIsScreenOff == true) {
+              mTimerTask.cancel();
+              mTimerTask = mBgTrackingTask.new TimerTs();
+              mTimer.schedule(mTimerTask, 0, 60000);
+          }
     }
 
     private void initializeMap( HashMap<String, Long> foregroundMap) {
-        for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
-            entry.setValue(0L);
-        }
+        foregroundMap.clear();
     }
 
     private void initLocalMapForThread( HashMap<String, Long> foregroundMap){
@@ -615,6 +624,14 @@ public class UsageTrackingService extends Service {
                     // If music has been started after tracking started.
                     mIsMusicStarted = true;
 
+                    // If screen is off and music is playing, then update timer again to 1 sec.
+                    if (mIsScreenOff == true) {
+                        mTimerTask.cancel();
+                        mTimerTask = mBgTrackingTask.new TimerTs();
+                        mTimer.schedule(mTimerTask, 0, 1000);
+                    }
+
+                    // If it's not the first interval after service start, check for threshold gap.
                     if (mMusicStopTime > 0) {
                         if (Utils.getTimeInSecFromNano(System.nanoTime() - mMusicStopTime) > MUSIC_THRESHOLD_TIME) {
                             mMusicStartTimeStamp = System.currentTimeMillis();
@@ -760,14 +777,12 @@ public class UsageTrackingService extends Service {
          mIsFirstTimeStartForgroundAppService = true;
          
          mDatabase = new PhoneUsageDatabase(mContext);
-         mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
          mStartTimestamp = System.currentTimeMillis();
          startThread();
          // If music is already playing when tracking started.
          if (isMusicPlaying()) {
              mIsMusicPlayingAtStart = true;
              mIsMusicStarted = true;
-             mIsRunningBackgroundApps = true;
              mMusicStartTimeStamp = System.currentTimeMillis();
              mMusicStartTime = System.nanoTime();
              }
