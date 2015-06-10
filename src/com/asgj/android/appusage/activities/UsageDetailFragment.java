@@ -1,6 +1,7 @@
 package com.asgj.android.appusage.activities;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -20,18 +21,98 @@ public class UsageDetailFragment extends Fragment {
 	private float mMaxDuration;
 	private ArrayList<UsageInfo> mIntervalList = null;
 	private String[] mVerticalLabels = new String[10];
-	private String[] mHorizontalLabels = new String[] { "0", "1", "2", "3",
-			"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
-			"16", "17", "18", "19", "20", "21", "22", "23", "24" };
-
+	private String[] mHorizontalLabels = null;
 	private float[] mIntervalDurationList = new float[24];
 	private float[] mIntervalStartTimeList = new float[24];
 	private float[] mIntervalEndTimeList = new float[24];
 	private String mApplicationName;
 
-	UsageDetailFragment(ArrayList<UsageInfo> intervalList, String appName) {
+	/**
+	 * 
+	 * @param intervalList list of intervals having starttime, endtime and durations. it totally dependent on the showby.
+	 * @param appName name of application for which graph is need to shown
+	 * @param showBy this is most important parameter for detail fragment. it actually decides the horizontal labels.
+	 */
+	UsageDetailFragment(ArrayList<UsageInfo> intervalList, String appName,String showBy) {
 		mIntervalList = intervalList;
 		mApplicationName = appName;
+		switch (showBy) {
+		case "Today":
+			mHorizontalLabels =new String[] { "0", "1", "2", "3",
+					"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
+					"16", "17", "18", "19", "20", "21", "22", "23", "24" };
+			break;
+		case "Weekly":
+			mHorizontalLabels =new String[] { "0", "1", "2", "3",
+					"4", "5", "6", "7"};
+			break;
+		case "Monthly":
+			mHorizontalLabels =new String[] { "0", "1", "2", "3",
+					"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
+					"16", "17", "18", "19", "20", "21", "22", "23", "24","25","26","27","28","29","30" };
+			break;
+		case "Yearly":
+			mHorizontalLabels =new String[] { "0", "1", "2", "3",
+					"4", "5", "6", "7", "8", "9", "10", "11"};
+			break;
+		case "Custom":
+			
+			long minStartTime = Integer.MAX_VALUE;
+			long maxStarttime = Integer.MIN_VALUE;
+			for(UsageInfo interval : mIntervalList){
+				if(interval.getmIntervalStartTime() < minStartTime){
+					minStartTime = interval.getmIntervalStartTime();
+				}
+				if(interval.getmIntervalStartTime() > maxStarttime){
+					maxStarttime = interval.getmIntervalStartTime();
+				}
+			}
+			Calendar cal1 = Calendar.getInstance();
+			cal1.setTimeInMillis(minStartTime);
+			Calendar cal2 = Calendar.getInstance();
+			cal2.setTimeInMillis(maxStarttime);
+			int comp1 = cal1.get(Calendar.YEAR);
+	        int comp2 = cal2.get(Calendar.YEAR);
+	        
+	        
+	        if (comp1 != comp2) {
+	        	//if dates diff is nore than year than show months.
+	        	mHorizontalLabels =new String[] { "0", "1", "2", "3",
+						"4", "5", "6", "7", "8", "9", "10", "11"};
+	        	break;
+	        }
+	        
+	        comp1 = cal1.get(Calendar.MONTH);
+	        comp2 = cal2.get(Calendar.MONTH);
+	        
+	        if (comp1 != comp2) {
+	        	//if dates diff is nore than no of months.
+	        	mHorizontalLabels =new String[] { "0", "1", "2", "3",
+						"4", "5", "6", "7", "8", "9", "10", "11"};
+	        	break;
+	        }
+	        
+	        comp1 = cal1.get(Calendar.DAY_OF_MONTH);
+	        comp2 = cal2.get(Calendar.DAY_OF_MONTH);
+	        int noofdays = 0;
+	        if (comp1 != comp2) {
+	        	//if dates are not equal and have diff less than 30 days then show days upto diff.
+	        	noofdays = noofdays+ (Math.abs(comp1-comp2)); 
+	        	mHorizontalLabels =new String[noofdays];
+				for(int i =0; i< noofdays ; i++){
+					mHorizontalLabels[i] = ""+ i;
+				}
+	        }else{
+	        	//if dates are equal, then show in hours.
+	        	mHorizontalLabels =new String[] { "0", "1", "2", "3",
+						"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
+						"16", "17", "18", "19", "20", "21", "22", "23", "24" };
+	        	break;
+	        }
+			
+			
+			break;
+		}
 		try {
 			prepareDataForGraph();
 		} catch (Exception e) {

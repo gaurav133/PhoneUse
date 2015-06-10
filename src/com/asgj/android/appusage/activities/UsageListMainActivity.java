@@ -171,7 +171,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     }
     private void initDetailFragment(ArrayList<UsageInfo> intervalList,String applicationName) {
     	FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        mDetailFragment = new UsageDetailFragment(intervalList,applicationName);
+        mDetailFragment = new UsageDetailFragment(intervalList,applicationName,UsageSharedPrefernceHelper.getShowByType(mContext));
         transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);
         transaction.addToBackStack(null);
         transaction.commit();
