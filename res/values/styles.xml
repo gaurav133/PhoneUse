@@ -21,10 +21,11 @@
     <style name="mainActionBarBckgnd" parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
         <item name="android:background">#ff1ca8f4</item>
         <item name="android:titleTextStyle">@style/actionbartitlestyle</item>
+        <item name="android:displayOptions">showTitle</item>
     </style>
     
     <style name="actionbartitlestyle">
-        <item name="android:textSize">25sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:textColor">@android:color/white</item>
     </style>
     <!-- Main screen action bar style. -->

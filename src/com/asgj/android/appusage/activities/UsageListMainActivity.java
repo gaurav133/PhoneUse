@@ -16,6 +16,7 @@ import android.animation.Animator.AnimatorListener;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -24,6 +25,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -66,7 +68,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private LocalBinder mBinder;
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
-    private UsageListFragment<HashMap, ArrayList, ArrayList> mFragment;
+    private UsageListFragment<HashMap, ArrayList, ArrayList> mUsageListFragment;
     private UsageDetailFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
@@ -109,7 +111,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         		,getString(R.string.string_Yearly),getString(R.string.string_Custom)};
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
-        mFragment.setOnUsageItemClickListener(this);
+        if(Utils.isTabletDevice(mContext)){
+        	initDetailFragment(null, "abc");
+        }
+        mUsageListFragment.setOnUsageItemClickListener(this);
         mIsCreated = true;
 
         mHandler = new Handler();
@@ -164,16 +169,25 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     }
 
     private void initListFragment() {
+    	Fragment fragment = getFragmentManager().findFragmentById(R.id.usage_list_main_fragment); 
+    	if(fragment != null){
+    		getFragmentManager().popBackStackImmediate();
+    	}
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        mFragment = new UsageListFragment<HashMap, ArrayList, ArrayList>();
-        transaction.replace(R.id.usage_list_main_fragment, mFragment);
+        mUsageListFragment = new UsageListFragment<HashMap, ArrayList, ArrayList>();
+        transaction.replace(R.id.usage_list_main_fragment, mUsageListFragment);
         transaction.commit();
     }
     private void initDetailFragment(ArrayList<UsageInfo> intervalList,String applicationName) {
     	FragmentTransaction transaction = getFragmentManager().beginTransaction();
         mDetailFragment = new UsageDetailFragment(intervalList,applicationName,UsageSharedPrefernceHelper.getShowByType(mContext));
+        if(!Utils.isTabletDevice(mContext)) {
         transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);
         transaction.addToBackStack(null);
+        }
+        else {
+        transaction.replace(R.id.usage_detail_main_fragment, mDetailFragment);
+        }
         transaction.commit();
     }
 
@@ -287,7 +301,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                                 @Override
                                 public void run() {
                                     // TODO Auto-generated method stub
-                                    mFragment.setmUsageAppData(mDataMap);
+                                    mUsageListFragment.setmUsageAppData(mDataMap);
                                 }
                             });
                         }
@@ -295,7 +309,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 }
             }
         }
-        mFragment.setmUsageAppData(mDataMap);
+        mUsageListFragment.setmUsageAppData(mDataMap);
     }
 
    /**
@@ -354,7 +368,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 }
             }
         }
-        mFragment.setmMusicData(mMusicList);
+        mUsageListFragment.setmMusicData(mMusicList);
     }
 
     /**
@@ -411,7 +425,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         
         if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
+            mUsageListFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
         } else {
             displayDataForApps();
         }
@@ -716,26 +730,26 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 				UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[0]);
 				hideFabOption();
 				mShowByOptionsMain.setText(mShowList[0]);
-				mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
+				mUsageListFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			}
 			break;
 		case R.id.showByOptions2:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[1]);
 			hideFabOption();
 			mShowByOptionsMain.setText(mShowList[1]);
-			 mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
+			 mUsageListFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			break;
 		case R.id.showByOptions3:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[2]);
 			hideFabOption();
 			mShowByOptionsMain.setText(mShowList[2]);
-			 mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
+			 mUsageListFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			break;
 		case R.id.showByOptions4:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[3]);
 			hideFabOption();
 			mShowByOptionsMain.setText(mShowList[3]);
-			mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
+			mUsageListFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),0,0));
 			break;
 		case R.id.showByOptions5:
 			startDateFragment = new MonthViewFragment();
@@ -760,7 +774,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             displayDataForMusic();
         }else{
         	mShowByOptionsMain.setText(mShowList[4]);
-        	mFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),
+        	mUsageListFragment.setmUsageAppData(Utils.getAppUsageFromLAndroidDb(mContext,UsageSharedPrefernceHelper.getShowByType(mContext),
         			startCalendar.getTimeInMillis(),endCalendar.getTimeInMillis()));
         	displayDataForMusic();
         }
@@ -768,7 +782,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     }
 	@Override
 	public void onUsageItemClick(int tabIndex, int listItem) {
-		initDetailFragment(null,"mdeia");
+		if(Utils.isTabletDevice(mContext)){
+		     mDetailFragment.updateDetailGraph(null, "time", UsageSharedPrefernceHelper.getShowByType(mContext));
+		}else{
+		     initDetailFragment(null,"mdeia");
+		}
 		
 	}
 }

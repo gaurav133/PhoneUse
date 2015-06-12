@@ -24,17 +24,17 @@
         android:minHeight="?android:attr/listPreferredItemHeight"
         android:gravity="start|center_vertical"
         android:layout_centerVertical="true"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:fontFamily="sans-serif-condensed" />
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:fontFamily="sans-serif" />
 
     <TextView
         android:id="@+id/text2"
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="7"
-        android:fontFamily="sans-serif-condensed"
+        android:fontFamily="sans-serif"
         android:visibility="gone"
-        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textAppearance="?android:attr/textAppearanceMedium"
         android:minHeight="?android:attr/listPreferredItemHeight"
         android:gravity="center" />
 
@@ -43,10 +43,11 @@
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="7"
-        android:fontFamily="sans-serif-condensed"
+        android:fontFamily="sans-serif"
         android:minHeight="?android:attr/listPreferredItemHeight"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
         android:gravity="center_vertical|right" />
 
 </LinearLayout>

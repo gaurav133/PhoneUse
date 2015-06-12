@@ -28,10 +28,14 @@ import android.util.DisplayMetrics;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.asgj.android.appusage.R;
 public class Utils {
 
     public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
     public static String TIME_FORMAT_HH_HR_MM_MIN_SS_SEC = "hh hr mm min ss sec";
+    public static boolean isTabletDevice(Context context){
+    	return context.getResources().getBoolean(R.bool.isTablet);
+    }
 
     public static long getTimeInSecFromNano(long nanoSec) {
         return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);

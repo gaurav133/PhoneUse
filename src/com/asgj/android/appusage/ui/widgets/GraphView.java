@@ -16,9 +16,11 @@ public class GraphView extends View {
 	private String[] mHorizontalLabels;
 	private String[] mVerticalLabels;
 	private String mGraphTitle;
-	private static float mHorizontalGapParameter = 40;
-	private static float mVertialGapParameter = 75;
-	private static int[] mColorList = new int[] { Color.RED, Color.BLUE,
+	private String mHorizontalLabelName = null;
+	private String mVerticalLabelName = null;
+	private float mHorizontalGapParameter = 40;
+	private float mVertialGapParameter = 75;
+	private int[] mColorList = new int[] { Color.RED, Color.BLUE,
 			Color.GREEN, Color.CYAN };
 
 	/**
@@ -33,7 +35,7 @@ public class GraphView extends View {
 	 */
 	public GraphView(Context context, float[] values, String title,
 			String[] horlabels, String[] verlabels, float[] startime,
-			float[] endtime) {
+			float[] endtime,String horizontalLabelName,String verticalLabelName) {
 		super(context);
 		this.mIntervalValues = values;
 		this.mIntervalStartTime = startime;
@@ -41,6 +43,8 @@ public class GraphView extends View {
 		this.mGraphTitle = title;
 		this.mHorizontalLabels = horlabels;
 		this.mVerticalLabels = verlabels;
+		this.mHorizontalLabelName = horizontalLabelName;
+		this.mVerticalLabelName = verticalLabelName;
 		paint = new Paint();
 		this.setHorizontalScrollBarEnabled(true);
 		this.setVerticalScrollBarEnabled(true);
@@ -48,8 +52,8 @@ public class GraphView extends View {
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		setMeasuredDimension((int) (mHorizontalGapParameter * (mHorizontalLabels.length + 1) + 100),
-				(int) (mVertialGapParameter * (mVerticalLabels.length + 1) + 200));
+		setMeasuredDimension((int) (1.4 * mHorizontalGapParameter * (mHorizontalLabels.length)),
+				(int) (mVertialGapParameter * (mVerticalLabels.length) + 200));
 	}
 
 	@Override
@@ -59,9 +63,21 @@ public class GraphView extends View {
 		paint.setColor(Color.BLUE);
 		paint.setStrokeWidth(3f);
 		paint.setTextSize(50f);
-		canvas.drawText(mGraphTitle, mHorizontalGapParameter, mHorizontalGapParameter * 2, paint);
+		//Graph title
+		canvas.drawText(mGraphTitle, mHorizontalGapParameter * 3, mHorizontalGapParameter * 2, paint);
+		
+		//graph vertical label nam and horizontal label name
+		paint.setStrokeWidth(2f);
+		paint.setTextSize(30f);
+		canvas.drawText(mVerticalLabelName, mHorizontalGapParameter, mHorizontalGapParameter * 3, paint);
+		canvas.drawText(mHorizontalLabelName, mHorizontalGapParameter
+				* (mHorizontalLabels.length+ 1), getHeight() - mHorizontalGapParameter, paint);
+		
+		
 		paint.setTextSize(20f);
 		paint.setStrokeWidth(1f);
+		
+		//horizental line and its labels
 		for (int i = 0; i < mHorizontalLabels.length; i++) {
 			paint.setColor(Color.DKGRAY);
 			canvas.drawLine(mHorizontalGapParameter, getHeight() - mHorizontalGapParameter, mHorizontalGapParameter
@@ -71,6 +87,7 @@ public class GraphView extends View {
 					getHeight() - mHorizontalGapParameter + 30, paint);
 		}
 
+		//vertical line and its labels
 		for (int i = 0; i < mVerticalLabels.length; i++) {
 			paint.setColor(Color.DKGRAY);
 			canvas.drawLine(mHorizontalGapParameter, getHeight() - mHorizontalGapParameter, mHorizontalGapParameter,
@@ -82,6 +99,7 @@ public class GraphView extends View {
 					- (mVertialGapParameter * (i + 1)), paint);
 		}
 
+		//intervals with different colors
 		for (int i = 0; i < mIntervalValues.length; i++) {
 			if (mIntervalValues[i] == 0)
 				continue;

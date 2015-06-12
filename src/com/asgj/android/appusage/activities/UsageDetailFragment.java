@@ -26,34 +26,60 @@ public class UsageDetailFragment extends Fragment {
 	private float[] mIntervalStartTimeList = new float[24];
 	private float[] mIntervalEndTimeList = new float[24];
 	private String mApplicationName;
+	private String mHorizontalLabelName = null;
+	private String mVerticalLabelName = null;
+	
+	//default constrcutor is nessary incase android want to make instance of this fragment
+	public UsageDetailFragment() {
+	}
+	
+	
+	public void updateDetailGraph(ArrayList<UsageInfo> intervalList, String appName,String showBy){
+		initDetailFragment(intervalList,  appName, showBy);
+		
+	}
+	
+	public void initDetailFragment(ArrayList<UsageInfo> intervalList, String appName,String showBy){
 
-	/**
-	 * 
-	 * @param intervalList list of intervals having starttime, endtime and durations. it totally dependent on the showby.
-	 * @param appName name of application for which graph is need to shown
-	 * @param showBy this is most important parameter for detail fragment. it actually decides the horizontal labels.
-	 */
-	UsageDetailFragment(ArrayList<UsageInfo> intervalList, String appName,String showBy) {
 		mIntervalList = intervalList;
+		//dummy for testing
+		if(mIntervalList == null){
+			mIntervalList = new ArrayList<UsageInfo>();
+			for(int i =0; i< 3 ; i++){
+				UsageInfo info = new UsageInfo();
+				info.setmIntervalStartTime(((i+1)*4)+1);
+				info.setmIntervalEndTime(((i+1)*4)+(i+2));
+				info.setmIntervalDuration(info.getmIntervalEndTime() - info.getmIntervalStartTime());
+				mIntervalList.add(info);
+			}
+		}
 		mApplicationName = appName;
 		switch (showBy) {
 		case "Today":
 			mHorizontalLabels =new String[] { "0", "1", "2", "3",
 					"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
 					"16", "17", "18", "19", "20", "21", "22", "23", "24" };
+			mHorizontalLabelName = "Time in Hours (HH : 00)";
+			mVerticalLabelName = "Duration (Hours)";
 			break;
 		case "Weekly":
 			mHorizontalLabels =new String[] { "0", "1", "2", "3",
 					"4", "5", "6", "7"};
+			mHorizontalLabelName = "Time in Days (DD)";
+			mVerticalLabelName = "Duration (Days)";
 			break;
 		case "Monthly":
 			mHorizontalLabels =new String[] { "0", "1", "2", "3",
 					"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
 					"16", "17", "18", "19", "20", "21", "22", "23", "24","25","26","27","28","29","30" };
+			mHorizontalLabelName = "Time in Days (DD)";
+			mVerticalLabelName = "Duration (Days)";
 			break;
 		case "Yearly":
 			mHorizontalLabels =new String[] { "0", "1", "2", "3",
 					"4", "5", "6", "7", "8", "9", "10", "11"};
+			mHorizontalLabelName = "Time in Months (MM)";
+			mVerticalLabelName = "Duration (Hours)";
 			break;
 		case "Custom":
 			
@@ -79,6 +105,8 @@ public class UsageDetailFragment extends Fragment {
 	        	//if dates diff is nore than year than show months.
 	        	mHorizontalLabels =new String[] { "0", "1", "2", "3",
 						"4", "5", "6", "7", "8", "9", "10", "11"};
+	        	mHorizontalLabelName = "Time in Months (MM)";
+				mVerticalLabelName = "Duration (Hours)";
 	        	break;
 	        }
 	        
@@ -89,6 +117,8 @@ public class UsageDetailFragment extends Fragment {
 	        	//if dates diff is nore than no of months.
 	        	mHorizontalLabels =new String[] { "0", "1", "2", "3",
 						"4", "5", "6", "7", "8", "9", "10", "11"};
+	        	mHorizontalLabelName = "Time in Months (MM)";
+				mVerticalLabelName = "Duration (Hours)";
 	        	break;
 	        }
 	        
@@ -107,6 +137,8 @@ public class UsageDetailFragment extends Fragment {
 	        	mHorizontalLabels =new String[] { "0", "1", "2", "3",
 						"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15",
 						"16", "17", "18", "19", "20", "21", "22", "23", "24" };
+	        	mHorizontalLabelName = "Time in Hours (HH : 00)";
+				mVerticalLabelName = "Duration (Hours)";
 	        	break;
 	        }
 			
@@ -118,7 +150,17 @@ public class UsageDetailFragment extends Fragment {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	
+	}
 
+	/**
+	 * 
+	 * @param intervalList list of intervals having starttime, endtime and durations. it totally dependent on the showby.
+	 * @param appName name of application for which graph is need to shown
+	 * @param showBy this is most important parameter for detail fragment. it actually decides the horizontal labels.
+	 */
+	UsageDetailFragment(ArrayList<UsageInfo> intervalList, String appName,String showBy) {
+		initDetailFragment(intervalList,  appName, showBy);
 	}
 
 	private void prepareDataForGraph() throws Exception {
@@ -126,7 +168,8 @@ public class UsageDetailFragment extends Fragment {
 			throw new Exception("empty enterval list found..");
 		}
 		long maxDuration = mIntervalList.get(0).getmIntervalDuration();
-		for (UsageInfo interval : mIntervalList) {
+		for (int j =0; j< mIntervalList.size() ; j++) {
+			UsageInfo interval = mIntervalList.get(j);
 			long starttime = interval.getmIntervalStartTime();
 			for (int i = 0; i < mHorizontalLabels.length - 1; i++) {
 				float horValue = (float) Integer.parseInt(mHorizontalLabels[i]);
@@ -165,7 +208,7 @@ public class UsageDetailFragment extends Fragment {
 		// graph view used for showng bar chart.
 		GraphView graph = new GraphView(getActivity(), mIntervalDurationList,
 				mApplicationName, mHorizontalLabels, mVerticalLabels,
-				mIntervalStartTimeList, mIntervalEndTimeList);
+				mIntervalStartTimeList, mIntervalEndTimeList,mHorizontalLabelName,mVerticalLabelName);
 
 		LinearLayout.LayoutParams params = new LayoutParams(
 				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
