@@ -17,6 +17,10 @@ public class DeviceRebootReceiver extends BroadcastReceiver {
 			return;
 		if (action.equals(Intent.ACTION_SHUTDOWN)) {
 			if (UsageSharedPrefernceHelper.isServiceRunning(context)) {
+			    Intent stopServiceIntent = new Intent();
+			    stopServiceIntent
+                        .setClass(context, UsageTrackingService.class);
+			    context.stopService(stopServiceIntent);
 				UsageSharedPrefernceHelper.setServiceRunningWhileShutDown(
 						context, true);
 			}

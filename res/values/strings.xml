@@ -26,7 +26,8 @@
     <string name="string_select_packages_dialog_title">Please select packages that you want to track.</string>
     <string name="string_Ok">OK</string>
     <string name="string_Cancel">Cancel</string>
-    <string name="string_select_packages_pref_title">Package Monitering.</string>
+    <string name="string_select_packages_pref_title">Package Monitoring.</string>
     <string name="string_select_packages_maximum_app_toast">You can not select more than 5 applications.</string>
+    <string name="string_total_time_apps">Total Time</string>
 
 </resources>
