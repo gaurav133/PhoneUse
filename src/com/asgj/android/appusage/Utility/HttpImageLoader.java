@@ -1,5 +1,7 @@
 package com.asgj.android.appusage.Utility;
 
+import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
+
 import android.app.ActivityManager;
 import android.content.ComponentCallbacks2;
 import android.content.Context;
@@ -30,9 +32,8 @@ public class HttpImageLoader implements ComponentCallbacks2 {
 	}
 
 	public void display(String url, ImageView imageview, int defaultresource) {
-        
-        
-        if (!url.equals("Total Time")) {
+
+        if (!url.equals(UsageListAdapter.mTotalTimeKey)) {
             imageview.setImageResource(defaultresource);
         Bitmap image = cache.get(url);
         if (image != null) {
