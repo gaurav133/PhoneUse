@@ -15,6 +15,8 @@ import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -125,13 +127,21 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         
         // Check whether binding is needed.
         if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
-            Log.v(LOG_TAG, "Service restrart from activity");
+            Log.v(LOG_TAG, "Rebinding service to activity.");
             Intent startServiceIntent = new Intent();
             startServiceIntent.setClass(this, UsageTrackingService.class);
             startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
             //startService(startServiceIntent);
             bindService(startServiceIntent, mConnection, 0);
         }
+        
+        this.cal1 = Calendar.getInstance();
+        long startTime = UsageSharedPrefernceHelper.getCalendar(mContext, "startCalendar");
+        cal1.setTimeInMillis(startTime);
+        
+        this.cal2 = Calendar.getInstance();
+        long endTime = UsageSharedPrefernceHelper.getCalendar(mContext, "endCalendar");
+        cal2.setTimeInMillis(endTime);
     }
     
     private void initFabTextView(){
@@ -459,6 +469,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             unbindService(mConnection);
         }
         
+        UsageSharedPrefernceHelper.setCalendar(mContext, cal1.getTimeInMillis(), "startCalendar");
+        UsageSharedPrefernceHelper.setCalendar(mContext, cal2.getTimeInMillis(), "endCalendar");
+        
         UsageSharedPrefernceHelper.setCurrentDate(mContext);
         super.onDestroy();
     }
@@ -482,7 +495,21 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_LONG)
                     .show();
             startActivity(intentGoToHomeScreen);
+            finish();
 
+    }
+    private boolean isSufficientRAMAvailable(Context context) {
+        MemoryInfo info = new MemoryInfo();
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        activityManager.getMemoryInfo(info);
+        long percentAvail = info.availMem * 100 / info.totalMem;
+        Log.v (LOG_TAG, "Availabel precentage: " + percentAvail);
+        if (percentAvail < 10) {
+            // TODO Show some dialog.
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private void stopTrackingService() {
@@ -563,6 +590,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         switch (item.getItemId()) {
         case R.id.action_start:
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
+                if (isSufficientRAMAvailable(mContext)) {
                 if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                     if (!Utils.isPermissionGranted(this)) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(this)
@@ -580,16 +608,18 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                                         });
                         AlertDialog dialog = builder.create();
                         dialog.show();
-                    }
+                        } else {
+                            startTrackingService();
+                            item.setTitle(getString(R.string.string_stop));
+                        }
                 } else {
                         startTrackingService();
                         item.setTitle(getString(R.string.string_stop));
-                        UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
                     }
+                }
             } else {
                 stopTrackingService();
                 item.setTitle(getString(R.string.string_start));
-                UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
                 finish();
             }
 
