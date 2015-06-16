@@ -77,6 +77,20 @@ public class UsageSharedPrefernceHelper {
         editor.putLong("date", System.currentTimeMillis());
         editor.commit();
     }
+    
+    public static void setCalendar(Context context, long time, String key) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putLong(key, time);
+        editor.commit();
+    }
+    
+    public static long getCalendar(Context context, String key) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        return prefs.getLong(key, 0);
+    }
 
     public static long getDateStoredInPref(Context context) {
 

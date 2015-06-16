@@ -11,12 +11,14 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
-
 
 public class MonthViewFragment extends DialogFragment implements CalendarView.OnDateChangeListener {
 
@@ -29,6 +31,7 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
     private AlertDialog mDialog;
     private AlertDialog.Builder mBuilder;
     Calendar mStartCalendar, mEndCalendar;
+    DialogInterface.OnClickListener onClick = null;
 
       public MonthViewFragment() {
 
@@ -51,7 +54,7 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
         try {
             this.mInterface = (DateInterface) activity;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement OnArticleSelectedListener");
+            throw new ClassCastException(activity.toString() + " must implement DateInterface");
         }
     }
 
@@ -63,8 +66,18 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
         View customView = inflater.inflate(R.layout.dialog_layout, null);
 
         // Define your month view pickers
-        final CalendarView calStartDate = (CalendarView) customView.findViewById(R.id.monthViewStartDate);
-        final CalendarView calEndDate = (CalendarView) customView.findViewById(R.id.monthViewEndDate);
+        final CalendarView calStartDate = (CalendarView) customView
+                .findViewById(R.id.monthViewStartDate);
+        final CalendarView calEndDate = (CalendarView) customView
+                .findViewById(R.id.monthViewEndDate);
+
+        long startTime = UsageSharedPrefernceHelper.getCalendar(mContext, "startCalendar");
+        long endTime = UsageSharedPrefernceHelper.getCalendar(mContext, "endCalendar");
+
+        if (startTime != 0 && endTime != 0) {
+            calStartDate.setDate(startTime, true, true);
+            calEndDate.setDate(endTime, true, true);
+        }
 
         calStartDate.setOnDateChangeListener(this);
         calEndDate.setOnDateChangeListener(this);
@@ -73,18 +86,37 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
         mBuilder = new AlertDialog.Builder(mContext);
         mBuilder.setView(customView); // Set the view of the dialog to your custom layout
         mBuilder.setTitle("Select start and end date");
-        mBuilder.setPositiveButton(mContext.getString(R.string.string_Ok), new DialogInterface.OnClickListener(){
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-                    mInterface.onDateSetComplete(mStartCalendar, mEndCalendar);
-                    dialog.dismiss();
-
-            }});
 
         // Create and show the dialog
         mDialog = mBuilder.create();
+        mDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.string_Ok), onClick);
+
         return mDialog;
+    }
+
+    @Override
+    public void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+
+        AlertDialog alertDialog = (AlertDialog) getDialog();
+        Button okButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        okButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v)
+            {
+                positiveBtnProcess();
+            }
+        });
+    }
+
+    private void positiveBtnProcess() {
+        // Do your stuff here
+
+        if (validateStartDate() && validateEndDate()) {
+            mInterface.onDateSetComplete(mStartCalendar, mEndCalendar);
+            mDialog.dismiss();
+        }
     }
 
     private boolean validateStartDate() {
@@ -126,29 +158,16 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
         // TODO Auto-generated method stub
 
         switch (view.getId()) {
-        case R.id.monthViewStartDate : // Validate start date here.
-                                mStartCalendar.set(Calendar.YEAR, year);
-                                mStartCalendar.set(Calendar.MONTH, month);
-                                mStartCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-                                if(!validateStartDate() && mDialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled()) {
-                                    mDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-                                } else if (validateStartDate() && !mDialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled()) {
-                                    mDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                                } 
-                                    
-                                break;
-        case R.id.monthViewEndDate : // Validate end date here.
-                                mEndCalendar.set(Calendar.YEAR, year);
-                                mEndCalendar.set(Calendar.MONTH, month);
-                                mEndCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-                                if(!validateEndDate() && mDialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled()) {
-                                    mDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-                                } else if (validateEndDate() && !mDialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled()) {
-                                    mDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                                }
-                                break;
+        case R.id.monthViewStartDate: // Validate start date here.
+            mStartCalendar.set(Calendar.YEAR, year);
+            mStartCalendar.set(Calendar.MONTH, month);
+            mStartCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            break;
+        case R.id.monthViewEndDate: // Validate end date here.
+            mEndCalendar.set(Calendar.YEAR, year);
+            mEndCalendar.set(Calendar.MONTH, month);
+            mEndCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            break;
         }
     }
 }
