@@ -1,6 +1,6 @@
 package com.asgj.android.appusage.Utility;
 
-public class PackageInfo {
+public class ResolveInfo {
 	
 	String mApplicationName;
 	boolean isChecked;
