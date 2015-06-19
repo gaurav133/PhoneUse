@@ -17,19 +17,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
-import com.asgj.android.appusage.Utility.PackageInfo;
+import com.asgj.android.appusage.Utility.ResolveInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 
 public class PreferenceListAdapter extends BaseAdapter implements
 		View.OnClickListener,OnSeekBarChangeListener {
 
-	private ArrayList<PackageInfo> mPackageList = null;
+	private ArrayList<ResolveInfo> mPackageList = null;
 	private Context mContext = null;
 	private int mSelectedCount = 0;
 	private static int MAXIMUN_APPLICATIONS = 5;
 
-	PreferenceListAdapter(ArrayList<PackageInfo> packageList, Context context) {
+	PreferenceListAdapter(ArrayList<ResolveInfo> packageList, Context context) {
 		mPackageList = packageList;
 		mContext = context;
 		Set<String> alreadySelectedList = UsageSharedPrefernceHelper
@@ -52,7 +52,7 @@ public class PreferenceListAdapter extends BaseAdapter implements
 
 	}
 
-	public ArrayList<PackageInfo> getSelectedPackages() {
+	public ArrayList<ResolveInfo> getSelectedPackages() {
 		return mPackageList;
 	}
 
