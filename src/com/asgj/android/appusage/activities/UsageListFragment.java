@@ -27,8 +27,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
 
@@ -215,22 +217,46 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 		@Override
 		public Object instantiateItem(ViewGroup container, int position) {
 			// Inflate a new layout from our resources
-			View view = getActivity().getLayoutInflater().inflate(
-					R.layout.usage_list, container, false);
+		    View returnView = null;
+			View viewData = getActivity().getLayoutInflater().inflate(
+                    R.layout.usage_list, container, false);
+			View viewNoData = getActivity().getLayoutInflater().inflate(R.layout.layout_no_data_tracking_info, container, false);
+			TextView textViewNoDataStartTracking = (TextView) viewNoData.findViewById(R.id.textView_start_tracking_no_data_navigate);
+			TextView textViewNoData = (TextView) viewNoData.findViewById(R.id.textView_no_data_navigate);
 			// Add the newly created View to the ViewPager
-			container.addView(view);
 
 			// Retrieve a TextView from the inflated View, and update it's text
-			ListView title = (ListView) view.findViewById(R.id.usage_list);
+			ListView title = (ListView) viewData.findViewById(R.id.usage_list);
 			if (position == 0 && mAppDataListAdapter != null){
+			    textViewNoData.setVisibility(View.GONE);
+                textViewNoDataStartTracking.setVisibility(View.GONE);
 				title.setAdapter(mAppDataListAdapter);
 				mAppDataListAdapter.notifyDataSetChanged();
+			    if (mAppDataListAdapter.isEmpty()) {
+			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
+			            textViewNoData.setVisibility(View.VISIBLE);
+			        } else {
+			            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+			        }
+			        container.addView(viewNoData);
+			        returnView = viewNoData;
+			    } else {
+			        textViewNoData.setVisibility(View.GONE);
+			        textViewNoDataStartTracking.setVisibility(View.GONE);
+                    
+			        container.addView(viewData);
+			        returnView = viewData;
+			    }
 			}
 			else if (position == 1 && mMusicDataListAdapter != null){
+                    container.addView(viewData);
+                    returnView = viewData;
 				title.setAdapter(mMusicDataListAdapter);
 				mMusicDataListAdapter.notifyDataSetChanged();
 			}
-			else if (position == 2 && mCallDataListAdapter != null){
+			else if (position == 2 && mCallDataListAdapter != null) {
+                    container.addView(viewData);
+                    returnView = viewData;
 				title.setAdapter(mCallDataListAdapter);
 				mCallDataListAdapter.notifyDataSetChanged();
 			}
@@ -240,7 +266,7 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 			Log.i(LOG_TAG, "instantiateItem() [position: " + position + "]");
 
 			// Return the View
-			return view;
+			return returnView;
 		}
 
 		/**
@@ -253,10 +279,11 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 			Log.i(LOG_TAG, "destroyItem() [position: " + position + "]");
 		}
 		@Override
-		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-				long arg3) {
+		public void onItemClick(AdapterView<?> parentView, View v, int position,
+				long id) {
 			if(mItemClickListener != null){
-				mItemClickListener.onUsageItemClick((int)arg0.getTag(), arg2);
+			    String pkg = mAppDataListAdapter.getPackageNameKeys().get(position);
+				mItemClickListener.onUsageItemClick((int)parentView.getTag(), position);
 			}
 			
 		}
