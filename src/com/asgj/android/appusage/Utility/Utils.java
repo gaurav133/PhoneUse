@@ -11,9 +11,13 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -22,9 +26,11 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.provider.CallLog;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -32,6 +38,7 @@ import com.asgj.android.appusage.R;
 public class Utils {
 
     public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
+    private static final String LOG_TAG = Utils.class.getSimpleName();
     public static String TIME_FORMAT_HH_HR_MM_MIN_SS_SEC = "hh hr mm min ss sec";
     public static boolean isTabletDevice(Context context){
     	return context.getResources().getBoolean(R.bool.isTablet);
@@ -303,6 +310,14 @@ public class Utils {
         return 0;
     }
     
+    public static int getIndexFromArray(String[] arr, String element) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i].equals(element)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 	public static String getApplicationLabelName(Context context,
 			String packageName) {
 		ApplicationInfo mApplicationInfo = null;
@@ -360,5 +375,53 @@ public class Utils {
 		}
 		return map;
 	}
+    /**
+     * Method to check whether sufficient RAM is available to continue/start service.
+     * In case RAM is less than 2%, tracking will be stopped.
+     * @param context Context to access application resources.
+     * @return boolean flag indicating whether device has sufficient battery available.
+     */
+    public static boolean isSufficientRAMAvailable(Context context) {
+        MemoryInfo info = new MemoryInfo();
+        ActivityManager activityManager = (ActivityManager) context
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        activityManager.getMemoryInfo(info);
+        long percentAvail = info.availMem * 100 / info.totalMem;
+        Log.v(LOG_TAG, "Availabel precentage: " + percentAvail);
+        if (percentAvail < 2) {
+            // TODO Show some dialog.
+            return false;
+        } else {
+            return true;
+        }
+    }
+    /**
+     * Method to check whether sufficient battery is available to continue/start service.
+     * In case battery is less than 5% and device isn't charging, tracking will be stopped.
+     * @param context Context to access application resources.
+     * @return boolean flag indicating whether device has sufficient battery available.
+     */
+    public static boolean isSufficientBatteryAvailable(Context context) {
+        boolean result = true;
 
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = context.registerReceiver(null, ifilter);
+
+        // Are we charging / charged?
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                             status == BatteryManager.BATTERY_STATUS_FULL;
+
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        float batteryPct = level / (float)scale;
+
+        if (batteryPct*100 <= 5.0f && !isCharging) {
+            Log.v (LOG_TAG, "Battery percentage low: " + batteryPct);
+            result = false;
+        }
+        Log.v (LOG_TAG, "Battery percentage: " + batteryPct);
+        return result;
+    }
 }

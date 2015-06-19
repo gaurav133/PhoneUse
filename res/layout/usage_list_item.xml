@@ -23,9 +23,17 @@
         android:singleLine="false"
         android:minHeight="?android:attr/listPreferredItemHeight"
         android:gravity="start|center_vertical"
-        android:layout_centerVertical="true"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:fontFamily="sans-serif" />
+
+    
+    <TextView
+        android:id="@+id/textView_dash"
+        android:layout_width="0dip"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="-"/>
 
     <TextView
         android:id="@+id/text2"

@@ -13,10 +13,9 @@ import java.util.TreeMap;
 
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.ActivityManager.MemoryInfo;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -27,7 +26,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -70,7 +68,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private LocalBinder mBinder;
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
-    private UsageListFragment<HashMap, ArrayList, ArrayList> mUsageListFragment;
+    private UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>, ArrayList<UsageInfo>> mUsageListFragment;
     private UsageDetailFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
@@ -129,10 +127,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
             Log.v(LOG_TAG, "Rebinding service to activity.");
             Intent startServiceIntent = new Intent();
-            startServiceIntent.setClass(this, UsageTrackingService.class);
-            startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
-            //startService(startServiceIntent);
-            bindService(startServiceIntent, mConnection, 0);
+            startServiceIntent.setClass(mContext, UsageTrackingService.class);
+            startServiceIntent
+                    .setComponent(new ComponentName(mContext, UsageTrackingService.class));
+            bindService(startServiceIntent, mConnection, BIND_AUTO_CREATE);
         }
         
         this.cal1 = Calendar.getInstance();
@@ -184,7 +182,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     		getFragmentManager().popBackStackImmediate();
     	}
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        mUsageListFragment = new UsageListFragment<HashMap, ArrayList, ArrayList>();
+        mUsageListFragment = new UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>, ArrayList<UsageInfo>>();
         transaction.replace(R.id.usage_list_main_fragment, mUsageListFragment);
         transaction.commit();
     }
@@ -269,6 +267,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                     break;
                 }
             }
+            mUsageListFragment.setmUsageAppData(mDataMap);
         } else {
             // Check whether custom and end day not today.
             if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
@@ -277,6 +276,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
                 mDataMap = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext,
                         cal1, cal2);
+                mUsageListFragment.setmUsageAppData(mDataMap);
             } else {
                 if (mMainService != null) {
                     if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
@@ -287,6 +287,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                         mDataMap = mMainService.getCurrentMap(cal1);
                     }
 
+                    // Need dynamic data from service, only in case service is tracking.
+                    if (!Utils.isSufficientBatteryAvailable(mContext) || !Utils.isSufficientRAMAvailable(mContext)) {
+                        mUsageListFragment.setmUsageAppData(mDataMap);
+                        return;
+                    }
                     // Need data from service, fire off a broadcast.
                     Intent getDataIntent = new Intent();
                     getDataIntent.setAction("com.android.asgj.appusage.action.DATA_PROVIDE");
@@ -319,7 +324,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 }
             }
         }
-        mUsageListFragment.setmUsageAppData(mDataMap);
     }
 
    /**
@@ -473,6 +477,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         UsageSharedPrefernceHelper.setCalendar(mContext, cal2.getTimeInMillis(), "endCalendar");
         
         UsageSharedPrefernceHelper.setCurrentDate(mContext);
+        mDataMap = null;
+        mMusicList = null;
+        mContext = null;
+        mBinder = null;
+        mDatabase = null;
         super.onDestroy();
     }
 
@@ -491,27 +500,15 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             intentGoToHomeScreen.setAction("android.intent.action.MAIN");
             intentGoToHomeScreen.addCategory("android.intent.category.HOME");
 
-            // Test toast.
-            Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_LONG)
-                    .show();
-            startActivity(intentGoToHomeScreen);
-            finish();
+        // Test toast.
+        Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_LONG)
+                .show();
+        startActivity(intentGoToHomeScreen);
+        finish();
 
     }
-    private boolean isSufficientRAMAvailable(Context context) {
-        MemoryInfo info = new MemoryInfo();
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        activityManager.getMemoryInfo(info);
-        long percentAvail = info.availMem * 100 / info.totalMem;
-        Log.v (LOG_TAG, "Availabel precentage: " + percentAvail);
-        if (percentAvail < 10) {
-            // TODO Show some dialog.
-            return false;
-        } else {
-            return true;
-        }
-    }
 
+    @SuppressLint("InlinedApi")
     private void stopTrackingService() {
         // Destroy the service, as no longer needed.
         Intent stopServiceIntent = new Intent();
@@ -578,10 +575,23 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                     Date resultdate111 = new Date(entry.getValue().getLastTimeStamp());
                     Log.v(LOG_TAG, "Last timestamp: " + sdf11.format(resultdate111));
                 }
-
             }
         }
+    }
 
+    @Override
+    public void onTrimMemory(int level) {
+        // TODO Auto-generated method stub
+        Log.v(LOG_TAG, "onTrim memory callback activity, level is: " + level);
+        if (level >= TRIM_MEMORY_COMPLETE) {
+            if (mContext != null && UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+                // If service is bound to activity.
+                if (mMainService != null) {
+                    mMainService.saveDataOnKill();
+                }
+            }
+        }
+        super.onTrimMemory(level);
     }
 
     @Override
@@ -590,24 +600,26 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         switch (item.getItemId()) {
         case R.id.action_start:
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
-                if (isSufficientRAMAvailable(mContext)) {
-                if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                    if (!Utils.isPermissionGranted(this)) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                                .setTitle(R.string.string_error_title)
-                                .setMessage(R.string.string_error_msg)
-                                .setPositiveButton(android.R.string.ok,
-                                        new DialogInterface.OnClickListener() {
-                                            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                Intent intent = new Intent(
-                                                        Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                                                startActivity(intent);
-                                            }
-                                        });
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+                if (Utils.isSufficientRAMAvailable(mContext)
+                        && Utils.isSufficientBatteryAvailable(mContext)) {
+                    if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        if (!Utils.isPermissionGranted(this)) {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                                    .setTitle(R.string.string_error_title)
+                                    .setMessage(R.string.string_error_msg)
+                                    .setPositiveButton(android.R.string.ok,
+                                            new DialogInterface.OnClickListener() {
+                                                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                                                @Override
+                                                public void onClick(DialogInterface dialog,
+                                                        int which) {
+                                                    Intent intent = new Intent(
+                                                            Settings.ACTION_USAGE_ACCESS_SETTINGS);
+                                                    startActivity(intent);
+                                                }
+                                            });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
                         } else {
                             startTrackingService();
                             item.setTitle(getString(R.string.string_stop));
@@ -627,7 +639,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         case R.id.action_showBy:
             AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle(
                     getString(R.string.string_showBy)).setSingleChoiceItems(
-                    new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice, mShowList),Utils.getIndexFromArray(mShowList, UsageSharedPrefernceHelper.getShowByType(mContext)),
+                    new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice,
+                            mShowList),
+                    Utils.getIndexFromArray(mShowList,
+                            UsageSharedPrefernceHelper.getShowByType(mContext)),
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.app.Service;
@@ -20,22 +21,20 @@ import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.os.Binder;
 import android.os.Build;
-import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.database.PhoneUsageDatabase;
-import com.asgj.android.appusage.database.PhoneUsageDbHelper;
 
 /**
  * Service to track application usage time for different apps being used by the user.
  * It'll track usage for foreground apps as well as background apps (Music, Call).
  * @author jain.g
  */
+@SuppressLint("InlinedApi")
 public class UsageTrackingService extends Service {
 
     public interface provideData {
@@ -58,16 +57,12 @@ public class UsageTrackingService extends Service {
     BackgroundTrackingTask.TimerTs mTimerTask;
 
     private boolean mIsRunningForegroundAppsThread = false,
-            mIsRunningBackgroundApps = false,
-            mIsFirstTimeStartForgroundAppService = false,
-            mIsMusicPlaying = false,
-            mIsMusicStarted = false,
-            mIsMusicPlayingAtStart = false,
+            mIsFirstTimeStartForgroundAppService = false, mIsMusicPlaying = false,
+            mIsMusicStarted = false, mIsContinueTracking = false, mIsMusicPlayingAtStart = false,
             mIsScreenOff = false;
 
     private KeyguardManager mKeyguardManager;
     private ActivityManager mActivityManager;
-    private TelephonyManager mTelephonyManager;
 
     private long mPreviousStartTime;
     private String mPackageName;
@@ -88,8 +83,8 @@ public class UsageTrackingService extends Service {
 
                 if (mBgTrackingTask != null && mBgTrackingTask.foregroundMap != null
                         && mIsScreenOff == false) {
-                    long time = System.nanoTime();
-                    long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
+                    long duration = Utils.getTimeInSecFromNano(System.nanoTime()
+                            - mPreviousStartTime);
 
                     doHandlingOnApplicationClose();
                     if (duration > 0L) {
@@ -122,7 +117,10 @@ public class UsageTrackingService extends Service {
 
                 // Check whether key-guard is locked or not.
                 if (mKeyguardManager.isKeyguardLocked()) {
-                 // Bypass to screenUserPresent receiver.
+                    // Bypass to screenUserPresent receiver.
+                    mIsScreenOff = false;
+                    mPreviousStartTime = System.nanoTime();
+                    mPreviousAppStartTimeStamp = System.currentTimeMillis();
                 } else {
                     
                     mIsRunningForegroundAppsThread = true;
@@ -155,11 +153,12 @@ public class UsageTrackingService extends Service {
                 String time = dateFormat.format(new Date(System.currentTimeMillis()));
                 Log.v(LOG_TAG, "Time is: " + time);
                 
-                String timeToCompare12Hour = "12:00:00 AM";
-                String timeToCompare24Hour = "00:00:00";
-                
-                if (time.equals(timeToCompare12Hour) || time.equals(timeToCompare24Hour))
-                {
+                Calendar presentCalendar = Calendar.getInstance();
+                Calendar previousCalendar = Calendar.getInstance();
+                previousCalendar.add(Calendar.SECOND, -1);
+
+                if (Utils.compareDates(presentCalendar, previousCalendar) > 0) {
+
                     // APPS DATA.
                     Log.v(LOG_TAG, "It's midnight, dump data to DB.");
                     UsageSharedPrefernceHelper.clearPreference(mContext);
@@ -270,9 +269,17 @@ public class UsageTrackingService extends Service {
      * Perform clean up tasks in this method, as activity will restart after this.
      */
     public void onTaskRemoved(Intent rootIntent) {
-        onDestroy();
+        saveDataOnKill();
     };
 
+    @Override
+    public void onTrimMemory(int level) {
+        // TODO Auto-generated method stub
+        super.onTrimMemory(level);
+        if (level >= TRIM_MEMORY_COMPLETE && UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+            saveDataOnKill();
+        }
+    }
     /**
      * Method to get current tracking map for applications for displaying in main screen.
      * @return Map of entries, with pkg name as key and duration as value. 
@@ -582,6 +589,13 @@ public class UsageTrackingService extends Service {
              mIsFirstTimeStartForgroundAppService = false;
     }
     
+    private void stopTimer() {
+        if (mTimerTask != null && mTimer != null) {
+            mTimerTask.cancel();
+            mTimer.cancel();
+            mTimer.purge();
+        }
+    }
 
     private final class BackgroundTrackingTask {
 
@@ -592,6 +606,16 @@ public class UsageTrackingService extends Service {
             public void run() {
                 // TODO Auto-generated method stub
 
+                // In case battery or RAM is low, stop timer.
+                if (!Utils.isSufficientBatteryAvailable(mContext)
+                        || !Utils.isSufficientRAMAvailable(mContext)) {
+                    Log.v(LOG_TAG, "Inside run battery ram low");
+                    if (!mIsContinueTracking) {
+                        saveDataOnKill();
+                    }
+                    mIsContinueTracking = true;
+                    return;
+                }
                 if (mIsFirstTimeStartForgroundAppService) {
                     initLocalMapForThread(foregroundMap);
                 }
@@ -599,6 +623,8 @@ public class UsageTrackingService extends Service {
             	if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
                               // If the present application is different from the previous application, update the previous app time.
                 if (isTopApplicationchange()) {
+                if (isTopApplicationchange() && !mKeyguardManager.isKeyguardLocked()
+                        && mIsRunningForegroundAppsThread == true) {
                     long time = System.nanoTime();
                     long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
                 
@@ -631,17 +657,19 @@ public class UsageTrackingService extends Service {
                         mTimer.schedule(mTimerTask, 0, 1000);
                     }
 
-                    // If it's not the first interval after service start, check for threshold gap.
-                    if (mMusicStopTime > 0) {
-                        if (Utils.getTimeInSecFromNano(System.nanoTime() - mMusicStopTime) > MUSIC_THRESHOLD_TIME) {
+                        // If it's not the first interval after service start,
+                        // check for threshold gap.
+                        if (mMusicStopTime > 0) {
+                            if (Utils.getTimeInSecFromNano(System.nanoTime() - mMusicStopTime) > MUSIC_THRESHOLD_TIME) {
+                                mMusicStartTimeStamp = System.currentTimeMillis();
+                                mMusicStartTime = System.nanoTime();
+                            }
+                        } else {
+                            mMusicStartTime = System.nanoTime();
                             mMusicStartTimeStamp = System.currentTimeMillis();
-							mMusicStartTime = System.nanoTime();
                         }
-                    } else {
-                        mMusicStartTime = System.nanoTime();
-                        mMusicStartTimeStamp = System.currentTimeMillis();
                     }
-                } 
+                }
             }
         }
     }
@@ -687,13 +715,10 @@ public class UsageTrackingService extends Service {
         return super.onUnbind(intent);
     }
 
-    @Override
-    public void onDestroy() {
-        // TODO Auto-generated method stub
-        Log.v (LOG_TAG, "onDestroy Service");
-        
+    public void saveDataOnKill() {
+        Log.v(LOG_TAG, "Save data on kill method call");
+
         mIsRunningForegroundAppsThread = false;
-        mIsRunningBackgroundApps = false;
         mIsMusicStarted = false;
 
         long time = System.nanoTime();
@@ -725,16 +750,9 @@ public class UsageTrackingService extends Service {
         doHandlingOnApplicationClose();
 
         // Get call details for given time-stamps.
-        mCallDetailsMap = Utils.getCallDetails(mContext, mStartTimestamp, mEndTimestamp,mCallDetailsMap);
-        
-        // Unregister receivers.
-        //setUpReceivers(false);
-        
-        // Display list. 
-        mDatabase.exportDatabse(PhoneUsageDbHelper.getInstance(mContext).getDatabaseName());
-        UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
-        super.onDestroy();
-        
+        mCallDetailsMap = Utils.getCallDetails(mContext, mStartTimestamp, mEndTimestamp,
+                mCallDetailsMap);
+
         // Dump data to xml shared preference.
         UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mForegroundActivityMap);
         
@@ -750,13 +768,33 @@ public class UsageTrackingService extends Service {
         
         // Store current date to preferences.
         UsageSharedPrefernceHelper.setCurrentDate(mContext);
-        
-        if (mTimerTask != null) {
-            mTimerTask.cancel();
-        }
 
-        Toast.makeText(mContext, "Phone used for: " + phoneUsedTime() + "seconds",
-                Toast.LENGTH_LONG).show();
+        mPreviousAppStartTimeStamp = System.currentTimeMillis();
+        mPreviousAppExitTimeStamp = mPreviousAppStartTimeStamp;
+        mPreviousStartTime = System.nanoTime();
+        mListMusicPlayTimes.clear();
+        initializeMap(mBgTrackingTask.foregroundMap);
+        initializeMap(mForegroundActivityMap);
+    }
+
+    @Override
+    public void onDestroy() {
+        // TODO Auto-generated method stub
+        Log.v(LOG_TAG, "onDestroy Service");
+        saveDataOnKill();
+        UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
+        setUpReceivers(false);
+        mForegroundActivityMap = null;
+        mBgTrackingTask.foregroundMap = null;
+        mBgTrackingTask = null;
+        mDatabase = null;
+        mCallDetailsMap = null;
+        mListMusicPlayTimes = null;
+        mIsContinueTracking = false;
+        mIsRunningForegroundAppsThread = false;
+        mIsMusicStarted = false;
+
+        stopTimer();
     }
 
     @Override

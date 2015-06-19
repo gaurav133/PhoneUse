@@ -29,6 +29,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
     HttpImageLoader mImageLoader = null;
     Typeface mNormalTypeface, mBoldTypeface;
 
+    @SuppressWarnings("unchecked")
     public UsageListAdapter(Context context, Data data) throws Exception {
         mContext = context;
         mData = data;
@@ -36,14 +37,13 @@ public class UsageListAdapter<Data> extends BaseAdapter {
         mKeys = new ArrayList<>();
         
         if (mData instanceof ArrayList) {
-            if (!((ArrayList) mData).isEmpty()) {
+            if (!((ArrayList<UsageInfo>) mData).isEmpty()) {
                 UsageInfo info = new UsageInfo();
                 info.setmIntervalDuration(Utils.calculateListSum((ArrayList) mData));
                 
                 mList = new ArrayList<>();
                 mList.add(index, info);
-
-                mList.addAll((ArrayList<UsageInfo>) ((ArrayList) mData).clone());
+                mList.addAll((ArrayList<UsageInfo>) ((ArrayList<UsageInfo>) mData).clone());
             }
         } else if (mData instanceof HashMap) {
             mMap = (HashMap<String, Long>) ((HashMap<String, Long>) mData).clone();
@@ -101,12 +101,14 @@ public class UsageListAdapter<Data> extends BaseAdapter {
 
         TextView text_left = (TextView) convertView.findViewById(R.id.text1);
         TextView text_middle = (TextView) convertView.findViewById(R.id.text2);
+        TextView text_dash = (TextView) convertView.findViewById(R.id.textView_dash);
         TextView text_right = (TextView) convertView.findViewById(R.id.text3);
         ImageView image_view_app_icon = (ImageView) convertView.findViewById(R.id.app_icon);
 
         if (mList != null) {
             image_view_app_icon.setVisibility(View.GONE);
             if (position == 0) {
+                text_dash.setVisibility(View.GONE);
                 text_middle.setVisibility(View.GONE);
                 text_left.setText(mContext.getString(R.string.string_total_time_apps).toUpperCase());
                 text_left.setTextColor(mContext.getResources().getColor(
@@ -117,12 +119,12 @@ public class UsageListAdapter<Data> extends BaseAdapter {
                 text_right.setText("" + Utils.getTimeFromSeconds(mList.get(position).getmIntervalDuration()).toUpperCase());
                 text_right.setTypeface(mBoldTypeface);
             } else {
+                text_dash.setVisibility(View.VISIBLE);
                 text_middle.setVisibility(View.VISIBLE);
                 text_left.setText(""
                         + Utils.getTimeFromTimeStamp(mContext, mList.get(position)
-                                .getmIntervalStartTime()) + "-");
-                text_middle.setText(""
-                        + Utils.getTimeFromTimeStamp(mContext, mList.get(position)
+                                .getmIntervalStartTime()));
+                text_middle.setText(Utils.getTimeFromTimeStamp(mContext, mList.get(position)
                                 .getmIntervalEndTime()));
                 text_right.setText(""
                         + Utils.getTimeFromSeconds(mList.get(position).getmIntervalDuration()));
@@ -130,11 +132,11 @@ public class UsageListAdapter<Data> extends BaseAdapter {
                 text_right.setTypeface(mNormalTypeface);
                 text_left.setTextColor(mContext.getResources().getColor(android.R.color.black));
                 text_right.setTextColor(mContext.getResources().getColor(android.R.color.black));
-                
             }
         }  
         
         if (mMap != null) {
+            text_dash.setVisibility(View.GONE);
             if (position == 0) {
                 image_view_app_icon.setVisibility(View.GONE);
                 text_left.setTextColor(mContext.getResources().getColor(

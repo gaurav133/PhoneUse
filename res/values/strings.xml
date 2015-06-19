@@ -29,5 +29,7 @@
     <string name="string_select_packages_pref_title">Package Monitoring.</string>
     <string name="string_select_packages_maximum_app_toast">You can not select more than 5 applications.</string>
     <string name="string_total_time_apps">Total Time</string>
+    <string name="string_start_tracking_no_data_navigate">No Usage Data. Start tracking, and navigate to other applications.</string>
+    <string name="string_no_data_navigate">No Usage Data, please navigate to other applications.</string>
 
 </resources>
