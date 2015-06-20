@@ -7,9 +7,16 @@
 
     <ListView
         android:id="@+id/usage_list"
-        android:divider="@color/color_action_bar_background"
-        android:dividerHeight="1dp"
+        android:divider="@null"
+        android:dividerHeight="0dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <ExpandableListView
+        android:id="@+id/music_list"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:childDivider="@null"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </LinearLayout>
