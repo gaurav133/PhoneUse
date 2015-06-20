@@ -16,7 +16,9 @@
 
 package com.asgj.android.appusage.activities;
 
+import java.util.ArrayList;
 import android.app.Fragment;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -26,11 +28,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.ui.widgets.MusicListAdapter;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
 
@@ -65,7 +71,7 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 	private SamplePagerAdapter mPageAdapter = null;
 
 	private UsageListAdapter<AppData> mAppDataListAdapter = null;
-	private UsageListAdapter<MusicData> mMusicDataListAdapter = null;
+	private MusicListAdapter mMusicDataListAdapter = null;
 	private UsageListAdapter<CallData> mCallDataListAdapter = null;
 	private OnUsageItemClickListener mItemClickListener = null;
 	
@@ -97,7 +103,7 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 	public void setmMusicData(MusicData mMusicData) {
 		this.mMusicData = mMusicData;
 		try {
-			mMusicDataListAdapter = new UsageListAdapter<MusicData>(getActivity(), mMusicData);
+			mMusicDataListAdapter = new MusicListAdapter((ArrayList<UsageInfo>)this.mMusicData,getActivity());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -167,7 +173,7 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 	 * {@link #getPageTitle(int)} method which controls what is displayed in the
 	 * {@link SlidingTabLayout}.
 	 */
-	class SamplePagerAdapter extends PagerAdapter implements OnItemClickListener{
+	class SamplePagerAdapter extends PagerAdapter implements OnItemClickListener , OnChildClickListener{
 
 		String[] mList = new String[] { "Apps", "Media", "Call" };
 
@@ -227,7 +233,10 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 
 			// Retrieve a TextView from the inflated View, and update it's text
 			ListView title = (ListView) viewData.findViewById(R.id.usage_list);
+			ExpandableListView musicListView = (ExpandableListView)viewData.findViewById(R.id.music_list);
 			if (position == 0 && mAppDataListAdapter != null){
+				title.setVisibility(View.VISIBLE);
+				musicListView.setVisibility(View.GONE);
 			    textViewNoData.setVisibility(View.GONE);
                 textViewNoDataStartTracking.setVisibility(View.GONE);
 				title.setAdapter(mAppDataListAdapter);
@@ -249,10 +258,27 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 			    }
 			}
 			else if (position == 1 && mMusicDataListAdapter != null){
-                    container.addView(viewData);
-                    returnView = viewData;
-				title.setAdapter(mMusicDataListAdapter);
-				mMusicDataListAdapter.notifyDataSetChanged();
+				title.setVisibility(View.GONE);
+				musicListView.setChildDivider(null);
+				musicListView.setDivider(null);
+				musicListView.setDividerHeight(0);
+				musicListView.setVisibility(View.VISIBLE);
+				musicListView.setAdapter(mMusicDataListAdapter);
+				if (mMusicDataListAdapter.isEmpty()) {
+			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
+			            textViewNoData.setVisibility(View.VISIBLE);
+			        } else {
+			            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+			        }
+			        container.addView(viewNoData);
+			        returnView = viewNoData;
+			    } else {
+			        textViewNoData.setVisibility(View.GONE);
+			        textViewNoDataStartTracking.setVisibility(View.GONE);
+                    
+			        container.addView(viewData);
+			        returnView = viewData;
+			    }
 			}
 			else if (position == 2 && mCallDataListAdapter != null) {
                     container.addView(viewData);
@@ -262,7 +288,8 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 			}
 			title.setTag(position);
 			title.setOnItemClickListener(this);
-
+			musicListView.setOnChildClickListener(this);
+			musicListView.setTag(position);
 			Log.i(LOG_TAG, "instantiateItem() [position: " + position + "]");
 
 			// Return the View
@@ -286,6 +313,14 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 				mItemClickListener.onUsageItemClick((int)parentView.getTag(), position);
 			}
 			
+		}
+		@Override
+		public boolean onChildClick(ExpandableListView parent, View v,
+				int groupPosition, int childPosition, long id) {
+			if(mItemClickListener != null){
+				mItemClickListener.onUsageItemClick(groupPosition, childPosition);
+			}
+			return false;
 		}
 
 	}

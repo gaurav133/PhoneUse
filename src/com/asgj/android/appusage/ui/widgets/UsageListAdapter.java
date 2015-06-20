@@ -36,16 +36,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
         mImageLoader = HttpImageLoader.getInstance(context);
         mKeys = new ArrayList<>();
         
-        if (mData instanceof ArrayList) {
-            if (!((ArrayList<UsageInfo>) mData).isEmpty()) {
-                UsageInfo info = new UsageInfo();
-                info.setmIntervalDuration(Utils.calculateListSum((ArrayList) mData));
-                
-                mList = new ArrayList<>();
-                mList.add(index, info);
-                mList.addAll((ArrayList<UsageInfo>) ((ArrayList<UsageInfo>) mData).clone());
-            }
-        } else if (mData instanceof HashMap) {
+       if (mData instanceof HashMap) {
             mMap = (HashMap<String, Long>) ((HashMap<String, Long>) mData).clone();
 
             for (String s : mMap.keySet()) {
@@ -67,9 +58,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
     @Override
     public int getCount() {
         // TODO Auto-generated method stub
-        if (mList != null) {
-            return mList.size();
-        } else if (mMap != null) {
+        if (mMap != null) {
             return mKeys.size();
         } else {
             return 0;
@@ -105,35 +94,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
         TextView text_right = (TextView) convertView.findViewById(R.id.text3);
         ImageView image_view_app_icon = (ImageView) convertView.findViewById(R.id.app_icon);
 
-        if (mList != null) {
-            image_view_app_icon.setVisibility(View.GONE);
-            if (position == 0) {
-                text_dash.setVisibility(View.GONE);
-                text_middle.setVisibility(View.GONE);
-                text_left.setText(mContext.getString(R.string.string_total_time_apps).toUpperCase());
-                text_left.setTextColor(mContext.getResources().getColor(
-                        R.color.color_total_time_title));
-                text_right.setTextColor(mContext.getResources().getColor(
-                        R.color.color_total_time_title));
-                text_left.setTypeface(mBoldTypeface);
-                text_right.setText("" + Utils.getTimeFromSeconds(mList.get(position).getmIntervalDuration()).toUpperCase());
-                text_right.setTypeface(mBoldTypeface);
-            } else {
-                text_dash.setVisibility(View.VISIBLE);
-                text_middle.setVisibility(View.VISIBLE);
-                text_left.setText(""
-                        + Utils.getTimeFromTimeStamp(mContext, mList.get(position)
-                                .getmIntervalStartTime()));
-                text_middle.setText(Utils.getTimeFromTimeStamp(mContext, mList.get(position)
-                                .getmIntervalEndTime()));
-                text_right.setText(""
-                        + Utils.getTimeFromSeconds(mList.get(position).getmIntervalDuration()));
-                text_left.setTypeface(mNormalTypeface);
-                text_right.setTypeface(mNormalTypeface);
-                text_left.setTextColor(mContext.getResources().getColor(android.R.color.black));
-                text_right.setTextColor(mContext.getResources().getColor(android.R.color.black));
-            }
-        }  
+          
         
         if (mMap != null) {
             text_dash.setVisibility(View.GONE);

@@ -44,6 +44,8 @@ public class HttpImageLoader implements ComponentCallbacks2 {
             if (image != null) {
             cache.put(url, image);
             imageview.setImageBitmap(image);
+            }else{
+            	imageview.setImageResource(defaultresource);	
             }
         }
         }
