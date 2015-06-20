@@ -2,7 +2,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="@android:attr/listPreferredItemHeight"
-    android:background="@android:color/black"
     android:orientation="horizontal"
     android:padding="10dp" >
      
@@ -20,7 +19,7 @@
             android:id="@+id/title_package"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
+            android:textColor="@android:color/black"
             android:textSize="20sp" />
 
         <SeekBar
@@ -29,6 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:max="24"
+            android:clickable="true"
             android:progress="1"
             android:visibility="gone" />
     </LinearLayout>
@@ -37,6 +37,7 @@
         android:id="@+id/checkBox_package"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:clickable="false"
         android:layout_alignParentRight="true" />
 
 </RelativeLayout>
