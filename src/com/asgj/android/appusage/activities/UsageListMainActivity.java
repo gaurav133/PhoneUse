@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -83,13 +84,18 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private float mForthFabPos = -1f;
     private float mFifthFabPos = -1f;
     private boolean isFabPositionSet = false;
-    private int mFabPosParameter = 50;
+    private int mFabPosParameter = 20;
     private void setFabPositions(){
     	if(isFabPositionSet){
     		return;
     	}
     	DisplayMetrics metrics = getResources().getDisplayMetrics();
     	float height = metrics.heightPixels;
+    	if(mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+    		mFabPosParameter = 20;
+    	}else{
+    		mFabPosParameter = 40;
+    	}
     	mSecondFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 3);
     	mThirdFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 6);
     	mForthFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 9);
@@ -671,17 +677,17 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
     private void showFabOptions(){
-		mShowByOptions2.animate().y(mSecondFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();
-		mShowByOptions3.animate().y(mThirdFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();;
-		mShowByOptions4.animate().y(mForthFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();
-		mShowByOptions5.animate().y(mFifthFabPos).setDuration(1000).setListener(new ShowAnimationListner()).start();
+		mShowByOptions2.animate().y(mSecondFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
+		mShowByOptions3.animate().y(mThirdFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();;
+		mShowByOptions4.animate().y(mForthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
+		mShowByOptions5.animate().y(mFifthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
     }
     
     private void hideFabOption(){
-		mShowByOptions2.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
-		mShowByOptions3.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
-		mShowByOptions4.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
-		mShowByOptions5.animate().y(mNormalYPosition).setDuration(1000).setListener(new HideAnimationListner()).start();
+		mShowByOptions2.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
+		mShowByOptions3.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
+		mShowByOptions4.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
+		mShowByOptions5.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
     	
     }
     
