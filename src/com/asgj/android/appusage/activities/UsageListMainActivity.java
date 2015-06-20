@@ -85,6 +85,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private float mFifthFabPos = -1f;
     private boolean isFabPositionSet = false;
     private int mFabPosParameter = 20;
+    private int mFabMargins = 50;
     private void setFabPositions(){
     	if(isFabPositionSet){
     		return;
@@ -167,8 +168,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mShowByOptionsMain.getLayoutParams();
     		DisplayMetrics metrics = getResources().getDisplayMetrics();
         	float height = metrics.heightPixels;
-        	params.bottomMargin = (int)(height / mFabPosParameter);
-        	params.rightMargin = (int)(height / mFabPosParameter);
+        	params.bottomMargin = (int)(height / mFabMargins);
+        	params.rightMargin = (int)(height / mFabMargins);
         	mShowByOptionsMain.setLayoutParams(params);
         	mShowByOptions2.setLayoutParams(params);
         	mShowByOptions3.setLayoutParams(params);
