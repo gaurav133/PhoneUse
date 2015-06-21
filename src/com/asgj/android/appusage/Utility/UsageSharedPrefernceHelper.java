@@ -19,6 +19,7 @@ public class UsageSharedPrefernceHelper {
     private static final String LOG_TAG = UsageSharedPrefernceHelper.class.getSimpleName();
     private static String PREF_NAME_APP_USAGE_INFO = "phone.usage.app.info";
     private static String PREF_NAME_MUSIC_USAGE_INFO = "phone.usage.music.info";
+    
 
     public static void insertTotalDurationAppInPref(Context context, String pkgName, long time) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
@@ -185,6 +186,48 @@ public class UsageSharedPrefernceHelper {
         editor.putStringSet("applicationtracking", mInfoList);
         editor.commit();
         }
+    }
+    
+    public static void setTrackingMode(Context context,boolean isCustomMode){
+    	SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putBoolean("trackingMode", isCustomMode);
+        editor.commit();
+    }
+    
+    public static boolean getTrackingMode(Context context){
+    	SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        return prefs.getBoolean("trackingMode", false);
+    }
+    
+    public static void setTrackingStartTime(Context context,Integer startTime){
+    	SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putInt("startTrackingTime", startTime);
+        editor.commit();
+    }
+    
+    public static Integer getTrackingStartTime(Context context){
+    	SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        return prefs.getInt("startTrackingTime", 0);
+    }
+    
+    public static void setTrackingEndTime(Context context,Integer endTime){
+    	SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putInt("endTrackingTime", endTime);
+        editor.commit();
+    }
+    
+    public static Integer getTrackingEndTime(Context context){
+    	SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+                Context.MODE_PRIVATE);
+        return prefs.getInt("endTrackingTime", 24);
     }
     private static String getFormattedStringFromMusicInfo(UsageInfo info) {
         return info.getmIntervalStartTime() + "_" + info.getmIntervalEndTime() + "_"
