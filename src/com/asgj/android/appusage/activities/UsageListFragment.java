@@ -46,10 +46,10 @@ import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
  * {@link ViewPager} title strip which gives continuous feedback to the user
  * when scrolling.
  */
-public class UsageListFragment<AppData, MusicData, CallData> extends
+public class UsageListFragment<AppData, MusicData> extends
 		Fragment {
 
-	static final String LOG_TAG = "SlidingTabsBasicFragment";
+	static final String LOG_TAG = UsageListFragment.class.getSimpleName();
 
 	/**
 	 * A custom {@link ViewPager} title strip which looks much like Tabs present
@@ -61,7 +61,6 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 	private AppData mUsageAppData = null;
 
 	private MusicData mMusicData = null;
-	private CallData mCallData = null;
 
 	/**
 	 * A {@link ViewPager} which will be used in conjunction with the
@@ -72,7 +71,6 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 
 	private UsageListAdapter<AppData> mAppDataListAdapter = null;
 	private MusicListAdapter mMusicDataListAdapter = null;
-	private UsageListAdapter<CallData> mCallDataListAdapter = null;
 	private OnUsageItemClickListener mItemClickListener = null;
 	
 	public void setOnUsageItemClickListener(OnUsageItemClickListener listener){
@@ -100,21 +98,11 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 		mPageAdapter.notifyDataSetChanged();
 	}
 
-	public void setmMusicData(MusicData mMusicData) {
+	@SuppressWarnings("unchecked")
+    public void setmMusicData(MusicData mMusicData) {
 		this.mMusicData = mMusicData;
 		try {
 			mMusicDataListAdapter = new MusicListAdapter((ArrayList<UsageInfo>)this.mMusicData,getActivity());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		mPageAdapter.notifyDataSetChanged();
-	}
-
-	public void setmCallData(CallData mCallData) {
-		this.mCallData = mCallData;
-		try {
-			mCallDataListAdapter = new UsageListAdapter<CallData>(getActivity(), mCallData);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -280,12 +268,10 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 			        returnView = viewData;
 			    }
 			}
-			else if (position == 2 && mCallDataListAdapter != null) {
                     container.addView(viewData);
                     returnView = viewData;
-				title.setAdapter(mCallDataListAdapter);
-				mCallDataListAdapter.notifyDataSetChanged();
-			}
+
+			
 			title.setTag(position);
 			title.setOnItemClickListener(this);
 			musicListView.setOnChildClickListener(this);
@@ -309,8 +295,7 @@ public class UsageListFragment<AppData, MusicData, CallData> extends
 		public void onItemClick(AdapterView<?> parentView, View v, int position,
 				long id) {
 			if(mItemClickListener != null){
-			    String pkg = mAppDataListAdapter.getPackageNameKeys().get(position);
-				mItemClickListener.onUsageItemClick((int)parentView.getTag(), position);
+				mItemClickListener.onUsageItemClick((Integer)parentView.getTag(), position);
 			}
 			
 		}

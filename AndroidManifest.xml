@@ -30,7 +30,7 @@
         </activity>
         <activity
             android:name="com.asgj.android.appusage.activities.SettingActivity"
-            android:label="@string/string_setting"
+            android:label="@string/string_settings"
 			android:configChanges="layoutDirection|screenSize"
             android:theme="@style/mainActionBarStyle" >
             <intent-filter>

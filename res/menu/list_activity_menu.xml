@@ -11,6 +11,6 @@
         android:title="@string/string_showBy"/>
      <item
         android:id="@+id/action_setting"
-        android:title="@string/string_setting"/>
+        android:title="@string/string_settings"/>
 
 </menu>

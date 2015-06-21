@@ -69,7 +69,7 @@ public class UsageTrackingService extends Service {
     private String mCurrentAppName, mPreviousAppName;
 
     private Context mContext = null;
-    private long mStartTime, mUsedTime, mStartTimestamp, mEndTimestamp;
+    private long mStartTime, mUsedTime;
     private long mMusicStartTime, mMusicStopTime;
     private long mPreviousAppStartTimeStamp, mPreviousAppExitTimeStamp, mMusicStartTimeStamp, mMusicStopTimeStamp;
 
@@ -736,8 +736,6 @@ public class UsageTrackingService extends Service {
         }
         
         Log.v (LOG_TAG, "Destroy Service -- mForeground Map after updation is : " + mForegroundActivityMap);
-        
-        mEndTimestamp = System.currentTimeMillis();
 
         // Check whether music playing in background while we are stopping
         // tracking.
@@ -748,10 +746,6 @@ public class UsageTrackingService extends Service {
 
         // As application has changed, we need to dump data to DB.
         doHandlingOnApplicationClose();
-
-        // Get call details for given time-stamps.
-        mCallDetailsMap = Utils.getCallDetails(mContext, mStartTimestamp, mEndTimestamp,
-                mCallDetailsMap);
 
         // Dump data to xml shared preference.
         UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mForegroundActivityMap);
@@ -813,9 +807,8 @@ public class UsageTrackingService extends Service {
     	 mIsRunningForegroundAppsThread = true;
     	 if(isFirstTime)
          mIsFirstTimeStartForgroundAppService = true;
-         
+
          mDatabase = new PhoneUsageDatabase(mContext);
-         mStartTimestamp = System.currentTimeMillis();
          startThread();
          // If music is already playing when tracking started.
          if (isMusicPlaying()) {

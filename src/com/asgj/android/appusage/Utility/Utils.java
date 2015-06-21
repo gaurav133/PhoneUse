@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
@@ -22,13 +23,11 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.BatteryManager;
 import android.os.Build;
-import android.provider.CallLog;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.ImageView;
@@ -169,7 +168,6 @@ public class Utils {
      * @throws 
      */
     public static String getTimeFromSeconds(long seconds) {
-        long duration = seconds;
         String time = "";
         int hour = (int) seconds / 3600;
         seconds = seconds % 3600;
@@ -332,38 +330,8 @@ public class Utils {
 		return (String) context.getPackageManager().getApplicationLabel(
 				mApplicationInfo);
 	}
-    /**
-    * Get call logs for a particular duration.
-    * @param startTime Starting time from which call logs are desired (Inclusive).
-    * @param endTime End time upto which call logs are desired (Exclusive).
-    * @param context Context to access resources.
-    * @return HashMap containing filtered call log entries for given time interval.
-    */
-    public static HashMap<String, Integer> getCallDetails(Context context, long startTime,
-            long endTime, HashMap<String, Integer> mCallDetailsMap) {
 
-        Cursor managedCursor = context.getContentResolver().query(CallLog.Calls.CONTENT_URI, null,
-                null, null, CallLog.Calls.DATE + " DESC");
-
-        int date = managedCursor.getColumnIndex(CallLog.Calls.DATE);
-        int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
-
-        while (managedCursor.moveToNext()) {
-
-            String callDate = managedCursor.getString(date);
-
-            // Only add if the call times overlap with tracking times.
-            if ((Long.parseLong(callDate) <= startTime && (Long.parseLong(callDate) + duration) >= startTime)
-                    || (Long.parseLong(callDate) > startTime && Long.parseLong(callDate) < endTime)) {
-
-                // Add the details in hash-map.
-
-                mCallDetailsMap.put(callDate, duration);
-            }
-        }
-        return mCallDetailsMap;
-    }
-    public static HashMap<String,String> getDataFromSystemL(List<UsageStats> queryUsageStats){
+	public static HashMap<String,String> getDataFromSystemL(List<UsageStats> queryUsageStats){
 		HashMap<String,String> map = new HashMap<String, String>();
 		for(UsageStats stat : queryUsageStats){
 			try {
