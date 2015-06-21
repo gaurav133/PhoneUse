@@ -31,5 +31,8 @@
     <string name="string_total_time_apps">Total Time</string>
     <string name="string_start_tracking_no_data_navigate">No Usage Data. Start tracking, and navigate to other applications.</string>
     <string name="string_no_data_navigate">No Usage Data, please navigate to other applications.</string>
+    <string name="string_default_message_track_pref">Default Mode. Change to User Choice Mode for running Service in specific time interval. It will help us in saving your Battery.</string>
+    <string name="string_user_choice_message_track_pref">User Choice Mode. The service will only run in the specified interval. It will reduce your Battery consumption.</string>
+    <string name="string_title_track_pref">Tracking Mode</string>
 
 </resources>

@@ -163,7 +163,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	 */
 	class SamplePagerAdapter extends PagerAdapter implements OnItemClickListener , OnChildClickListener{
 
-		String[] mList = new String[] { "Apps", "Media", "Call" };
+		String[] mList = new String[] { "Apps", "Media" };
 
 		/**
 		 * @return the number of pages to display
@@ -268,8 +268,6 @@ public class UsageListFragment<AppData, MusicData> extends
 			        returnView = viewData;
 			    }
 			}
-                    container.addView(viewData);
-                    returnView = viewData;
 
 			
 			title.setTag(position);
