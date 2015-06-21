@@ -3,10 +3,16 @@ package com.asgj.android.appusage.activities;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -24,6 +30,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
@@ -73,6 +80,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private UsageDetailFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
+    private String[] mSortByList = null;
     private TextView mShowByOptionsMain = null;
     private TextView mShowByOptions2 = null;
     private TextView mShowByOptions3 = null;
@@ -116,6 +124,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         mShowList = new String[]{getString(R.string.string_Today),
         		getString(R.string.string_Weekly),getString(R.string.string_Monthly)
         		,getString(R.string.string_Yearly),getString(R.string.string_Custom)};
+        mSortByList = new String[] {getString(R.string.string_time), getString(R.string.string_application)};
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
         if(Utils.isTabletDevice(mContext)){
@@ -673,6 +682,63 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         	Intent intent = new Intent(this, SettingActivity.class);
         	startActivity(intent);
         	break;
+        case R.id.action_sort_by:
+            // Open alert dialog.
+            AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(this).setTitle(
+                    getString(R.string.string_sort_by)).setAdapter(new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mSortByList), new OnClickListener() {
+                        
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+                            switch(which) {
+                            case 0 : // Time case.
+                                List<Map.Entry<String, Long>> timeList = new LinkedList<Map.Entry<String, Long>>(mDataMap.entrySet());
+
+                                Collections.sort(timeList, new Comparator<Map.Entry<String, Long>>() {
+
+                                    @Override
+                                    public int compare(Entry<String, Long> lhs,
+                                            Entry<String, Long> rhs) {
+                                        // TODO Auto-generated method stub
+                                        return (int) (lhs.getValue() - rhs.getValue());
+                                    }
+                                });
+                                LinkedHashMap<String, Long> sortedTimeMap = new LinkedHashMap<String, Long>();
+                                ListIterator<Map.Entry<String, Long>> timeIterator = timeList.listIterator();
+                                while (timeIterator.hasNext()) {
+                                    Map.Entry<String, Long> entry = timeIterator.next();
+                                    sortedTimeMap.put(entry.getKey(), entry.getValue());
+                                }
+                                mUsageListFragment.setmUsageAppData(sortedTimeMap);
+                                break;
+                                
+                            case 1 : 
+                            List<Map.Entry<String, Long>> appList = new LinkedList<Map.Entry<String, Long>>(mDataMap.entrySet());
+
+                            Collections.sort(appList, new Comparator<Map.Entry<String, Long>>() {
+
+                                @Override
+                                public int compare(Entry<String, Long> lhs,
+                                        Entry<String, Long> rhs) {
+                                    // TODO Auto-generated method stub
+                                    return (int) (lhs.getKey().compareToIgnoreCase(rhs.getKey()));
+                                }
+                            });
+                            LinkedHashMap<String, Long> sortedApplicationMap = new LinkedHashMap<String, Long>();
+                            ListIterator<Map.Entry<String, Long>> appIterator = appList.listIterator();
+                            while (appIterator.hasNext()) {
+                                Map.Entry<String, Long> entry = appIterator.next();
+                                sortedApplicationMap.put(entry.getKey(), entry.getValue());
+                            }
+                            mUsageListFragment.setmUsageAppData(sortedApplicationMap);
+                            break;
+
+                            }
+                        }
+                    });
+            AlertDialog sortByDialog = sortByBuilder.create();
+            sortByDialog.show();
+            break;
 
         }
         return super.onOptionsItemSelected(item);
