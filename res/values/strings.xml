@@ -35,7 +35,8 @@
     <string name="string_user_choice_message_track_pref">User Choice Mode. The service will only run in the specified interval. It will reduce your Battery consumption.</string>
     <string name="string_title_track_pref">Tracking Mode</string>
     <string name="string_sort_by">Sort By</string>
-    <string name="string_time">Time</string>
+    <string name="string_duration">Duration</string>
     <string name="string_application">Application</string>
+    <string name="string_last_time_used">Last Time Used</string>
 
 </resources>
