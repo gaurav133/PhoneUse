@@ -144,7 +144,7 @@ public class PreferenceListAdapter extends BaseAdapter implements
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress,
 			boolean fromUser) {
-		int position = (int)seekBar.getTag();
+		int position = (Integer)seekBar.getTag();
 		mPackageList.get(position).setmInputtime(progress);
 	}
 

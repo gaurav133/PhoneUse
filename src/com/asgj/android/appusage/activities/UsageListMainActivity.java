@@ -69,7 +69,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private LocalBinder mBinder;
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
-    private UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>, ArrayList<UsageInfo>> mUsageListFragment;
+    private UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>> mUsageListFragment;
     private UsageDetailFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
@@ -189,7 +189,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     		getFragmentManager().popBackStackImmediate();
     	}
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        mUsageListFragment = new UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>, ArrayList<UsageInfo>>();
+        mUsageListFragment = new UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>>();
         transaction.replace(R.id.usage_list_main_fragment, mUsageListFragment);
         transaction.commit();
     }
