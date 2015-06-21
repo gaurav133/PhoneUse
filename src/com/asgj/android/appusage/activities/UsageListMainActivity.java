@@ -673,7 +673,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         	Intent intent = new Intent(this, SettingActivity.class);
         	startActivity(intent);
         	break;
-
         }
         return super.onOptionsItemSelected(item);
     }
