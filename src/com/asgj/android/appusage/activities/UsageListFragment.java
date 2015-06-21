@@ -17,6 +17,7 @@
 package com.asgj.android.appusage.activities;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -53,6 +54,7 @@ import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
+import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.ui.widgets.MusicListAdapter;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
@@ -76,6 +78,8 @@ public class UsageListFragment<AppData, MusicData> extends
 	private SlidingTabLayout mSlidingTabLayout;
 	
 	private HashMap<String, String> mLabelMap;
+	
+	private PhoneUsageDatabase mDatabase;
 
 	private AppData mUsageAppData = null;
 
@@ -141,6 +145,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 	    setHasOptionsMenu(true);
+	    mDatabase = new PhoneUsageDatabase(getActivity());
 		return inflater.inflate(R.layout.usage_fragment_layout, container,
 				false);
 	}
@@ -194,7 +199,7 @@ public class UsageListFragment<AppData, MusicData> extends
         case R.id.action_sort_by:
             // Open alert dialog.
             AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(getActivity()).setTitle(
-                    getString(R.string.string_sort_by)).setAdapter(new ArrayAdapter<>(getActivity().getBaseContext(), android.R.layout.simple_list_item_1, new String[] {getString(R.string.string_time), getString(R.string.string_application)}), new OnClickListener() {
+                    getString(R.string.string_sort_by)).setAdapter(new ArrayAdapter<>(getActivity().getBaseContext(), android.R.layout.simple_list_item_1, new String[] {getString(R.string.string_duration), getString(R.string.string_application), getString(R.string.string_last_time_used)}), new OnClickListener() {
                         
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -242,8 +247,31 @@ public class UsageListFragment<AppData, MusicData> extends
                             setmUsageAppData((AppData) sortedApplicationMap);
                             break;
 
+                    case 2 : 
+                        HashMap<String, Long> map = mDatabase.getApplicationEndTimeStampsForMentionedTimeBeforeToday(getActivity(), UsageSharedPrefernceHelper.getCalendarByShowType(getActivity()), Calendar.getInstance());
+                        List<Map.Entry<String, Long>> lastTimeList = new LinkedList<Map.Entry<String, Long>>(((HashMap<String, Long>) map).entrySet());
+
+                        Collections.sort(lastTimeList, new Comparator<Map.Entry<String, Long>>() {
+
+                            @Override
+                            public int compare(Entry<String, Long> lhs,
+                                    Entry<String, Long> rhs) {
+                                // TODO Auto-generated method stub
+                                return (int) (rhs.getValue() - lhs.getValue());
                             }
+                        });
+                        LinkedHashMap<String, Long> sortedLastTimeUsedMap = new LinkedHashMap<String, Long>();
+                        ListIterator<Map.Entry<String, Long>> lastTimeUsedIterator = lastTimeList.listIterator();
+                        while (lastTimeUsedIterator.hasNext()) {
+                            Map.Entry<String, Long> entry = lastTimeUsedIterator.next();
+                            sortedLastTimeUsedMap.put(entry.getKey(), ((HashMap<String, Long>) mUsageAppData).get(entry.getKey()));
                         }
+                        setmUsageAppData((AppData) sortedLastTimeUsedMap);
+                        break;
+
+                        }
+                    }
+
                     });
             AlertDialog sortByDialog = sortByBuilder.create();
             sortByDialog.show();

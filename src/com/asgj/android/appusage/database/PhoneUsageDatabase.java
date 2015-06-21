@@ -120,15 +120,15 @@ public class PhoneUsageDatabase {
 
     public HashMap<String, Long> getApplicationEntryForMentionedTimeBeforeToday(Context context,
             Calendar startCalendar, Calendar endCalendar) {
-        // long currentTime = System.currentTimeMillis();
 
         String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
         String endDate = Utils.getDateFromMiliSeconds(endCalendar.getTimeInMillis());
         
         String selection = Columns.COLUMN_APP_NAME + "<> '" + MUSIC_PACKAGE_NAME + "' AND "
                 + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
+        String[] projection = new String[] {Columns.COLUMN_APP_NAME, Columns.COLUMN_INTERVAL_DURATION};
 
-        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, null);
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, projection, selection, null, null, null, null);
         HashMap<String, Long> map = new HashMap<String, Long>();
 
         if (cursor != null && cursor.getCount() > 0) {
@@ -144,7 +144,37 @@ public class PhoneUsageDatabase {
             } while (cursor.moveToNext());
         }
         return map;
+    }
+    
+    public HashMap<String, Long> getApplicationEndTimeStampsForMentionedTimeBeforeToday(Context context,
+            Calendar startCalendar, Calendar endCalendar) {
 
+        String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
+        String endDate = Utils.getDateFromMiliSeconds(endCalendar.getTimeInMillis());
+        
+        String selection = Columns.COLUMN_APP_NAME + "<> '" + MUSIC_PACKAGE_NAME + "' AND "
+                + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
+        String[] projection = new String[] {Columns.COLUMN_APP_NAME, Columns.COLUMN_END_INTERVAL_TIME};
+        
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, projection, selection, null, Columns.COLUMN_APP_NAME, null, Columns.COLUMN_END_INTERVAL_TIME + " DESC");
+        HashMap<String, Long> map = new HashMap<String, Long>();
+
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            do {
+                String pkgName = cursor.getString(cursor.getColumnIndex(Columns.COLUMN_APP_NAME));
+                long timestamp = cursor.getLong(cursor
+                        .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME));
+                if (map.containsKey(pkgName)) {
+                    if (map.get(pkgName) > timestamp) {
+                        map.put(pkgName, timestamp);
+                    }
+                } else {
+                    map.put(pkgName, timestamp);
+                }
+            } while (cursor.moveToNext());
+        }
+        return map;
     }
 
     public ArrayList<UsageInfo> getMusicEntryForMentionedTimeBeforeToday(Context context,
@@ -154,7 +184,6 @@ public class PhoneUsageDatabase {
         // (24*3600*1000));
         // String startDate = null;
 
-        Calendar calendarStart = Calendar.getInstance();
         Calendar calendarEnd = Calendar.getInstance();
         calendarEnd.add(Calendar.DATE, -1);
 
@@ -164,7 +193,7 @@ public class PhoneUsageDatabase {
         String selection = Columns.COLUMN_APP_NAME + "= '" + MUSIC_PACKAGE_NAME + "' AND "
                 + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
 
-        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, null);
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, Columns.COLUMN_APP_NAME, null, Columns.COLUMN_END_INTERVAL_TIME + " DESC");
         ArrayList<UsageInfo> mInfoList = new ArrayList<UsageInfo>();
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
