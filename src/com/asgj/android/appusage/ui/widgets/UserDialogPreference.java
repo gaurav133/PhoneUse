@@ -43,6 +43,12 @@ public class UserDialogPreference extends DialogPreference implements
 
         mAdapter = new PreferenceListAdapter(mResolveInfo, mContext);
     }
+    
+    @Override
+    protected void onAttachedToActivity() {
+    	initPackageList();
+    	super.onAttachedToActivity();
+    }
 
 	public UserDialogPreference(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -59,7 +65,7 @@ public class UserDialogPreference extends DialogPreference implements
 
 	@Override
 	protected void onPrepareDialogBuilder(Builder builder) {
-		initPackageList();
+		
 		builder.setAdapter(mAdapter, this);
 		builder.setTitle(R.string.string_select_packages_dialog_title);
 		builder.setPositiveButton(android.R.string.ok, this);

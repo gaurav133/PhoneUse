@@ -6,8 +6,6 @@
 
      <uses-permission android:name="android.permission.GET_TASKS"/>
      <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
-     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
      <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-sdk
@@ -16,12 +14,13 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/usage_launcher_icon"
         android:theme="@style/mainActionBarStyle"
         android:label="@string/app_name" >
         <activity
             android:name="com.asgj.android.appusage.activities.UsageListMainActivity"
             android:theme="@style/mainActionBarStyle"
+            android:icon="@drawable/usage_launcher_icon"
             android:label="@string/app_name" >
            
             <intent-filter>
