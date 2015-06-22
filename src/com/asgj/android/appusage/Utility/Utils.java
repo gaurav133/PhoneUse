@@ -13,10 +13,12 @@ import java.util.concurrent.TimeUnit;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.ActivityManager.MemoryInfo;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -358,6 +360,17 @@ public class Utils {
         Log.v(LOG_TAG, "Availabel precentage: " + percentAvail);
         if (percentAvail < 2) {
             // TODO Show some dialog.
+            AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                    .setTitle(R.string.string_title_low_memory_dialog)
+                    .setMessage(R.string.string_desc_low_memory_dialog)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
             return false;
         } else {
             return true;
@@ -388,6 +401,19 @@ public class Utils {
         if (batteryPct*100 <= 5.0f && !isCharging) {
             Log.v (LOG_TAG, "Battery percentage low: " + batteryPct);
             result = false;
+            AlertDialog.Builder builder = new AlertDialog.Builder(context)
+            .setTitle(R.string.string_title_low_battery_dialog)
+            .setMessage(R.string.string_desc_low_battery_dialog)
+            .setPositiveButton(android.R.string.ok,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog,
+                                int which) {
+                            dialog.dismiss();
+                        }
+                    });
+    AlertDialog dialog = builder.create();
+    dialog.show();
         }
         Log.v (LOG_TAG, "Battery percentage: " + batteryPct);
         return result;

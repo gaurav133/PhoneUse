@@ -38,5 +38,8 @@
     <string name="string_duration">Duration</string>
     <string name="string_application">Application</string>
     <string name="string_last_time_used">Last Time Used</string>
-
+    <string name="string_title_low_battery_dialog">Low Battery</string>
+    <string name="string_desc_low_battery_dialog">Device battery is critically low. Connect your device to a charger to start tracking.</string>
+    <string name="string_title_low_memory_dialog">Low Memory</string>
+    <string name="string_desc_low_memory_dialog">Your device is running low on memory. Kill some applications using task manager and then retry starting tracking.</string>
 </resources>
