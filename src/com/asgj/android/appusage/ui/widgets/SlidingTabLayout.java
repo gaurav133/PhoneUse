@@ -17,6 +17,7 @@
 package com.asgj.android.appusage.ui.widgets;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.support.v4.view.PagerAdapter;
@@ -223,6 +224,13 @@ public class SlidingTabLayout extends HorizontalScrollView {
                 tabTitleView = (TextView) tabView;
             }
 
+            if(i == mViewPager.getCurrentItem()){
+            	tabTitleView.setTextColor(Color.WHITE);
+            	tabTitleView.setAlpha(1.0f);
+          	 }else{
+          		tabTitleView.setTextColor(Color.WHITE);
+          		tabTitleView.setAlpha(0.5f);
+          	 }
             tabTitleView.setTextSize(15);
             tabTitleView.setText(adapter.getPageTitle(i));
             tabView.setOnClickListener(tabClickListener);

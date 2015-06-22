@@ -7,6 +7,8 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.view.View;
 
+import com.asgj.android.appusage.R;
+
 public class GraphView extends View {
 
 	private Paint paint;
@@ -18,8 +20,9 @@ public class GraphView extends View {
 	private String mGraphTitle;
 	private String mHorizontalLabelName = null;
 	private String mVerticalLabelName = null;
-	private float mHorizontalGapParameter = 40;
-	private float mVertialGapParameter = 75;
+	private float mHorizontalGapParameter;
+	private float mVertialGapParameter;
+	private Context mContext = null;
 	private int[] mColorList = new int[] { Color.RED, Color.BLUE,
 			Color.GREEN, Color.CYAN };
 
@@ -37,6 +40,7 @@ public class GraphView extends View {
 			String[] horlabels, String[] verlabels, float[] startime,
 			float[] endtime,String horizontalLabelName,String verticalLabelName) {
 		super(context);
+		this.mContext = context;
 		this.mIntervalValues = values;
 		this.mIntervalStartTime = startime;
 		this.mIntervalEndTime = endtime;
@@ -45,6 +49,8 @@ public class GraphView extends View {
 		this.mVerticalLabels = verlabels;
 		this.mHorizontalLabelName = horizontalLabelName;
 		this.mVerticalLabelName = verticalLabelName;
+		this.mHorizontalGapParameter = context.getResources().getDimension(R.dimen.graph_view_horizontal_parameter);
+		this.mVertialGapParameter = context.getResources().getDimension(R.dimen.graph_view_vertical_parameter);
 		paint = new Paint();
 		this.setHorizontalScrollBarEnabled(true);
 		this.setVerticalScrollBarEnabled(true);
@@ -53,7 +59,7 @@ public class GraphView extends View {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		setMeasuredDimension((int) (1.4 * mHorizontalGapParameter * (mHorizontalLabels.length)),
-				(int) (mVertialGapParameter * (mVerticalLabels.length) + 200));
+				(int) (mVertialGapParameter * (mVerticalLabels.length) + (mContext.getResources().getDimension(R.dimen.graph_view_extra_measure_height))));
 	}
 
 	@Override
@@ -61,21 +67,21 @@ public class GraphView extends View {
 
 		paint.setTextAlign(Align.LEFT);
 		paint.setColor(Color.BLUE);
-		paint.setStrokeWidth(3f);
-		paint.setTextSize(50f);
+		paint.setStrokeWidth(mContext.getResources().getDimension(R.dimen.graph_view_stroke_width_large));
+		paint.setTextSize(mContext.getResources().getDimension(R.dimen.graph_view_stroke_text_size_large));
 		//Graph title
 		canvas.drawText(mGraphTitle, mHorizontalGapParameter * 3, mHorizontalGapParameter * 2, paint);
 		
 		//graph vertical label nam and horizontal label name
-		paint.setStrokeWidth(2f);
-		paint.setTextSize(30f);
+		paint.setStrokeWidth(mContext.getResources().getDimension(R.dimen.graph_view_stroke_width_medium));
+		paint.setTextSize(mContext.getResources().getDimension(R.dimen.graph_view_stroke_text_size_medium));
 		canvas.drawText(mVerticalLabelName, mHorizontalGapParameter, mHorizontalGapParameter * 3, paint);
 		canvas.drawText(mHorizontalLabelName, mHorizontalGapParameter
 				* (mHorizontalLabels.length+ 1), getHeight() - mHorizontalGapParameter, paint);
 		
 		
-		paint.setTextSize(20f);
-		paint.setStrokeWidth(1f);
+		paint.setTextSize(mContext.getResources().getDimension(R.dimen.graph_view_strpke_text_size_small));
+		paint.setStrokeWidth(mContext.getResources().getDimension(R.dimen.graph_view_stroke_width_small));
 		
 		//horizental line and its labels
 		for (int i = 0; i < mHorizontalLabels.length; i++) {
@@ -84,7 +90,7 @@ public class GraphView extends View {
 					* (mHorizontalLabels.length), getHeight() - mHorizontalGapParameter, paint);
 			paint.setColor(Color.BLACK);
 			canvas.drawText(mHorizontalLabels[i], (i * mHorizontalGapParameter) + mHorizontalGapParameter,
-					getHeight() - mHorizontalGapParameter + 30, paint);
+					getHeight() - mHorizontalGapParameter + (mContext.getResources().getDimension(R.dimen.graph_view_bottom_margin_horizontal_label)), paint);
 		}
 
 		//vertical line and its labels
@@ -95,7 +101,7 @@ public class GraphView extends View {
 					paint);
 			paint.setTextAlign(Align.CENTER);
 			paint.setColor(Color.BLACK);
-			canvas.drawText(mVerticalLabels[i], mHorizontalGapParameter - 20, getHeight() - mHorizontalGapParameter
+			canvas.drawText(mVerticalLabels[i], mHorizontalGapParameter - (mContext.getResources().getDimension(R.dimen.graph_view_left_margin_vertical_label)), getHeight() - mHorizontalGapParameter
 					- (mVertialGapParameter * (i + 1)), paint);
 		}
 
