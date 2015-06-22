@@ -4,4 +4,18 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 	<dimen name="activity_show_by_textview_width">65dp</dimen>
+	
+	<!-- Graph  -->
+	<dimen name="graph_view_horizontal_parameter">40dp</dimen>
+	<dimen name="graph_view_vertical_parameter">75dp</dimen>
+	<dimen name="graph_view_stroke_width_large">3dp</dimen>
+	<dimen name="graph_view_stroke_width_medium">2dp</dimen>
+	<dimen name="graph_view_stroke_width_small">1dp</dimen>
+	<dimen name="graph_view_stroke_text_size_large">50dp</dimen>
+	<dimen name="graph_view_stroke_text_size_medium">30dp</dimen>
+	<dimen name="graph_view_strpke_text_size_small">20dp</dimen>
+	<dimen name="graph_view_extra_measure_height">200dp</dimen>
+	<dimen name="graph_view_left_margin_vertical_label">20dp</dimen>
+	<dimen name="graph_view_bottom_margin_horizontal_label">30dp</dimen>
+	
 </resources>
