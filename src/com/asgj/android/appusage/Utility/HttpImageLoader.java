@@ -33,7 +33,7 @@ public class HttpImageLoader implements ComponentCallbacks2 {
 
 	public void display(String url, ImageView imageview, int defaultresource) {
 
-        if (!url.equals(UsageListAdapter.mTotalTimeKey)) {
+        if (url != null && !url.equals(UsageListAdapter.mTotalTimeKey)) {
             imageview.setImageResource(defaultresource);
         Bitmap image = cache.get(url);
         if (image != null) {
