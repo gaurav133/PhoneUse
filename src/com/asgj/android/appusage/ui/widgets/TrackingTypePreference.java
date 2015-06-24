@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.ui.widgets.RangeSeekBar.OnRangeSeekBarChangeListener;
 
 public class TrackingTypePreference extends SwitchPreference implements
@@ -48,9 +49,9 @@ public class TrackingTypePreference extends SwitchPreference implements
 		mTimeRangeSelectionBar = (RangeSeekBar) view
 				.findViewById(R.id.timeRangeView);
 		mTimeRangeSelectionBar.setSelectedMinValue(UsageSharedPrefernceHelper
-				.getTrackingStartTime(mContext));
+				.getTrackingStartTime(mContext)/60);
 		mTimeRangeSelectionBar.setSelectedMaxValue(UsageSharedPrefernceHelper
-				.getTrackingEndTime(mContext));
+				.getTrackingEndTime(mContext)/60);
 		mSwitchView.setOnCheckedChangeListener(this);
 		mTimeRangeSelectionBar.setNotifyWhileDragging(true);
 		mTimeRangeSelectionBar.setOnRangeSeekBarChangeListener(this);
@@ -79,10 +80,10 @@ public class TrackingTypePreference extends SwitchPreference implements
 			mSwitchView.setText(summaryOn);
 			mTimeSelectedStart.setVisibility(View.VISIBLE);
 			mTimeSelectedEnd.setVisibility(View.VISIBLE);
-			mTimeSelectedStart.setText(""+UsageSharedPrefernceHelper
-					.getTrackingStartTime(mContext));
-			mTimeSelectedEnd.setText(""+UsageSharedPrefernceHelper
-					.getTrackingEndTime(mContext));
+			mTimeSelectedStart.setText(Utils.getTimeForRangeFromSeconds(UsageSharedPrefernceHelper
+					.getTrackingStartTime(mContext) , true));
+			mTimeSelectedEnd.setText(Utils.getTimeForRangeFromSeconds(UsageSharedPrefernceHelper
+					.getTrackingEndTime(mContext),true));
 			mTimeRangeSelectionBar.setVisibility(View.VISIBLE);
 		} else {
 			mSwitchView.setText(summaryOff);
@@ -108,10 +109,10 @@ public class TrackingTypePreference extends SwitchPreference implements
 	@Override
 	public void onRangeSeekBarValuesChanged(RangeSeekBar bar, Integer minValue,
 			Integer maxValue) {
-		UsageSharedPrefernceHelper.setTrackingStartTime(mContext, minValue);
-		UsageSharedPrefernceHelper.setTrackingEndTime(mContext, maxValue);
-		mTimeSelectedStart.setText(""+minValue);
-		mTimeSelectedEnd.setText(""+maxValue);
+		UsageSharedPrefernceHelper.setTrackingStartTime(mContext, minValue * 60);
+		UsageSharedPrefernceHelper.setTrackingEndTime(mContext, maxValue * 60);
+		mTimeSelectedStart.setText(Utils.getTimeForRangeFromSeconds(minValue * 60,true));
+		mTimeSelectedEnd.setText(Utils.getTimeForRangeFromSeconds(maxValue * 60,true));
 	}
 
 }

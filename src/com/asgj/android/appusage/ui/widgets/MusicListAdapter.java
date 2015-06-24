@@ -159,13 +159,17 @@ public class MusicListAdapter implements ExpandableListAdapter {
 		TextView textview = (TextView) convertView.findViewById(R.id.group_title);
 		textview.setText(mGroupList.get(groupPosition));
 		ImageView imageView = (ImageView) convertView.findViewById(R.id.drop_icon);
-		if(isExpanded){
+		
+		
+		if(isExpanded && (imageView.getTag() != null && (!(Boolean)imageView.getTag()))){
 			Animation anim = AnimationUtils.loadAnimation(mContext, R.anim.anim_right_to_bottom);
+			imageView.setTag(true);
 			imageView.setAnimation(anim);
 			imageView.animate();
-		}else{
+		}else if(!isExpanded && (imageView.getTag() == null || (Boolean)imageView.getTag())){
 			Animation anim = AnimationUtils.loadAnimation(mContext, R.anim.anim_bottom_to_right);
 			imageView.setAnimation(anim);
+			imageView.setTag(false);
 			imageView.animate();
 			
 		}

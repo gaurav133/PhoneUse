@@ -378,6 +378,7 @@ public class UsageListFragment<AppData, MusicData> extends
 				musicListView.setChildDivider(null);
 				musicListView.setDivider(null);
 				musicListView.setDividerHeight(0);
+				musicListView.setGroupIndicator(null);
 				musicListView.setVisibility(View.VISIBLE);
 				musicListView.setAdapter(mMusicDataListAdapter);
 				if (mMusicDataListAdapter.isEmpty()) {
