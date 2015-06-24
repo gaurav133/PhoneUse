@@ -36,40 +36,46 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.asgj.android.appusage.R;
+
 public class Utils {
 
-    public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
-    private static final String LOG_TAG = Utils.class.getSimpleName();
-    public static String TIME_FORMAT_HH_HR_MM_MIN_SS_SEC = "hh hr mm min ss sec";
-    public static boolean isTabletDevice(Context context){
-    	return context.getResources().getBoolean(R.bool.isTablet);
-    }
+	public static String TIME_FORMAT_HHMMSS = "hh:mm:ss";
+	private static final String LOG_TAG = Utils.class.getSimpleName();
+	public static String TIME_FORMAT_HH_HR_MM_MIN_SS_SEC = "hh hr mm min ss sec";
 
-    public static long getTimeInSecFromNano(long nanoSec) {
-        return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
-    }
-    
-    public static long getTimeInSecFromMili(long miliSec) {
-        return TimeUnit.SECONDS.convert(miliSec, TimeUnit.MILLISECONDS);
-    }
-    public  static <T> int getIndexFromArray(T[] arr,T element){
-    	for(int i =0; i< arr.length ; i++){
-    		if(arr[i] == element){
-    			return i;
-    		}
-    	}
-    	return -1;
-    }
-     
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public static boolean isPermissionGranted(Context context) {
-        final UsageStatsManager usageStatsManager = (UsageStatsManager) context.getSystemService("usagestats");
-        final List<UsageStats> queryUsageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0,  System.currentTimeMillis());
-        return !queryUsageStats.isEmpty();
-    }
+	public static boolean isTabletDevice(Context context) {
+		return context.getResources().getBoolean(R.bool.isTablet);
+	}
+
+	public static long getTimeInSecFromNano(long nanoSec) {
+		return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
+	}
+
+	public static long getTimeInSecFromMili(long miliSec) {
+		return TimeUnit.SECONDS.convert(miliSec, TimeUnit.MILLISECONDS);
+	}
+
+	public static <T> int getIndexFromArray(T[] arr, T element) {
+		for (int i = 0; i < arr.length; i++) {
+			if (arr[i] == element) {
+				return i;
+			}
+		}
+		return -1;
+	}
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public static HashMap<String, Long> getAppUsageFromLAndroidDb(
+	public static boolean isPermissionGranted(Context context) {
+		final UsageStatsManager usageStatsManager = (UsageStatsManager) context
+				.getSystemService("usagestats");
+		final List<UsageStats> queryUsageStats = usageStatsManager
+				.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0,
+						System.currentTimeMillis());
+		return !queryUsageStats.isEmpty();
+	}
+
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+	public static HashMap<String, Long> getAppUsageFromLAndroidDb(
 			Context context, String showBy, long startTime, long endTime) {
 		UsageStatsManager usm = (UsageStatsManager) context
 				.getSystemService("usagestats");
@@ -96,127 +102,181 @@ public class Utils {
 			usageStatsList = usm.queryUsageStats(interval, 0,
 					System.currentTimeMillis());
 		} else {
-			usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime,
-					endTime == 0? System.currentTimeMillis() : endTime);
+			usageStatsList = usm.queryUsageStats(
+					UsageStatsManager.INTERVAL_BEST, startTime,
+					endTime == 0 ? System.currentTimeMillis() : endTime);
 		}
 		HashMap<String, Long> map = new HashMap<String, Long>();
 		for (UsageStats stat : usageStatsList) {
-		    if (Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()) > 0) {
-		          map.put(stat.getPackageName(),
-		                    Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()));
-		    }
+			if (Utils.getTimeInSecFromMili(stat.getTotalTimeInForeground()) > 0) {
+				map.put(stat.getPackageName(), Utils.getTimeInSecFromMili(stat
+						.getTotalTimeInForeground()));
+			}
 		}
 		return map;
 	}
 
-    /**
-     * Returns time in required format from input nanoseconds for displaying.
-     * @param nanoSec Input no. of nanoseconds
-     * @param format Input format for displaying time
-     * @throws IllegalArgumentException in case input format doesn't match the stored format
-     * @return Time as per required format
-     */
-    public static String getTimeFromNanoSeconds(long nanoSec, String format) throws IllegalArgumentException {
-        if (!format.equals(TIME_FORMAT_HHMMSS) || (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
-            throw new IllegalArgumentException("given time format not supported");
-        }
-        nanoSec = nanoSec / 1000;
-        int hour = (int) nanoSec / 3600;
-        nanoSec = nanoSec % 3600;
-        int min = (int) nanoSec / 60;
-        int sec = (int) nanoSec % 60;
-        String time = "";
-        if (format.equals(TIME_FORMAT_HHMMSS)) {
-            if (hour > 0) {
-                time = time + hour + ":";
-            }
-            if (min > 0) {
-                time = time + min + ":";
-            }
-            if (sec > 0) {
-                time = time + sec + " sec";
-            }
-            return time;
-        } else {
-            if (hour > 0) {
-                time = time + hour + " hr ";
-            }
-            if (min > 0) {
-                time = time + min + " min ";
-            }
-            if (sec > 0) {
-                time = time + sec + " sec";
-            }
-            return time;
-        }
-    }
+	/**
+	 * Returns time in required format from input nanoseconds for displaying.
+	 * 
+	 * @param nanoSec
+	 *            Input no. of nanoseconds
+	 * @param format
+	 *            Input format for displaying time
+	 * @throws IllegalArgumentException
+	 *             in case input format doesn't match the stored format
+	 * @return Time as per required format
+	 */
+	public static String getTimeFromNanoSeconds(long nanoSec, String format)
+			throws IllegalArgumentException {
+		if (!format.equals(TIME_FORMAT_HHMMSS)
+				|| (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
+			throw new IllegalArgumentException(
+					"given time format not supported");
+		}
+		nanoSec = nanoSec / 1000;
+		int hour = (int) nanoSec / 3600;
+		nanoSec = nanoSec % 3600;
+		int min = (int) nanoSec / 60;
+		int sec = (int) nanoSec % 60;
+		String time = "";
+		if (format.equals(TIME_FORMAT_HHMMSS)) {
+			if (hour > 0) {
+				time = time + hour + ":";
+			}
+			if (min > 0) {
+				time = time + min + ":";
+			}
+			if (sec > 0) {
+				time = time + sec + " sec";
+			}
+			return time;
+		} else {
+			if (hour > 0) {
+				time = time + hour + " hr ";
+			}
+			if (min > 0) {
+				time = time + min + " min ";
+			}
+			if (sec > 0) {
+				time = time + sec + " sec";
+			}
+			return time;
+		}
+	}
 
-    public static long getMiliSecFromDate(String date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date dateIns = null;
-        try {
-            dateIns = sdf.parse(date);
-        } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return dateIns.getTime();
-    }
-    
-    /**
-     * Calculate the time from given seconds
-     * @param seconds Input seconds to be converted.
-     * @return Time in given format.
-     * @throws 
-     */
-    public static String getTimeFromSeconds(long seconds) {
-        String time = "";
-        int hour = (int) seconds / 3600;
-        seconds = seconds % 3600;
-        int min = (int) seconds / 60;
-        int sec = (int) seconds % 60;
+	public static long getMiliSecFromDate(String date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		Date dateIns = null;
+		try {
+			dateIns = sdf.parse(date);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return dateIns.getTime();
+	}
 
-        if (hour > 0) {
-            time += hour + " hr";
-        }
-        if (min > 0) {
-            time += " " + min + " min"; 
-        }
-        if (sec > 0) {
-            time += " " + sec + " sec";
-        }
-        return time;
-    }
+	/**
+	 * Calculate the time from given seconds
+	 * 
+	 * @param seconds
+	 *            Input seconds to be converted.
+	 * @return Time in given format.
+	 * @throws
+	 */
+	public static String getTimeFromSeconds(long seconds) {
+		String time = "";
+		int hour = (int) seconds / 3600;
+		seconds = seconds % 3600;
+		int min = (int) seconds / 60;
+		int sec = (int) seconds % 60;
 
-    public static String getTimeFromTimeStamp(Context context, long timeStamp) {
-        
-        java.text.DateFormat dateFormat = SimpleDateFormat.getTimeInstance();
-        return dateFormat.format(timeStamp);
-    }
+		if (hour > 0) {
+			time += hour + " hr";
+		}
+		if (min > 0) {
+			time += " " + min + " min";
+		}
+		if (sec > 0) {
+			time += " " + sec + " sec";
+		}
+		return time;
+	}
 
-    public static ArrayList<ApplicationInfo> getAllApplicationsInDevice(Context context) {
-        final PackageManager pm = context.getPackageManager();
-        ArrayList<ApplicationInfo> packages = (ArrayList<ApplicationInfo>) pm
-                .getInstalledApplications(PackageManager.GET_META_DATA);
-        return packages;
-    }
+	public static String getTimeForRangeFromSeconds(long seconds,
+			boolean is12HourFormat) {
+		String time = "";
+		int hour = (int) seconds / 3600;
+		seconds = seconds % 3600;
+		int min = (int) seconds / 60;
+		int sec = (int) seconds % 60;
 
-    public static String getDateFromMiliSeconds(long miliSec) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date resultdate = new Date(miliSec);
-        return sdf.format(resultdate);
-    }
-    
-    /**
-     * Returns application icon corresponding to given package.
-     * @param pkgName Package name for which icon is needed.
-     * @param context Context to access application resources.
-     * @return Application icon for pkgName, null in case pkgName is empty.
-     */
+		if (hour >= 12) {
+			if (hour - 12 > 9) {
+				time += (hour - 12) + " :";
+			} else {
+				time += "0" + (hour - 12) + " :";
+			}
+		} else {
+			if (hour > 9) {
+				time += (hour) + " :";
+			} else {
+				time += "0" + (hour) + " :";
+			}
+		}
+		if (min > 9) {
+			time += " " + min + "";
+		} else {
+			time += " 0" + min + "";
+		}
+		if (sec > 0) {
+			
+		}
+
+		if (hour >= 12) {
+			hour = hour - 12;
+			time = time + " PM";
+		} else {
+			time = time + " AM";
+		}
+		return time;
+	}
+
+	public static String getTimeFromTimeStamp(Context context, long timeStamp) {
+
+		java.text.DateFormat dateFormat = SimpleDateFormat.getTimeInstance();
+		return dateFormat.format(timeStamp);
+	}
+
+	public static ArrayList<ApplicationInfo> getAllApplicationsInDevice(
+			Context context) {
+		final PackageManager pm = context.getPackageManager();
+		ArrayList<ApplicationInfo> packages = (ArrayList<ApplicationInfo>) pm
+				.getInstalledApplications(PackageManager.GET_META_DATA);
+		return packages;
+	}
+
+	public static String getDateFromMiliSeconds(long miliSec) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		Date resultdate = new Date(miliSec);
+		return sdf.format(resultdate);
+	}
+
+	/**
+	 * Returns application icon corresponding to given package.
+	 * 
+	 * @param pkgName
+	 *            Package name for which icon is needed.
+	 * @param context
+	 *            Context to access application resources.
+	 * @return Application icon for pkgName, null in case pkgName is empty.
+	 */
 	public static void getScaledImageView(Context context, ImageView image) {
 		RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) image
 				.getLayoutParams();
-		DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+		DisplayMetrics displayMetrics = context.getResources()
+				.getDisplayMetrics();
 		Configuration conf = context.getResources().getConfiguration();
 		int screenLayout = conf.orientation == Configuration.ORIENTATION_LANDSCAPE ? conf.screenHeightDp
 				: conf.screenWidthDp;
@@ -227,6 +287,7 @@ public class Utils {
 		image.setLayoutParams(params);
 
 	}
+
 	public static Bitmap getApplicationIcon(Context context, String pkgName) {
 		Bitmap resizedBitmap = null;
 		Drawable appIcon = null;
@@ -238,86 +299,91 @@ public class Utils {
 			Configuration conf = context.getResources().getConfiguration();
 			int screenLayout = conf.orientation == Configuration.ORIENTATION_LANDSCAPE ? conf.screenHeightDp
 					: conf.screenWidthDp;
-			DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+			DisplayMetrics displayMetrics = context.getResources()
+					.getDisplayMetrics();
 			int density = displayMetrics.densityDpi;
 			int p = (int) ((screenLayout * density) / 2000);
 			// Scale according to screen size.
 			if (bmp != null && p > 0)
-			resizedBitmap = Bitmap.createScaledBitmap(bmp, p, p, true);
+				resizedBitmap = Bitmap.createScaledBitmap(bmp, p, p, true);
 		} catch (NameNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return resizedBitmap;
 	}
-	
-	public static long calculateMapSum (HashMap<String, Long> inputMap) {
 
-        long sum = 0;
-        
-        if (!inputMap.isEmpty()) {
-            for (Map.Entry<String, Long> entry : inputMap.entrySet()) {
-                sum += entry.getValue();
-            }
-        }
-        return sum;
-    }
+	public static long calculateMapSum(HashMap<String, Long> inputMap) {
 
-    public static long calculateListSum (ArrayList<UsageInfo> inputList) {
+		long sum = 0;
 
-        long sum = 0;
-        if (!inputList.isEmpty()) {
-            ListIterator<UsageInfo> listIterator = inputList.listIterator();
-            
-            while (listIterator.hasNext()) {
-               sum += listIterator.next().getmIntervalDuration(); 
-            }
-        }
-        return sum;
-    }
-    
-    /**
-     * Method to compare 2 dates in Java based on input calendar objects.
-     * @param cal1 Calendar object 1.
-     * @param cal2 Calendar object 2.
-     * @return 1 if cal1 > cal2, 0 if equal, -1 otherwise.
-     */
-    public static int compareDates(Calendar cal1, Calendar cal2) {
+		if (!inputMap.isEmpty()) {
+			for (Map.Entry<String, Long> entry : inputMap.entrySet()) {
+				sum += entry.getValue();
+			}
+		}
+		return sum;
+	}
 
-        int comp1, comp2;
-        
-        comp1 = cal1.get(Calendar.YEAR);
-        comp2 = cal2.get(Calendar.YEAR);
-        
-        if (comp1 != comp2) {
-            return (comp1 > comp2) ? 1 : -1; 
-        }
-        
-        comp1 = cal1.get(Calendar.MONTH);
-        comp2 = cal2.get(Calendar.MONTH);
-        
-        if (comp1 != comp2) {
-            return (comp1 > comp2) ? 1 : -1; 
-        }
-        
-        comp1 = cal1.get(Calendar.DAY_OF_MONTH);
-        comp2 = cal2.get(Calendar.DAY_OF_MONTH);
-        
-        if (comp1 != comp2) {
-            return (comp1 > comp2) ? 1 : -1; 
-        }
-        
-        return 0;
-    }
-    
-    public static int getIndexFromArray(String[] arr, String element) {
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i].equals(element)) {
-                return i;
-            }
-        }
-        return -1;
-    }
+	public static long calculateListSum(ArrayList<UsageInfo> inputList) {
+
+		long sum = 0;
+		if (!inputList.isEmpty()) {
+			ListIterator<UsageInfo> listIterator = inputList.listIterator();
+
+			while (listIterator.hasNext()) {
+				sum += listIterator.next().getmIntervalDuration();
+			}
+		}
+		return sum;
+	}
+
+	/**
+	 * Method to compare 2 dates in Java based on input calendar objects.
+	 * 
+	 * @param cal1
+	 *            Calendar object 1.
+	 * @param cal2
+	 *            Calendar object 2.
+	 * @return 1 if cal1 > cal2, 0 if equal, -1 otherwise.
+	 */
+	public static int compareDates(Calendar cal1, Calendar cal2) {
+
+		int comp1, comp2;
+
+		comp1 = cal1.get(Calendar.YEAR);
+		comp2 = cal2.get(Calendar.YEAR);
+
+		if (comp1 != comp2) {
+			return (comp1 > comp2) ? 1 : -1;
+		}
+
+		comp1 = cal1.get(Calendar.MONTH);
+		comp2 = cal2.get(Calendar.MONTH);
+
+		if (comp1 != comp2) {
+			return (comp1 > comp2) ? 1 : -1;
+		}
+
+		comp1 = cal1.get(Calendar.DAY_OF_MONTH);
+		comp2 = cal2.get(Calendar.DAY_OF_MONTH);
+
+		if (comp1 != comp2) {
+			return (comp1 > comp2) ? 1 : -1;
+		}
+
+		return 0;
+	}
+
+	public static int getIndexFromArray(String[] arr, String element) {
+		for (int i = 0; i < arr.length; i++) {
+			if (arr[i].equals(element)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	public static String getApplicationLabelName(Context context,
 			String packageName) {
 		ApplicationInfo mApplicationInfo = null;
@@ -333,11 +399,14 @@ public class Utils {
 				mApplicationInfo);
 	}
 
-	public static HashMap<String,String> getDataFromSystemL(List<UsageStats> queryUsageStats){
-		HashMap<String,String> map = new HashMap<String, String>();
-		for(UsageStats stat : queryUsageStats){
+	public static HashMap<String, String> getDataFromSystemL(
+			List<UsageStats> queryUsageStats) {
+		HashMap<String, String> map = new HashMap<String, String>();
+		for (UsageStats stat : queryUsageStats) {
 			try {
-				map.put(stat.getPackageName(), Utils.getTimeFromNanoSeconds(stat.getTotalTimeInForeground(),Utils.TIME_FORMAT_HH_HR_MM_MIN_SS_SEC));
+				map.put(stat.getPackageName(), Utils.getTimeFromNanoSeconds(
+						stat.getTotalTimeInForeground(),
+						Utils.TIME_FORMAT_HH_HR_MM_MIN_SS_SEC));
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -345,77 +414,88 @@ public class Utils {
 		}
 		return map;
 	}
-    /**
-     * Method to check whether sufficient RAM is available to continue/start service.
-     * In case RAM is less than 2%, tracking will be stopped.
-     * @param context Context to access application resources.
-     * @return boolean flag indicating whether device has sufficient battery available.
-     */
-    public static boolean isSufficientRAMAvailable(Context context) {
-        MemoryInfo info = new MemoryInfo();
-        ActivityManager activityManager = (ActivityManager) context
-                .getSystemService(Context.ACTIVITY_SERVICE);
-        activityManager.getMemoryInfo(info);
-        long percentAvail = info.availMem * 100 / info.totalMem;
-        Log.v(LOG_TAG, "Availabel precentage: " + percentAvail);
-        if (percentAvail < 2) {
-            // TODO Show some dialog.
-            AlertDialog.Builder builder = new AlertDialog.Builder(context)
-                    .setTitle(R.string.string_title_low_memory_dialog)
-                    .setMessage(R.string.string_desc_low_memory_dialog)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    });
-            AlertDialog dialog = builder.create();
-            dialog.show();
-            return false;
-        } else {
-            return true;
-        }
-    }
-    /**
-     * Method to check whether sufficient battery is available to continue/start service.
-     * In case battery is less than 5% and device isn't charging, tracking will be stopped.
-     * @param context Context to access application resources.
-     * @return boolean flag indicating whether device has sufficient battery available.
-     */
-    public static boolean isSufficientBatteryAvailable(Context context) {
-        boolean result = true;
 
-        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        Intent batteryStatus = context.registerReceiver(null, ifilter);
+	/**
+	 * Method to check whether sufficient RAM is available to continue/start
+	 * service. In case RAM is less than 2%, tracking will be stopped.
+	 * 
+	 * @param context
+	 *            Context to access application resources.
+	 * @return boolean flag indicating whether device has sufficient battery
+	 *         available.
+	 */
+	public static boolean isSufficientRAMAvailable(Context context) {
+		MemoryInfo info = new MemoryInfo();
+		ActivityManager activityManager = (ActivityManager) context
+				.getSystemService(Context.ACTIVITY_SERVICE);
+		activityManager.getMemoryInfo(info);
+		long percentAvail = info.availMem * 100 / info.totalMem;
+		Log.v(LOG_TAG, "Availabel precentage: " + percentAvail);
+		if (percentAvail < 2) {
+			// TODO Show some dialog.
+			AlertDialog.Builder builder = new AlertDialog.Builder(context)
+					.setTitle(R.string.string_title_low_memory_dialog)
+					.setMessage(R.string.string_desc_low_memory_dialog)
+					.setPositiveButton(android.R.string.ok,
+							new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									dialog.dismiss();
+								}
+							});
+			AlertDialog dialog = builder.create();
+			dialog.show();
+			return false;
+		} else {
+			return true;
+		}
+	}
 
-        // Are we charging / charged?
-        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                             status == BatteryManager.BATTERY_STATUS_FULL;
+	/**
+	 * Method to check whether sufficient battery is available to continue/start
+	 * service. In case battery is less than 5% and device isn't charging,
+	 * tracking will be stopped.
+	 * 
+	 * @param context
+	 *            Context to access application resources.
+	 * @return boolean flag indicating whether device has sufficient battery
+	 *         available.
+	 */
+	public static boolean isSufficientBatteryAvailable(Context context) {
+		boolean result = true;
 
-        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+		Intent batteryStatus = context.registerReceiver(null, ifilter);
 
-        float batteryPct = level / (float)scale;
+		// Are we charging / charged?
+		int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+		boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING
+				|| status == BatteryManager.BATTERY_STATUS_FULL;
 
-        if (batteryPct*100 <= 5.0f && !isCharging) {
-            Log.v (LOG_TAG, "Battery percentage low: " + batteryPct);
-            result = false;
-            AlertDialog.Builder builder = new AlertDialog.Builder(context)
-            .setTitle(R.string.string_title_low_battery_dialog)
-            .setMessage(R.string.string_desc_low_battery_dialog)
-            .setPositiveButton(android.R.string.ok,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog,
-                                int which) {
-                            dialog.dismiss();
-                        }
-                    });
-    AlertDialog dialog = builder.create();
-    dialog.show();
-        }
-        Log.v (LOG_TAG, "Battery percentage: " + batteryPct);
-        return result;
-    }
+		int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+		int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+		float batteryPct = level / (float) scale;
+
+		if (batteryPct * 100 <= 5.0f && !isCharging) {
+			Log.v(LOG_TAG, "Battery percentage low: " + batteryPct);
+			result = false;
+			AlertDialog.Builder builder = new AlertDialog.Builder(context)
+					.setTitle(R.string.string_title_low_battery_dialog)
+					.setMessage(R.string.string_desc_low_battery_dialog)
+					.setPositiveButton(android.R.string.ok,
+							new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									dialog.dismiss();
+								}
+							});
+			AlertDialog dialog = builder.create();
+			dialog.show();
+		}
+		Log.v(LOG_TAG, "Battery percentage: " + batteryPct);
+		return result;
+	}
 }

@@ -30,7 +30,7 @@ public class RangeSeekBar extends ImageView {
 	private final float thumbHalfHeight = 0.5f * thumbImage.getHeight();
 	private final float lineHeight = 0.3f * thumbHalfHeight;
 	private final float padding = thumbHalfWidth;
-	private Integer absoluteMinValue = 0, absoluteMaxValue = 24;
+	private Integer absoluteMinValue = 0 * 60, absoluteMaxValue = (23 * 60) + (59);
 	private final NumberType numberType;
 	private final double absoluteMinValuePrim, absoluteMaxValuePrim;
 	private double normalizedMinValue = 0d;
