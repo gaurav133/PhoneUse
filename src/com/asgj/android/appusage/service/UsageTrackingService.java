@@ -3,10 +3,12 @@ package com.asgj.android.appusage.service;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -14,6 +16,8 @@ import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.app.Service;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,7 +27,6 @@ import android.os.Binder;
 import android.os.Build;
 import android.util.Log;
 
-import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
@@ -35,7 +38,7 @@ import com.asgj.android.appusage.database.PhoneUsageDatabase;
  * @author jain.g
  */
 @SuppressLint("InlinedApi")
-public class UsageTrackingService extends Service {
+public class UsageTrackingService extends Service implements Comparator<UsageStats> {
 
     public interface provideData {
         public void provideMap(HashMap<String, Long> map);
@@ -48,28 +51,31 @@ public class UsageTrackingService extends Service {
     private Timer mTimer;
 
     // Hash-map to hold time values for foreground and background activity time values.
-    public HashMap<String, Long> mForegroundActivityMap;
     public HashMap<String, Integer> mCallDetailsMap;
     public ArrayList<UsageInfo> mListMusicPlayTimes;
 
     int mIndex = 0;
     BackgroundTrackingTask mBgTrackingTask;
     BackgroundTrackingTask.TimerTs mTimerTask;
+    Calendar mStartTrackingCalendar, mEndTrackingCalendar;
 
     private boolean mIsRunningForegroundAppsThread = false,
             mIsFirstTimeStartForgroundAppService = false, mIsMusicPlaying = false,
-            mIsMusicStarted = false, mIsContinueTracking = false, mIsMusicPlayingAtStart = false,
+            mIsMusicStarted = false, mIsContinueTracking = false, mIsMusicPlayingAtStart = false, mIsTrackingOn = false,
             mIsScreenOff = false;
 
     private KeyguardManager mKeyguardManager;
     private ActivityManager mActivityManager;
+    private UsageStatsManager mUsageStatsManager;
+    private List<UsageStats> mUsageList;
+    private ListIterator<UsageStats> mUsageListIterator;
 
     private long mPreviousStartTime;
     private String mPackageName;
     private String mCurrentAppName, mPreviousAppName;
 
     private Context mContext = null;
-    private long mStartTime, mUsedTime;
+    private long mStartTime;
     private long mMusicStartTime, mMusicStopTime;
     private long mPreviousAppStartTimeStamp, mPreviousAppExitTimeStamp, mMusicStartTimeStamp, mMusicStopTimeStamp;
 
@@ -85,8 +91,6 @@ public class UsageTrackingService extends Service {
                         && mIsScreenOff == false) {
                     long duration = Utils.getTimeInSecFromNano(System.nanoTime()
                             - mPreviousStartTime);
-
-                    doHandlingOnApplicationClose();
                     if (duration > 0L) {
                         if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
                             mBgTrackingTask.foregroundMap
@@ -98,9 +102,11 @@ public class UsageTrackingService extends Service {
                                     duration);
                         }
                     }
-                    doHandlingForApplicationStarted();
                     if (mBinder.interfaceMap != null) {
                         mBinder.interfaceMap.provideMap(mBgTrackingTask.foregroundMap);
+                    doHandlingOnApplicationClose();
+                    
+                    doHandlingForApplicationStarted();
                     }
                 }
             }
@@ -152,15 +158,17 @@ public class UsageTrackingService extends Service {
                 java.text.DateFormat dateFormat = SimpleDateFormat.getTimeInstance();
                 String time = dateFormat.format(new Date(System.currentTimeMillis()));
                 Log.v(LOG_TAG, "Time is: " + time);
-                
-                Calendar presentCalendar = Calendar.getInstance();
-                Calendar previousCalendar = Calendar.getInstance();
-                previousCalendar.add(Calendar.SECOND, -1);
 
-                if (Utils.compareDates(presentCalendar, previousCalendar) > 0) {
+                Calendar previousCalendar, presentCalendar;
+                presentCalendar = Calendar.getInstance();
+                previousCalendar = Calendar.getInstance();
 
-                    // APPS DATA.
-                    Log.v(LOG_TAG, "It's midnight, dump data to DB.");
+                previousCalendar.setTimeInMillis(presentCalendar.getTimeInMillis() - 60 * 1000);
+
+                // If present date is greater than previous date.
+                if (Utils.compareDates(presentCalendar, previousCalendar) == 1) {
+
+                    Log.v (LOG_TAG, "It's midnight, dump data to DB");
                     UsageSharedPrefernceHelper.clearPreference(mContext);
 
                     if (mIsScreenOff == false) {
@@ -177,7 +185,6 @@ public class UsageTrackingService extends Service {
                     }
 
                     initializeMap(mBgTrackingTask.foregroundMap);
-                    initializeMap(mForegroundActivityMap);
 
                     // MUSIC DATA.
                     if (isMusicPlaying()) {
@@ -229,11 +236,8 @@ public class UsageTrackingService extends Service {
                 // Update data, only if we're getting screen dim state from foreground apps running state.
                 // Corner case - Screen on and locked, again screen turns dim. Avoid data update for this.
                 if (mIsRunningForegroundAppsThread == true) {
-                    doHandlingOnApplicationClose();
-                    storeMap(mBgTrackingTask.foregroundMap);
+
                     
-                    // Reinitialize map.
-                    initializeMap(mBgTrackingTask.foregroundMap);
                     
                     Log.v (LOG_TAG, "screen Dim -- mForegroundMap after reinitializtion is : " + mBgTrackingTask.foregroundMap);
                     
@@ -241,14 +245,14 @@ public class UsageTrackingService extends Service {
                     long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
 
                     if (duration > 0L) {
-                        if (mForegroundActivityMap.containsKey(mPreviousAppName)) {
-                            mForegroundActivityMap.put(mPreviousAppName, mForegroundActivityMap.get(mPreviousAppName) + duration);
+                        if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
+                            mBgTrackingTask.foregroundMap.put(mPreviousAppName, mBgTrackingTask.foregroundMap.get(mPreviousAppName) + duration);
                         } else {
-                            mForegroundActivityMap.put(mPreviousAppName, duration);
+                            mBgTrackingTask.foregroundMap.put(mPreviousAppName, duration);
                         }
                     }
                     
-                    Log.v (LOG_TAG, "screen Dim -- mForeground activity Map after updation is : " + mForegroundActivityMap);
+                    doHandlingOnApplicationClose();
                 }
                 
                 // If screen dim, and user isn't listening to songs or talking, then update boolean variables.
@@ -257,7 +261,7 @@ public class UsageTrackingService extends Service {
 
                     mTimerTask.cancel();
                     mTimerTask = mBgTrackingTask.new TimerTs();
-                    mTimer.schedule(mTimerTask, 0, 60000);
+                        mTimer.schedule(mTimerTask, 0, 120000);
                 }
                 mIsRunningForegroundAppsThread = false;
                 
@@ -280,85 +284,7 @@ public class UsageTrackingService extends Service {
             saveDataOnKill();
         }
     }
-    /**
-     * Method to get current tracking map for applications for displaying in main screen.
-     * @return Map of entries, with pkg name as key and duration as value. 
-     */
-    public HashMap<String, Long> getCurrentMap(Calendar calendar) {
-        HashMap<String, Long> currentDataForToday = new HashMap<>();
-		if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
-                mContext.getString(R.string.string_Today))) {
-            Calendar endCalendar = Calendar.getInstance();
-            endCalendar.add(Calendar.DATE, -1);
-            
-            HashMap<String, Long> mPreviousDaysData; 
-            
-            if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(mContext.getString(R.string.string_Custom))) {
-		            mPreviousDaysData = mDatabase
-                    .getApplicationEntryForMentionedTimeBeforeToday(mContext,
-                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext), endCalendar);
-            } else {
-                mPreviousDaysData = mDatabase.getApplicationEntryForMentionedTimeBeforeToday(mContext, calendar, endCalendar);
-            }
-            for (Map.Entry<String, Long> dataEntry : mPreviousDaysData
-                    .entrySet()) {
-                String key = dataEntry.getKey();
 
-                if (dataEntry.getValue() > 0L) {
-                    if (currentDataForToday.containsKey(key)) {
-                        currentDataForToday.put(key, dataEntry.getValue()
-                                + currentDataForToday.get(key));
-                    } else {
-                        currentDataForToday.put(key, dataEntry.getValue());
-                    }
-                }
-            }
-        }
-        
-        /*if (mBgTrackingTask != null) {
-            if (mBgTrackingTask.foregroundMap != null) {
-                Log.v ("gaurav", "Foreground Map in calculation: " + mBgTrackingTask.foregroundMap);
-            for (Map.Entry<String, Long> dataEntry : mBgTrackingTask.foregroundMap.entrySet()) {
-                String key = dataEntry.getKey();
-                Log.v ("gaurav", "Inserting entry");
-                if (currentDataForToday.containsKey(key)) {
-                    currentDataForToday.put(key, dataEntry.getValue() + currentDataForToday.get(key));
-                } else {
-                    currentDataForToday.put(key, dataEntry.getValue());
-                }
-            }
-            }
-        }
-*/
-        for (Map.Entry<String, Long> dataEntry : mForegroundActivityMap.entrySet()) {
-            String key = dataEntry.getKey();
-
-            if (dataEntry.getValue() > 0) {
-                if (currentDataForToday.containsKey(key)) {
-                    currentDataForToday.put(key, dataEntry.getValue() + currentDataForToday.get(key));
-                } else {
-                    currentDataForToday.put(key, dataEntry.getValue());
-                }
-            }
-        }
-        
-        HashMap<String, Long> tempMap = new HashMap<>();
-        tempMap = UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext);
-        
-        for (Map.Entry<String, Long> dataEntry : tempMap.entrySet()) {
-            String key = dataEntry.getKey();
-            
-            if (dataEntry.getValue() > 0) {
-                if (currentDataForToday.containsKey(key)) {
-                    currentDataForToday.put(key, dataEntry.getValue() + currentDataForToday.get(key));
-                } else {
-                    currentDataForToday.put(key, dataEntry.getValue());
-                }
-            }
-        }
-    
-        return currentDataForToday;
-    }
 
     /**
      * Method to return current data for music (for today) for displaying in Music tab.
@@ -367,10 +293,7 @@ public class UsageTrackingService extends Service {
     public ArrayList<UsageInfo> getCurrentDataForMusic() {
         
         ArrayList<UsageInfo> currentDataForMusic = new ArrayList<UsageInfo>();
-        currentDataForMusic = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
 
-        currentDataForMusic.addAll(mListMusicPlayTimes);
-        
         if (UsageSharedPrefernceHelper.isServiceRunning(mContext) && isMusicPlaying()) {
             
             // Add an entry from start time of music to present time.
@@ -396,16 +319,7 @@ public class UsageTrackingService extends Service {
             currentDataForMusic.add(info);
         }
         
-        if (!UsageSharedPrefernceHelper.getShowByType(mContext).equals(
-                mContext.getString(R.string.string_Today)) && !UsageSharedPrefernceHelper.getShowByType(mContext).equals(mContext.getString(R.string.string_Custom))) {
-            Calendar endCalendar = Calendar.getInstance();
-            endCalendar.add(Calendar.DATE, -1);
-            
-            currentDataForMusic
-                    .addAll(mDatabase.getMusicEntryForMentionedTimeBeforeToday(
-                            mContext,
-                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext), endCalendar));
-        }
+
         return currentDataForMusic;
     }
     
@@ -419,19 +333,6 @@ public class UsageTrackingService extends Service {
         mIsMusicPlaying = audioManager.isMusicActive();
         return mIsMusicPlaying;
     }
-
-    /**
-     * Calculate total time for which phone is used.
-     */
-    public long phoneUsedTime() {
-        Log.v ("gaurav", "Map is: " + mForegroundActivityMap);
-        mUsedTime = 0;
-        for (Map.Entry<String, Long> entry : mForegroundActivityMap.entrySet()) {
-            mUsedTime += entry.getValue();
-        }
-        return mUsedTime;
-    }
-
     /**
      * Local binder class to return an instance of this service for interaction with activity.
      */
@@ -460,7 +361,7 @@ public class UsageTrackingService extends Service {
         mKeyguardManager = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         
         // Initialize hash-maps to hold time values.
-        mForegroundActivityMap = new HashMap<String, Long>();
+
         mCallDetailsMap = new HashMap<String, Integer>();
         mListMusicPlayTimes = new ArrayList<UsageInfo>();
 
@@ -468,6 +369,7 @@ public class UsageTrackingService extends Service {
         mStartTime = System.nanoTime();
         mPreviousAppStartTimeStamp = System.currentTimeMillis();
 
+        mIsTrackingOn = true;
         // Initialize thread to set up default values.
         initThread(true);
         UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
@@ -515,6 +417,10 @@ public class UsageTrackingService extends Service {
 
          // Insert data to database for previous application.
          mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
+         
+         // Insert data to preference too.
+         UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mBgTrackingTask.foregroundMap);
+         initializeMap(mBgTrackingTask.foregroundMap);
     }
 
     private void doHandlingForApplicationStarted() {
@@ -526,10 +432,33 @@ public class UsageTrackingService extends Service {
     
     @SuppressWarnings("deprecation")
     private boolean isTopApplicationchange() {
+        
+        if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
           mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
           mPackageName = mActivityManager.getRunningTasks(1).get(0).topActivity.getPackageName();
 
           mCurrentAppName = mPackageName;
+        } else {
+           mUsageList = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,
+                    0, System.currentTimeMillis());
+            Collections.sort(mUsageList, this);
+
+            if (mUsageList != null) {
+                mUsageListIterator = mUsageList.listIterator();
+
+                UsageStats stats = null;
+                while (mUsageListIterator.hasNext()) {
+                    stats = mUsageListIterator.next();
+                }
+                if (stats != null) {
+
+                    mPackageName = stats.getPackageName();
+
+                    mCurrentAppName = mPackageName;
+                }
+               
+            }
+        }
           return !mCurrentAppName.equals(mPreviousAppName);
 
     }
@@ -570,7 +499,7 @@ public class UsageTrackingService extends Service {
           if (mIsScreenOff == true) {
               mTimerTask.cancel();
               mTimerTask = mBgTrackingTask.new TimerTs();
-              mTimer.schedule(mTimerTask, 0, 60000);
+                  mTimer.schedule(mTimerTask, 0, 120000);
           }
     }
 
@@ -595,6 +524,7 @@ public class UsageTrackingService extends Service {
             mTimer.cancel();
             mTimer.purge();
         }
+        mIsTrackingOn = false;
     }
 
     private final class BackgroundTrackingTask {
@@ -618,17 +548,15 @@ public class UsageTrackingService extends Service {
                 }
                 if (mIsFirstTimeStartForgroundAppService) {
                     initLocalMapForThread(foregroundMap);
+                    return;
                 }
 
-            	if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
-                              // If the present application is different from the previous application, update the previous app time.
-                if (isTopApplicationchange()) {
-                if (isTopApplicationchange() && !mKeyguardManager.isKeyguardLocked()
+            	if (isTopApplicationchange() && !mKeyguardManager.isKeyguardLocked()
                         && mIsRunningForegroundAppsThread == true) {
                     long time = System.nanoTime();
                     long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
                 
-                    doHandlingOnApplicationClose();
+
                     if (duration > 0) {
                         if (foregroundMap.containsKey(mPreviousAppName)) {
                             foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
@@ -636,11 +564,18 @@ public class UsageTrackingService extends Service {
                             foregroundMap.put(mPreviousAppName, Utils.getTimeInSecFromNano(time - mPreviousStartTime));
                         }
                     }
-
+                    doHandlingOnApplicationClose();
                     // Update mPreviousAppStartTimeStamp.
                     doHandlingForApplicationStarted();
                 }
                 mPreviousAppName = mCurrentAppName;
+                if (mMusicStopTime != 0) {
+                    if (Utils.getTimeInSecFromNano(System.nanoTime() - mMusicStopTime) > MUSIC_THRESHOLD_TIME) {
+                        if (mListMusicPlayTimes != null && !mListMusicPlayTimes.isEmpty()) {
+                            UsageSharedPrefernceHelper.updateTodayDataForMusic(mContext, mListMusicPlayTimes);
+                            mListMusicPlayTimes.clear();
+                        }
+                    }
                 }
 
                 // If music is not playing but it was started after tracking started, then update music time.
@@ -672,24 +607,6 @@ public class UsageTrackingService extends Service {
                 }
             }
         }
-    }
-
-    private void storeMap(HashMap<String, Long> foregroundMap) {
-        
-        // For each entry in foreground map, update the entry in mForegroundMap
-        for (Map.Entry<String, Long> entry : foregroundMap.entrySet()) {
-            String key = entry.getKey();
-
-            if (entry.getValue() > 0L) {
-                if (mForegroundActivityMap.containsKey(key)) {
-                    mForegroundActivityMap.put(key, mForegroundActivityMap.get(key) + entry.getValue());
-                } else {
-                    mForegroundActivityMap.put(key, entry.getValue());
-                }
-            }
-        }
-        Log.v (LOG_TAG, "mForegroundActivityMap is : " + mForegroundActivityMap);
-    }
 
        /**
     /**
@@ -726,16 +643,14 @@ public class UsageTrackingService extends Service {
 
         Log.v (LOG_TAG, "onDestroy -- mForegroundMap in onDestroy is : " + mBgTrackingTask.foregroundMap);
         
-        storeMap(mBgTrackingTask.foregroundMap);
+
         if (duration > 0) {
-        if (mForegroundActivityMap.containsKey(mPreviousAppName)) {
-            mForegroundActivityMap.put(mPreviousAppName, mForegroundActivityMap.get(mPreviousAppName) + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+        if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
+            mBgTrackingTask.foregroundMap.put(mPreviousAppName, mBgTrackingTask.foregroundMap.get(mPreviousAppName) + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
         } else {
-            mForegroundActivityMap.put(mPreviousAppName, Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+            mBgTrackingTask.foregroundMap.put(mPreviousAppName, Utils.getTimeInSecFromNano(time - mPreviousStartTime));
             }
         }
-        
-        Log.v (LOG_TAG, "Destroy Service -- mForeground Map after updation is : " + mForegroundActivityMap);
 
         // Check whether music playing in background while we are stopping
         // tracking.
@@ -748,7 +663,6 @@ public class UsageTrackingService extends Service {
         doHandlingOnApplicationClose();
 
         // Dump data to xml shared preference.
-        UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mForegroundActivityMap);
         
         if (!mListMusicPlayTimes.isEmpty()) {
             UsageSharedPrefernceHelper.updateTodayDataForMusic(mContext, mListMusicPlayTimes);
@@ -768,7 +682,7 @@ public class UsageTrackingService extends Service {
         mPreviousStartTime = System.nanoTime();
         mListMusicPlayTimes.clear();
         initializeMap(mBgTrackingTask.foregroundMap);
-        initializeMap(mForegroundActivityMap);
+
     }
 
     @Override
@@ -778,7 +692,7 @@ public class UsageTrackingService extends Service {
         saveDataOnKill();
         UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
         setUpReceivers(false);
-        mForegroundActivityMap = null;
+
         mBgTrackingTask.foregroundMap = null;
         mBgTrackingTask = null;
         mDatabase = null;
@@ -807,6 +721,10 @@ public class UsageTrackingService extends Service {
     	 mIsRunningForegroundAppsThread = true;
     	 if(isFirstTime)
          mIsFirstTimeStartForgroundAppService = true;
+    	 if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+             mUsageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
+             mUsageList = new ArrayList<UsageStats>();
+         }
 
          mDatabase = new PhoneUsageDatabase(mContext);
          startThread();
@@ -824,6 +742,11 @@ public class UsageTrackingService extends Service {
     public LocalBinder onBind(Intent intent) {
         Log.v(LOG_TAG, "onBind Call");
                return mBinder;
+    }
+    @Override
+    public int compare(UsageStats usageStats1, UsageStats usageStats2) {
+        // TODO Auto-generated method stub
+        return (int) (usageStats1.getLastTimeUsed() - usageStats2.getLastTimeUsed());
     }
   }
 

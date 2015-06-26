@@ -26,7 +26,7 @@ import com.asgj.android.appusage.database.PhoneUsageDbHelper.Table;
 public class PhoneUsageDatabase {
 
 	public static final String MUSIC_PACKAGE_NAME = "music_package";
-	
+	private static final String LOG_TAG = PhoneUsageDatabase.class.getSimpleName();
 	private Context mContext;
 	PhoneUsageDbHelper mDbHelper = null;
 	SQLiteDatabase mDatabase = null;
@@ -93,20 +93,62 @@ public class PhoneUsageDatabase {
         ArrayList<UsageInfo> mInfoList = new ArrayList<UsageInfo>();
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
+            int startIntervalIndex = cursor
+                    .getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME);
+            int endIntervalIndex = cursor
+                    .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME);
+            int durationIndex = cursor
+                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
             do {
                 UsageInfo info = new UsageInfo();
-                info.setmIntervalStartTime(cursor.getLong(cursor
-                        .getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME)));
-                info.setmIntervalEndTime(cursor.getLong(cursor
-                        .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME)));
-                info.setmIntervalDuration(cursor.getLong(cursor
-                        .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION)));
+                info.setmIntervalStartTime(cursor.getLong(startIntervalIndex));
+                info.setmIntervalEndTime(cursor.getLong(endIntervalIndex));
+                info.setmIntervalDuration(cursor.getLong(durationIndex));
                 mInfoList.add(info);
             } while (cursor.moveToNext());
         }
         return mInfoList;
 
     }
+	
+	public HashMap<Long, UsageInfo> getAppIntervalsBetweenDates(
+            String packageName, Calendar startCalendar, Calendar endCalendar) {
+	    
+        String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
+        String endDate = Utils.getDateFromMiliSeconds(endCalendar.getTimeInMillis());
+
+        String indexCreate = "CREATE INDEX IF NOT EXISTS " + "date " + "ON " + Table.TABLE_NAME + "(" + Columns.COLUMN_DATE + "," + Columns.COLUMN_APP_NAME + ")";
+        mDatabase.execSQL(indexCreate);
+        String selection = Columns.COLUMN_APP_NAME + "= '" + packageName + "' AND "
+                + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
+
+        HashMap<Long, UsageInfo> map = new HashMap<>();
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
+                null, null, null);
+        Log.v (LOG_TAG, "Cursor count is: " + cursor.getCount());
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            int startIntervalIndex = cursor
+                    .getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME);
+            int endIntervalIndex = cursor
+                    .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME);
+            int durationIndex = cursor
+                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
+            do {
+                long startTime = System.nanoTime();
+                UsageInfo info = new UsageInfo();
+                info.setmIntervalStartTime(cursor.getLong(startIntervalIndex));
+                info.setmIntervalEndTime(cursor.getLong(endIntervalIndex));
+                info.setmIntervalDuration(cursor.getLong(durationIndex));
+                map.put(info.getmIntervalDuration(), info);
+                //mInfoList.add(info);
+                Log.v(LOG_TAG, "This loop  cursor iteration took : " + Utils.getTimeInSecFromNano(System.nanoTime() - startTime) + " ms.");
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return map;
+    }
+	
     public void insertApplicationEntry(String pkgname, UsageInfo mValues) {
         ContentValues cv = new ContentValues();
         cv.put(Columns.COLUMN_APP_NAME, pkgname);
@@ -118,7 +160,7 @@ public class PhoneUsageDatabase {
         mDatabase.insert(Table.TABLE_NAME, null, cv);
     }
 
-    public HashMap<String, Long> getApplicationEntryForMentionedTimeBeforeToday(Context context,
+    public HashMap<String, Long> getAppDurationForGivenTimes(Context context,
             Calendar startCalendar, Calendar endCalendar) {
 
         String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
@@ -133,10 +175,13 @@ public class PhoneUsageDatabase {
 
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
+            int columnDuration = cursor
+                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
+            int columnAppName = cursor
+                    .getColumnIndex(Columns.COLUMN_APP_NAME);
             do {
-                String pkgName = cursor.getString(cursor.getColumnIndex(Columns.COLUMN_APP_NAME));
-                long duration = cursor.getLong(cursor
-                        .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION));
+                String pkgName = cursor.getString(columnAppName);
+                long duration = cursor.getLong(columnDuration);
                 if (map.containsKey(pkgName)) {
                     duration = duration + map.get(pkgName);
                 }
@@ -177,12 +222,8 @@ public class PhoneUsageDatabase {
         return map;
     }
 
-    public ArrayList<UsageInfo> getMusicEntryForMentionedTimeBeforeToday(Context context,
+    public ArrayList<UsageInfo> getMusicIntervalsBetweenDates(Context context,
             Calendar startCalendar, Calendar endCalendar) {
-        // long currentTime = System.currentTimeMillis();
-        // String yesterdayDate = Utils.getDateFromMiliSeconds(currentTime -
-        // (24*3600*1000));
-        // String startDate = null;
 
         Calendar calendarEnd = Calendar.getInstance();
         calendarEnd.add(Calendar.DATE, -1);
@@ -197,14 +238,17 @@ public class PhoneUsageDatabase {
         ArrayList<UsageInfo> mInfoList = new ArrayList<UsageInfo>();
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
+            int columnStartInterval = cursor
+                    .getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME);
+            int columnEndInterval = cursor
+                    .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME);
+            int columnDuration = cursor
+                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
             do {
                 UsageInfo info = new UsageInfo();
-                info.setmIntervalStartTime(cursor.getLong(cursor
-                        .getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME)));
-                info.setmIntervalEndTime(cursor.getLong(cursor
-                        .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME)));
-                info.setmIntervalDuration(cursor.getLong(cursor
-                        .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION)));
+                info.setmIntervalStartTime(cursor.getLong(columnStartInterval));
+                info.setmIntervalEndTime(cursor.getLong(columnEndInterval));
+                info.setmIntervalDuration(cursor.getLong(columnDuration));
                 mInfoList.add(info);
             } while (cursor.moveToNext());
         }
@@ -225,10 +269,11 @@ public class PhoneUsageDatabase {
 		long total_time = 0;
 		if (cursor != null && cursor.getCount() > 0) {
 			cursor.moveToFirst();
+            int columnDuration = cursor
+                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
 			do {
 				total_time = total_time
-						+ cursor.getLong(cursor
-								.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION));
+						+ cursor.getLong(columnDuration);
 			} while (cursor.moveToNext());
 		}
 		return total_time;
@@ -246,10 +291,11 @@ public class PhoneUsageDatabase {
 		long total_time = 0;
 		if (cursor != null && cursor.getCount() > 0) {
 			cursor.moveToFirst();
+            int columnDuration = cursor
+                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
 			do {
 				total_time = total_time
-						+ cursor.getLong(cursor
-								.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION));
+						+ cursor.getLong(columnDuration);
 			} while (cursor.moveToNext());
 		}
 		return total_time;
@@ -276,9 +322,10 @@ public class PhoneUsageDatabase {
 		ArrayList<String> mPackList = new ArrayList<>();
 		if (cursor != null && cursor.getCount() > 0) {
 			cursor.moveToFirst();
+            int columnAppName = cursor
+                    .getColumnIndex(Columns.COLUMN_APP_NAME);
 			do {
-				mPackList.add(cursor.getString(cursor
-								.getColumnIndex(Columns.COLUMN_APP_NAME)));
+				mPackList.add(cursor.getString(columnAppName));
 			} while (cursor.moveToNext());
 		}
 		return mPackList;

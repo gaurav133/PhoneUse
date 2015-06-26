@@ -47,9 +47,14 @@ public class Utils {
 		return context.getResources().getBoolean(R.bool.isTablet);
 	}
 
-	public static long getTimeInSecFromNano(long nanoSec) {
-		return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
-	}
+    /**
+     * Returns time in seconds from given nanoseconds.
+     * @param nanoSec input time in nanoseconds.
+     * @return time in seconds.
+     */
+    public static long getTimeInSecFromNano(long nanoSec) {
+        return TimeUnit.SECONDS.convert(nanoSec, TimeUnit.NANOSECONDS);
+    }
 
 	public static long getTimeInSecFromMili(long miliSec) {
 		return TimeUnit.SECONDS.convert(miliSec, TimeUnit.MILLISECONDS);
@@ -116,81 +121,112 @@ public class Utils {
 		return map;
 	}
 
-	/**
-	 * Returns time in required format from input nanoseconds for displaying.
-	 * 
-	 * @param nanoSec
-	 *            Input no. of nanoseconds
-	 * @param format
-	 *            Input format for displaying time
-	 * @throws IllegalArgumentException
-	 *             in case input format doesn't match the stored format
-	 * @return Time as per required format
-	 */
-	public static String getTimeFromNanoSeconds(long nanoSec, String format)
-			throws IllegalArgumentException {
-		if (!format.equals(TIME_FORMAT_HHMMSS)
-				|| (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
-			throw new IllegalArgumentException(
-					"given time format not supported");
-		}
-		nanoSec = nanoSec / 1000;
-		int hour = (int) nanoSec / 3600;
-		nanoSec = nanoSec % 3600;
-		int min = (int) nanoSec / 60;
-		int sec = (int) nanoSec % 60;
-		String time = "";
-		if (format.equals(TIME_FORMAT_HHMMSS)) {
-			if (hour > 0) {
-				time = time + hour + ":";
-			}
-			if (min > 0) {
-				time = time + min + ":";
-			}
-			if (sec > 0) {
-				time = time + sec + " sec";
-			}
-			return time;
-		} else {
-			if (hour > 0) {
-				time = time + hour + " hr ";
-			}
-			if (min > 0) {
-				time = time + min + " min ";
-			}
-			if (sec > 0) {
-				time = time + sec + " sec";
-			}
-			return time;
-		}
-	}
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public static HashMap<String, UsageStats> getCurrentUsageMapForL(Context context) {
 
-	public static long getMiliSecFromDate(String date) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-		Date dateIns = null;
-		try {
-			dateIns = sdf.parse(date);
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return dateIns.getTime();
-	}
+        UsageStatsManager statsManager = (UsageStatsManager) context.getSystemService("usagestats");
+        ArrayList<UsageStats> appList = new ArrayList<>();
+        appList = (ArrayList<UsageStats>) statsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 0, System.currentTimeMillis());
+        HashMap<String, UsageStats> result = new HashMap<String, UsageStats>();
 
-	/**
-	 * Calculate the time from given seconds
-	 * 
-	 * @param seconds
-	 *            Input seconds to be converted.
-	 * @return Time in given format.
-	 * @throws
-	 */
-	public static String getTimeFromSeconds(long seconds) {
-		String time = "";
-		int hour = (int) seconds / 3600;
-		seconds = seconds % 3600;
-		int min = (int) seconds / 60;
-		int sec = (int) seconds % 60;
+        ListIterator<UsageStats> iterator = appList.listIterator();
+
+        while (iterator.hasNext()) {
+            UsageStats stats = iterator.next();
+            result.put(stats.getPackageName(), stats);
+        }
+
+        return result;
+    }
+    
+    public static long getStartTimeFromDuration(long endTime, int duration) {
+        Calendar result = Calendar.getInstance();
+        
+        result.setTimeInMillis(endTime);
+        result.add(Calendar.SECOND, -duration);
+        
+        return result.getTimeInMillis();
+    }
+
+    /**
+     * Returns time in required format from input nanoseconds for displaying.
+     * @param nanoSec Input no. of nanoseconds
+     * @param format Input format for displaying time
+     * @throws IllegalArgumentException in case input format doesn't match the stored format
+     * @return Time as per required format
+     */
+    public static String getTimeFromNanoSeconds(long nanoSec, String format) throws IllegalArgumentException {
+        if (!format.equals(TIME_FORMAT_HHMMSS) || (!format.equals(TIME_FORMAT_HH_HR_MM_MIN_SS_SEC))) {
+            throw new IllegalArgumentException("given time format not supported");
+        }
+        nanoSec = nanoSec / 1000;
+        int hour = (int) nanoSec / 3600;
+        nanoSec = nanoSec % 3600;
+        int min = (int) nanoSec / 60;
+        int sec = (int) nanoSec % 60;
+        String time = "";
+        if (format.equals(TIME_FORMAT_HHMMSS)) {
+            if (hour > 0) {
+                time = time + hour + ":";
+            }
+            if (min > 0) {
+                time = time + min + ":";
+            }
+            if (sec > 0) {
+                time = time + sec + " sec";
+            }
+            return time;
+        } else {
+            if (hour > 0) {
+                time = time + hour + " hr ";
+            }
+            if (min > 0) {
+                time = time + min + " min ";
+            }
+            if (sec > 0) {
+                time = time + sec + " sec";
+            }
+            return time;
+        }
+    }
+    
+    
+    public static int getHourFromTime(long timeStamp) {
+
+        SimpleDateFormat format = new SimpleDateFormat("hh:mm:ss");
+        String time;
+        
+        time = format.format(new Date(timeStamp));
+        int index = time.indexOf(":");
+        String hr = time.substring(0, index);
+        
+        return Integer.parseInt(hr);
+    }
+
+    public static long getMiliSecFromDate(String date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateIns = null;
+        try {
+            dateIns = sdf.parse(date);
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return dateIns.getTime();
+    }
+    
+    /**
+     * Calculate the time from given seconds
+     * @param seconds Input seconds to be converted.
+     * @return Time in given format.
+     * @throws 
+     */
+    public static String getTimeFromSeconds(long seconds) {
+        String time = "";
+        int hour = (int) seconds / 3600;
+        seconds = seconds % 3600;
+        int min = (int) seconds / 60;
+        int sec = (int) seconds % 60;
 
 		if (hour > 0) {
 			time += hour + " hr";

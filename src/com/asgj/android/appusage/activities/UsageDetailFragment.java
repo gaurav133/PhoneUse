@@ -1,8 +1,10 @@
 package com.asgj.android.appusage.activities;
 
-import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,12 +16,13 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.ScrollView;
 
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.ui.widgets.GraphView;
 
 public class UsageDetailFragment extends Fragment {
 
 	private float mMaxDuration;
-	private ArrayList<UsageInfo> mIntervalList = null;
+	private HashMap<Long, UsageInfo> mIntervalMap = null;
 	private String[] mVerticalLabels = new String[10];
 	private String[] mHorizontalLabels = null;
 	private float[] mIntervalDurationList = new float[24];
@@ -34,23 +37,24 @@ public class UsageDetailFragment extends Fragment {
 	}
 	
 	
-	public void updateDetailGraph(ArrayList<UsageInfo> intervalList, String appName,String showBy){
-		initDetailFragment(intervalList,  appName, showBy);
+	public void updateDetailGraph(HashMap<Long, UsageInfo> intervalMap, String appName,String showBy){
+		initDetailFragment(intervalMap,  appName, showBy);
 		
 	}
 	
-	public void initDetailFragment(ArrayList<UsageInfo> intervalList, String appName,String showBy){
+	@SuppressLint("UseSparseArrays")
+    public void initDetailFragment(HashMap<Long, UsageInfo> intervalMap, String appName,String showBy){
 
-		mIntervalList = intervalList;
+		mIntervalMap = intervalMap;
 		//dummy for testing
-		if(mIntervalList == null){
-			mIntervalList = new ArrayList<UsageInfo>();
+		if(mIntervalMap == null){
+			mIntervalMap = new HashMap<Long, UsageInfo>();
 			for(int i =0; i< 3 ; i++){
 				UsageInfo info = new UsageInfo();
 				info.setmIntervalStartTime(((i+1)*4)+1);
 				info.setmIntervalEndTime(((i+1)*4)+(i+2));
 				info.setmIntervalDuration(info.getmIntervalEndTime() - info.getmIntervalStartTime());
-				mIntervalList.add(info);
+				mIntervalMap.put(info.getmIntervalStartTime(), info);
 			}
 		}
 		mApplicationName = appName;
@@ -85,12 +89,13 @@ public class UsageDetailFragment extends Fragment {
 			
 			long minStartTime = Integer.MAX_VALUE;
 			long maxStarttime = Integer.MIN_VALUE;
-			for(UsageInfo interval : mIntervalList){
-				if(interval.getmIntervalStartTime() < minStartTime){
-					minStartTime = interval.getmIntervalStartTime();
+			for(Map.Entry<Long, UsageInfo> entry : mIntervalMap.entrySet()){
+			    long startTime = entry.getValue().getmIntervalStartTime();
+				if(startTime < minStartTime){
+					minStartTime = startTime;
 				}
-				if(interval.getmIntervalStartTime() > maxStarttime){
-					maxStarttime = interval.getmIntervalStartTime();
+				if(startTime > maxStarttime){
+					maxStarttime = startTime;
 				}
 			}
 			Calendar cal1 = Calendar.getInstance();
@@ -146,7 +151,7 @@ public class UsageDetailFragment extends Fragment {
 			break;
 		}
 		try {
-			prepareDataForGraph();
+		    prepareVerticaIntervals();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -154,30 +159,33 @@ public class UsageDetailFragment extends Fragment {
 	}
 
 	/**
-	 * 
-	 * @param intervalList list of intervals having starttime, endtime and durations. it totally dependent on the showby.
+	 * @param intervalMap list of intervals having starttime, endtime and durations. it totally dependent on the showby.
 	 * @param appName name of application for which graph is need to shown
 	 * @param showBy this is most important parameter for detail fragment. it actually decides the horizontal labels.
 	 */
-	UsageDetailFragment(ArrayList<UsageInfo> intervalList, String appName,String showBy) {
-		initDetailFragment(intervalList,  appName, showBy);
+	UsageDetailFragment(HashMap<Long, UsageInfo> intervalMap, String appName,String showBy) {
+		initDetailFragment(intervalMap,  appName, showBy);
 	}
 
-	private void prepareDataForGraph() throws Exception {
-		if (mIntervalList == null || mIntervalList.size() == 0) {
-			throw new Exception("empty enterval list found..");
+	private void prepareVerticaIntervals() throws IllegalArgumentException {
+		if (mIntervalMap == null || mIntervalMap.size() == 0) {
+			throw new IllegalArgumentException("empty interval map found..");
 		}
-		long maxDuration = mIntervalList.get(0).getmIntervalDuration();
-		for (int j =0; j< mIntervalList.size() ; j++) {
-			UsageInfo interval = mIntervalList.get(j);
-			long starttime = interval.getmIntervalStartTime();
+		
+		long maxDuration = mIntervalMap.entrySet().iterator().next().getValue().getmIntervalDuration();
+		for (Map.Entry<Long, UsageInfo> entry : mIntervalMap.entrySet()) {
+			UsageInfo interval = entry.getValue();
+			
+			// Get start time (starting hour for time).
+			long startTime = Utils.getHourFromTime(interval.getmIntervalStartTime());
+			
 			for (int i = 0; i < mHorizontalLabels.length - 1; i++) {
 				float horValue = (float) Integer.parseInt(mHorizontalLabels[i]);
 				float horValue1 = (float) Integer
 						.parseInt(mHorizontalLabels[i + 1]);
-				if (starttime >= horValue && starttime < horValue1) {
-					mIntervalStartTimeList[i] = starttime;
-					mIntervalEndTimeList[i] = interval.getmIntervalEndTime();
+				if (startTime >= horValue && startTime < horValue1) {
+					mIntervalStartTimeList[i] = startTime;
+					mIntervalEndTimeList[i] = Utils.getHourFromTime(interval.getmIntervalEndTime());
 					mIntervalDurationList[i] = interval.getmIntervalDuration();
 				}
 			}
