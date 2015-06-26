@@ -800,6 +800,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             displayDataForApps();
             displayDataForMusic();
     }
+    
+    @Override
+    public void onMusicItemClick(String pkg, int groupPosition,
+    		int childPosition) {
+    	// TODO Auto-generated method stub
+    	
+    }
 
     @Override
     public void onUsageItemClick(String pkg, int position) {

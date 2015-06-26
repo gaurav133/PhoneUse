@@ -105,6 +105,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	
 	public interface OnUsageItemClickListener {
 		public void onUsageItemClick(String pkg,int position);
+		public void onMusicItemClick(String pkg,int groupPosition,int childPosition);
 	}
 
 	/**
@@ -458,7 +459,7 @@ public class UsageListFragment<AppData, MusicData> extends
 		public boolean onChildClick(ExpandableListView parent, View v,
 				int groupPosition, int childPosition, long id) {
 			if(mItemClickListener != null){
-				mItemClickListener.onUsageItemClick("a", childPosition);
+				mItemClickListener.onMusicItemClick("a", groupPosition, childPosition);
 			}
 			return false;
 		}
