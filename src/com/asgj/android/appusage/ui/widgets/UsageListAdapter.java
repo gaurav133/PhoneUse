@@ -19,6 +19,7 @@ import com.asgj.android.appusage.Utility.Utils;
 
 public class UsageListAdapter<Data> extends BaseAdapter {
 
+    private static final String LOG_TAG = UsageListAdapter.class.getSimpleName();
     public static final String mTotalTimeKey = "totalTime";
     private int index = 0;
     Context mContext = null;
@@ -83,45 +84,55 @@ public class UsageListAdapter<Data> extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        
+        ViewHolder holder;
         if (convertView == null) {
             LayoutInflater inflater = LayoutInflater.from(mContext);
             convertView = inflater.inflate(R.layout.usage_list_item, null);
+
+            holder = new ViewHolder();
+            holder.image_view_app_icon = (ImageView) convertView.findViewById(R.id.app_icon);
+            holder.text_dash = (TextView) convertView.findViewById(R.id.textView_dash);
+            holder.text_left = (TextView) convertView.findViewById(R.id.text1);
+            holder.text_right = (TextView) convertView.findViewById(R.id.text3);
+            holder.text_middle = (TextView) convertView.findViewById(R.id.text2);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
         }
 
-        TextView text_left = (TextView) convertView.findViewById(R.id.text1);
-        TextView text_middle = (TextView) convertView.findViewById(R.id.text2);
-        TextView text_dash = (TextView) convertView.findViewById(R.id.textView_dash);
-        TextView text_right = (TextView) convertView.findViewById(R.id.text3);
-        ImageView image_view_app_icon = (ImageView) convertView.findViewById(R.id.app_icon);
-
-          
         
         if (mMap != null) {
-            text_dash.setVisibility(View.GONE);
+            holder.text_dash.setVisibility(View.GONE);
             if (position == 0) {
-                image_view_app_icon.setVisibility(View.GONE);
-                text_left.setTextColor(mContext.getResources().getColor(
+                holder.image_view_app_icon.setVisibility(View.GONE);
+                holder.text_left.setTextColor(mContext.getResources().getColor(
                         R.color.color_total_time_title));
-                text_left.setTypeface(mBoldTypeface);
-                text_left.setText(mContext.getString(R.string.string_total_time_apps).toUpperCase());
-                text_right.setText(("" + Utils.getTimeFromSeconds(mMap.get(mKeys.get(position))))
+                holder.text_left.setTypeface(mBoldTypeface);
+                holder.text_left.setText(mContext.getString(R.string.string_total_time_apps).toUpperCase());
+                holder.text_right.setText(("" + Utils.getTimeFromSeconds(mMap.get(mKeys.get(position))))
                         .toUpperCase());
-                text_right.setTextColor(mContext.getResources().getColor(
+                holder.text_right.setTextColor(mContext.getResources().getColor(
                         R.color.color_total_time_title));
-                text_right.setTypeface(mBoldTypeface);
+                holder.text_right.setTypeface(mBoldTypeface);
                 
             } else {
-                mImageLoader.display(mKeys.get(position), image_view_app_icon,
+                holder.image_view_app_icon.setVisibility(View.VISIBLE);
+                mImageLoader.display(mKeys.get(position), holder.image_view_app_icon,
                         R.drawable.ic_launcher);
-                text_left.setTextColor(mContext.getResources().getColor(android.R.color.black));
-                text_left.setText(Utils.getApplicationLabelName(mContext, mKeys.get(position)));
-                text_left.setTypeface(mNormalTypeface);
-                text_right.setText("" + Utils.getTimeFromSeconds(mMap.get(mKeys.get(position))));
-                text_right.setTextColor(mContext.getResources().getColor(android.R.color.black));
-                text_right.setTypeface(mNormalTypeface);
-                image_view_app_icon.setVisibility(View.VISIBLE);
+                holder.text_left.setTextColor(mContext.getResources().getColor(android.R.color.black));
+                holder.text_left.setText(Utils.getApplicationLabelName(mContext, mKeys.get(position)));
+                holder.text_left.setTypeface(mNormalTypeface);
+                holder.text_right.setText("" + Utils.getTimeFromSeconds(mMap.get(mKeys.get(position))));
+                holder.text_right.setTextColor(mContext.getResources().getColor(android.R.color.black));
+                holder.text_right.setTypeface(mNormalTypeface);
             }
         }
         return convertView;
+    }
+    
+    private class ViewHolder {
+        TextView text_left, text_right, text_middle, text_dash;
+        ImageView image_view_app_icon;
     }
 }

@@ -8,21 +8,24 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import com.asgj.android.appusage.R;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
+import com.asgj.android.appusage.R;
+
 public class UsageSharedPrefernceHelper {
     private static String PREFERNCE_NAME = "phone.usage";
     private static final String LOG_TAG = UsageSharedPrefernceHelper.class.getSimpleName();
+    private static String PREF_NAME_APP_USAGE_PREVIOUS_INFO = "phone.usage.app.previous.info";
     private static String PREF_NAME_APP_USAGE_INFO = "phone.usage.app.info";
     private static String PREF_NAME_MUSIC_USAGE_INFO = "phone.usage.music.info";
     
 
-    public static void insertTotalDurationAppInPref(Context context, String pkgName, long time) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO,
+    public static void insertTotalDurationAppInPref(Context context, String pkgName, long time, String prefName) {
+        SharedPreferences prefs = context.getSharedPreferences(prefName,
                 Context.MODE_PRIVATE);
         Editor editor = prefs.edit();
         editor.putLong(pkgName, time);
@@ -246,13 +249,29 @@ public class UsageSharedPrefernceHelper {
     public static void updateTodayDataForApps(Context context, HashMap<String, Long> dataMap) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_INFO, Context.MODE_PRIVATE);
 
-        for (Map.Entry<String, Long> dataEntry : dataMap.entrySet()) {
-            insertTotalDurationAppInPref(context, dataEntry.getKey(), dataEntry.getValue()
-                    + getTotalDurationAppInPref(context, dataEntry.getKey()));
+        if (dataMap != null) {
+            for (Map.Entry<String, Long> dataEntry : dataMap.entrySet()) {
+                insertTotalDurationAppInPref(context, dataEntry.getKey(), dataEntry.getValue()
+                        + getTotalDurationAppInPref(context, dataEntry.getKey()), PREF_NAME_APP_USAGE_INFO);
+            }
         }
         Log.v(LOG_TAG, "Data in xml: " + prefs.getAll());
     }
     
+    /**
+     * Method to update previous data for apps in case of Android L.
+     * This method will be called each time in onResume of list activity.
+     * @param context Application context.
+     * @param dataMap Data map containing previous data values.
+     */
+    public static void updatePreviousDataForAppsForL(Context context, HashMap<String, Long> dataMap) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_APP_USAGE_PREVIOUS_INFO, Context.MODE_PRIVATE);
+
+        for (Map.Entry<String, Long> dataEntry : dataMap.entrySet()) {
+            insertTotalDurationAppInPref(context, dataEntry.getKey(), dataEntry.getValue(), PREF_NAME_APP_USAGE_PREVIOUS_INFO);
+        }
+    }
+
     /**
      * Method to write music data for today to XML.
      * @param context Context to access application resources.

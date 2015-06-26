@@ -7,12 +7,12 @@
     <CalendarView
         android:id="@+id/monthViewStartDate"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="@dimen/calendar_view_height"
         android:layout_gravity="center" />
 
     <CalendarView
         android:id="@+id/monthViewEndDate"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="@dimen/calendar_view_height"
         android:layout_gravity="center" /> 
 </LinearLayout>

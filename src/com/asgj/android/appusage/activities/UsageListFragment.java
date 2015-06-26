@@ -84,6 +84,8 @@ public class UsageListFragment<AppData, MusicData> extends
 	private AppData mUsageAppData = null;
 
 	private MusicData mMusicData = null;
+	
+	private Menu mMenu;
 
 	/**
 	 * A {@link ViewPager} which will be used in conjunction with the
@@ -102,7 +104,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	
 	
 	public interface OnUsageItemClickListener {
-		public void onUsageItemClick(int tabIndex,int listItem);
+		public void onUsageItemClick(String pkg,int position);
 	}
 
 	/**
@@ -110,7 +112,8 @@ public class UsageListFragment<AppData, MusicData> extends
 	 * {@link Fragment}, from the app's resources.
 	 */
 
-	public void setmUsageAppData(AppData mUsageAppData) {
+	@SuppressWarnings("unchecked")
+    public void setmUsageAppData(AppData mUsageAppData) {
 		this.mUsageAppData = mUsageAppData;
 		try {
 			mAppDataListAdapter = new UsageListAdapter<AppData>(getActivity(), mUsageAppData);
@@ -119,7 +122,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			e.printStackTrace();
 		}
 		mPageAdapter.notifyDataSetChanged();
-		if (!((HashMap<String, Long>) mUsageAppData).isEmpty()) {
+		if (mUsageAppData != null && !((HashMap<String, Long>) mUsageAppData).isEmpty()) {
             HashMap<String, Long> tempMap = (HashMap<String, Long>) mUsageAppData;
             mLabelMap = new HashMap<>();
             
@@ -189,6 +192,10 @@ public class UsageListFragment<AppData, MusicData> extends
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 	    // TODO Auto-generated method stub
 	    inflater.inflate(R.menu.list_fragment_menu, menu);
+
+	    mMenu = menu;
+        MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_sort_by);
+        menuItem.setVisible(false);
 	    super.onCreateOptionsMenu(menu, inflater);
 	}
 	
@@ -201,6 +208,7 @@ public class UsageListFragment<AppData, MusicData> extends
             AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(getActivity()).setTitle(
                     getString(R.string.string_sort_by)).setAdapter(new ArrayAdapter<>(getActivity().getBaseContext(), android.R.layout.simple_list_item_1, new String[] {getString(R.string.string_duration), getString(R.string.string_application), getString(R.string.string_last_time_used)}), new OnClickListener() {
                         
+                        @SuppressWarnings("unchecked")
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             // TODO Auto-generated method stub
@@ -208,7 +216,8 @@ public class UsageListFragment<AppData, MusicData> extends
                             case 0 : // Time case.
                                 List<Map.Entry<String, Long>> timeList = new LinkedList<Map.Entry<String, Long>>(((HashMap<String, Long>) mUsageAppData).entrySet());
 
-                                Collections.sort(timeList, new Comparator<Map.Entry<String, Long>>() {
+                                if (!timeList.isEmpty()) {
+                                    Collections.sort(timeList, new Comparator<Map.Entry<String, Long>>() {
 
                                     @Override
                                     public int compare(Entry<String, Long> lhs,
@@ -224,6 +233,7 @@ public class UsageListFragment<AppData, MusicData> extends
                                     sortedTimeMap.put(entry.getKey(), entry.getValue());
                                 }
                                 setmUsageAppData((AppData) sortedTimeMap);
+                                }
                                 break;
                                 
                             case 1 : 
@@ -248,10 +258,16 @@ public class UsageListFragment<AppData, MusicData> extends
                             break;
 
                     case 2 : 
-                        HashMap<String, Long> map = mDatabase.getApplicationEndTimeStampsForMentionedTimeBeforeToday(getActivity(), UsageSharedPrefernceHelper.getCalendarByShowType(getActivity()), Calendar.getInstance());
-                        List<Map.Entry<String, Long>> lastTimeList = new LinkedList<Map.Entry<String, Long>>(((HashMap<String, Long>) map).entrySet());
+                                HashMap<String, Long> map = mDatabase
+                                        .getApplicationEndTimeStampsForMentionedTimeBeforeToday(
+                                                getActivity(), UsageSharedPrefernceHelper
+                                                        .getCalendarByShowType(getActivity()),
+                                                Calendar.getInstance());
+                                List<Map.Entry<String, Long>> lastTimeList = new LinkedList<Map.Entry<String, Long>>(
+                                        ((HashMap<String, Long>) map).entrySet());
 
-                        Collections.sort(lastTimeList, new Comparator<Map.Entry<String, Long>>() {
+                                Collections.sort(lastTimeList,
+                                        new Comparator<Map.Entry<String, Long>>() {
 
                             @Override
                             public int compare(Entry<String, Long> lhs,
@@ -350,6 +366,12 @@ public class UsageListFragment<AppData, MusicData> extends
 			// Retrieve a TextView from the inflated View, and update it's text
 			ListView title = (ListView) viewData.findViewById(R.id.usage_list);
 			ExpandableListView musicListView = (ExpandableListView)viewData.findViewById(R.id.music_list);
+			
+			MenuItem menuItem = null;
+			if (mMenu != null) {
+			     menuItem = (MenuItem) mMenu.findItem(R.id.action_sort_by);
+			}
+			
 			if (position == 0 && mAppDataListAdapter != null){
 				title.setVisibility(View.VISIBLE);
 				musicListView.setVisibility(View.GONE);
@@ -358,6 +380,9 @@ public class UsageListFragment<AppData, MusicData> extends
 				title.setAdapter(mAppDataListAdapter);
 				mAppDataListAdapter.notifyDataSetChanged();
 			    if (mAppDataListAdapter.isEmpty()) {
+			        if (menuItem != null) {
+			            menuItem.setVisible(false);
+			        }
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
@@ -366,6 +391,9 @@ public class UsageListFragment<AppData, MusicData> extends
 			        container.addView(viewNoData);
 			        returnView = viewNoData;
 			    } else {
+                    if (menuItem != null) {
+                        menuItem.setVisible(true);
+                    }
 			        textViewNoData.setVisibility(View.GONE);
 			        textViewNoDataStartTracking.setVisibility(View.GONE);
                     
@@ -422,7 +450,7 @@ public class UsageListFragment<AppData, MusicData> extends
 		public void onItemClick(AdapterView<?> parentView, View v, int position,
 				long id) {
 			if(mItemClickListener != null){
-				mItemClickListener.onUsageItemClick((Integer)parentView.getTag(), position);
+				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}
 			
 		}
@@ -430,7 +458,7 @@ public class UsageListFragment<AppData, MusicData> extends
 		public boolean onChildClick(ExpandableListView parent, View v,
 				int groupPosition, int childPosition, long id) {
 			if(mItemClickListener != null){
-				mItemClickListener.onUsageItemClick(groupPosition, childPosition);
+				mItemClickListener.onUsageItemClick("a", childPosition);
 			}
 			return false;
 		}

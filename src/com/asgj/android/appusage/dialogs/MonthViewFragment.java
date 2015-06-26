@@ -66,21 +66,25 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
         View customView = inflater.inflate(R.layout.dialog_layout, null);
 
         // Define your month view pickers
-        final CalendarView calStartDate = (CalendarView) customView
+        final CalendarView calViewStartDate = (CalendarView) customView
                 .findViewById(R.id.monthViewStartDate);
-        final CalendarView calEndDate = (CalendarView) customView
+        final CalendarView calViewEndDate = (CalendarView) customView
                 .findViewById(R.id.monthViewEndDate);
 
         long startTime = UsageSharedPrefernceHelper.getCalendar(mContext, "startCalendar");
         long endTime = UsageSharedPrefernceHelper.getCalendar(mContext, "endCalendar");
 
+        // If start and end time exist in preferences, consider those values.
         if (startTime != 0 && endTime != 0) {
-            calStartDate.setDate(startTime, true, true);
-            calEndDate.setDate(endTime, true, true);
+            calViewStartDate.setDate(startTime, true, true);
+            calViewEndDate.setDate(endTime, true, true);
+            
+            mStartCalendar.setTimeInMillis(startTime);
+            mEndCalendar.setTimeInMillis(endTime);
         }
 
-        calStartDate.setOnDateChangeListener(this);
-        calEndDate.setOnDateChangeListener(this);
+        calViewStartDate.setOnDateChangeListener(this);
+        calViewEndDate.setOnDateChangeListener(this);
 
         // Build the dialog
         mBuilder = new AlertDialog.Builder(mContext);
