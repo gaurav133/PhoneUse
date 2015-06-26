@@ -53,7 +53,7 @@ import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
 
-public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener {
+public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailFragment.OnDetachFromActivity{
     private Context mContext;
     private MonthViewFragment startDateFragment;
     private Calendar cal1, cal2;
@@ -193,11 +193,26 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         transaction.replace(R.id.usage_list_main_fragment, mUsageListFragment);
         transaction.commit();
     }
+    
+    private void setFabButtonsVisibility(boolean visible){
+    	int visibility = visible ? View.VISIBLE : View.INVISIBLE;
+    	mShowByOptionsMain.setVisibility(visibility);		
+    }
 
+    
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+    	if(mContext!= null && !Utils.isTabletDevice(mContext) && fragment instanceof UsageDetailFragment){
+    		setFabButtonsVisibility(false);
+    	}
+    	super.onAttachFragment(fragment);
+    }
+    
     private void initDetailFragment(HashMap<Long, UsageInfo> intervalList, String applicationName) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         mDetailFragment = new UsageDetailFragment(intervalList, applicationName,
                 UsageSharedPrefernceHelper.getShowByType(mContext));
+        mDetailFragment.setOnDetachListener(this);
         if (!Utils.isTabletDevice(mContext)) {
             transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);
             transaction.addToBackStack(null);
@@ -810,7 +825,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
     @Override
     public void onUsageItemClick(String pkg, int position) {
-
+    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
+    	hideFabOption();
         // Check current preference first.
         HashMap<Long, UsageInfo> graphMap = new HashMap<>();
 
@@ -849,6 +865,14 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                     UsageSharedPrefernceHelper.getShowByType(mContext));
         } else {
             initDetailFragment(graphMap, Utils.getApplicationLabelName(mContext, pkg));
+		}
+		
+	}
+
+	@Override
+	public void onDetach() {
+		if(!Utils.isTabletDevice(mContext)){
+			setFabButtonsVisibility(true);
 		}
 		
 	}
