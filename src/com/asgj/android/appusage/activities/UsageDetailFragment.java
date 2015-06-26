@@ -31,9 +31,26 @@ public class UsageDetailFragment extends Fragment {
 	private String mApplicationName;
 	private String mHorizontalLabelName = null;
 	private String mVerticalLabelName = null;
+	private OnDetachFromActivity mOnDetachListener = null;
 	
+	public interface OnDetachFromActivity{
+		public void onDetach();
+	}
 	//default constrcutor is nessary incase android want to make instance of this fragment
 	public UsageDetailFragment() {
+	}
+	
+	public void setOnDetachListener(OnDetachFromActivity onDetachListener){
+		mOnDetachListener = onDetachListener;
+	}
+	
+	
+	@Override
+	public void onDetach() {
+		if(mOnDetachListener != null){
+			mOnDetachListener.onDetach();
+		}
+		super.onDetach();
 	}
 	
 	
