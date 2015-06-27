@@ -44,6 +44,8 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         public void provideMap(HashMap<String, Long> map);
     }
 
+    private Thread.UncaughtExceptionHandler androidDefaultUEH;
+
     private static final long MUSIC_THRESHOLD_TIME = 60;
     private final LocalBinder mBinder = new LocalBinder();
     private static final String LOG_TAG = UsageTrackingService.class.getSimpleName();
@@ -531,6 +533,19 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
 
         HashMap<String, Long> foregroundMap = new HashMap<String, Long>();
         final class TimerTs extends TimerTask {
+            private Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+                public void uncaughtException(Thread thread, Throwable ex) {
+                    if (UsageSharedPrefernceHelper.isServiceRunning(getApplicationContext())) {
+                        Intent stopServiceIntent = new Intent(getApplicationContext(), UsageTrackingService.class);
+                        stopService(stopServiceIntent);
+                        
+                        Intent startServiceIntent = new Intent(getApplicationContext(), UsageTrackingService.class);
+                        startService(startServiceIntent);
+                        
+                    }
+                    androidDefaultUEH.uncaughtException(thread, ex);
+                }
+            };
 
             @Override
             public void run() {
@@ -547,6 +562,8 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                     return;
                 }
                 if (mIsFirstTimeStartForgroundAppService) {
+                    androidDefaultUEH = Thread.getDefaultUncaughtExceptionHandler();
+                    Thread.setDefaultUncaughtExceptionHandler(handler);
                     initLocalMapForThread(foregroundMap);
                     return;
                 }
