@@ -53,7 +53,7 @@ import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
 
-public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailFragment.OnDetachFromActivity{
+public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity{
     private Context mContext;
     private MonthViewFragment startDateFragment;
     private Calendar cal1, cal2;
@@ -70,7 +70,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
     private UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>> mUsageListFragment;
-    private UsageDetailFragment mDetailFragment;
+    private UsageDetailListFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
     private TextView mShowByOptionsMain = null;
@@ -202,16 +202,15 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     
     @Override
     public void onAttachFragment(Fragment fragment) {
-    	if(mContext!= null && !Utils.isTabletDevice(mContext) && fragment instanceof UsageDetailFragment){
+    	if(mContext!= null && !Utils.isTabletDevice(mContext) && fragment instanceof UsageDetailListFragment){
     		setFabButtonsVisibility(false);
     	}
     	super.onAttachFragment(fragment);
     }
     
-    private void initDetailFragment(HashMap<Long, UsageInfo> intervalList, String applicationName) {
+    private void initDetailFragment(HashMap<Long,UsageInfo> intervalList, String applicationName) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        mDetailFragment = new UsageDetailFragment(intervalList, applicationName,
-                UsageSharedPrefernceHelper.getShowByType(mContext));
+        mDetailFragment = new UsageDetailListFragment(intervalList);
         mDetailFragment.setOnDetachListener(this);
         if (!Utils.isTabletDevice(mContext)) {
             transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);
@@ -828,31 +827,30 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	if(mShowByOptions2.getVisibility() == View.VISIBLE)
     	hideFabOption();
         // Check current preference first.
-        HashMap<Long, UsageInfo> graphMap = new HashMap<>();
-
+    	HashMap<Long,UsageInfo> infoList = null;
         // Check whether custom and end day not today.
         if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                 mContext.getString(R.string.string_Custom))
                 && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
 
-            graphMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
+        	infoList = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
         } else {
 
             switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
             case "Today":
-                graphMap = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
+            	infoList = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
                         Calendar.getInstance());
                 break;
             case "Weekly":
             case "Monthly":
             case "Yearly":
-                graphMap = mDatabase.getAppIntervalsBetweenDates(pkg,
+            	infoList = mDatabase.getAppIntervalsBetweenDates(pkg,
                         UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
                         Calendar.getInstance());
         	
                 break;
             case "Custom":
-                graphMap = mDatabase.getAppIntervalsBetweenDates(pkg,
+            	infoList = mDatabase.getAppIntervalsBetweenDates(pkg,
                         cal1, Calendar.getInstance());
                 break;
             default:
@@ -861,10 +859,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
 
         if (Utils.isTabletDevice(mContext)) {
-            mDetailFragment.updateDetailGraph(null, "time",
-                    UsageSharedPrefernceHelper.getShowByType(mContext));
+            mDetailFragment.updateDetailList(infoList);
         } else {
-            initDetailFragment(graphMap, Utils.getApplicationLabelName(mContext, pkg));
+            initDetailFragment(infoList, Utils.getApplicationLabelName(mContext, pkg));
 		}
 		
 	}
