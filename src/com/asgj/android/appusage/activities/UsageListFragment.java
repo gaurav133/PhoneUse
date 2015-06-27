@@ -407,7 +407,17 @@ public class UsageListFragment<AppData, MusicData> extends
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
-			            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+			            Calendar endCalendar;
+	                    endCalendar = Calendar.getInstance();
+	                    endCalendar.setTimeInMillis(UsageSharedPrefernceHelper.getCalendar(getActivity(), "endCalendar"));
+	                    
+	                    if (UsageSharedPrefernceHelper.getShowByType(getActivity()).equals(getString(R.string.string_Custom)) && 
+                        Utils.compareDates(Calendar.getInstance(), endCalendar) > 0) {
+	                        textViewNoData.setVisibility(View.VISIBLE);
+	                    } else {
+	                        textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+	                    }
+			            
 			        }
 			        container.addView(viewNoData);
 			        returnView = viewNoData;
@@ -427,11 +437,22 @@ public class UsageListFragment<AppData, MusicData> extends
 				musicListView.setGroupIndicator(null);
 				musicListView.setVisibility(View.VISIBLE);
 				musicListView.setAdapter(mMusicDataListAdapter);
-				if (mMusicDataListAdapter.isEmpty()) {
+				if (mMusicDataListAdapter.getGroupCount() == 0) {
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
-			            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+
+			            Calendar endCalendar;
+                        endCalendar = Calendar.getInstance();
+                        endCalendar.setTimeInMillis(UsageSharedPrefernceHelper.getCalendar(getActivity(), "endCalendar"));
+                        
+                        if (UsageSharedPrefernceHelper.getShowByType(getActivity()).equals(getString(R.string.string_Custom)) && 
+                        Utils.compareDates(Calendar.getInstance(), endCalendar) > 0) {
+                            textViewNoData.setVisibility(View.VISIBLE);
+                        } else {
+                            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+                        }
+                        
 			        }
 			        container.addView(viewNoData);
 			        returnView = viewNoData;
