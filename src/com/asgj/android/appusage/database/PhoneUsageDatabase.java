@@ -111,7 +111,7 @@ public class PhoneUsageDatabase {
 
     }
 	
-	public ArrayList<UsageInfo> getAppIntervalsBetweenDates(
+	public HashMap<Long, UsageInfo> getAppIntervalsBetweenDates(
             String packageName, Calendar startCalendar, Calendar endCalendar) {
 	    
         String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
@@ -122,7 +122,7 @@ public class PhoneUsageDatabase {
         String selection = Columns.COLUMN_APP_NAME + "= '" + packageName + "' AND "
                 + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
 
-        ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
+        HashMap<Long, UsageInfo> map = new HashMap<>();
         Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
                 null, null, null);
         Log.v (LOG_TAG, "Cursor count is: " + cursor.getCount());
@@ -140,13 +140,13 @@ public class PhoneUsageDatabase {
                 info.setmIntervalStartTime(cursor.getLong(startIntervalIndex));
                 info.setmIntervalEndTime(cursor.getLong(endIntervalIndex));
                 info.setmIntervalDuration(cursor.getLong(durationIndex));
-                list.add(info);
+                map.put(info.getmIntervalDuration(), info);
                 //mInfoList.add(info);
                 Log.v(LOG_TAG, "This loop  cursor iteration took : " + Utils.getTimeInSecFromNano(System.nanoTime() - startTime) + " ms.");
             } while (cursor.moveToNext());
         }
         cursor.close();
-        return list;
+        return map;
     }
 	
     public void insertApplicationEntry(String pkgname, UsageInfo mValues) {

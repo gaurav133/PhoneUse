@@ -208,7 +208,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	super.onAttachFragment(fragment);
     }
     
-    private void initDetailFragment(ArrayList<UsageInfo> intervalList, String applicationName) {
+    private void initDetailFragment(HashMap<Long,UsageInfo> intervalList, String applicationName) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         mDetailFragment = new UsageDetailListFragment(intervalList);
         mDetailFragment.setOnDetachListener(this);
@@ -827,7 +827,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	if(mShowByOptions2.getVisibility() == View.VISIBLE)
     	hideFabOption();
         // Check current preference first.
-    	ArrayList<UsageInfo> infoList = null;
+    	HashMap<Long,UsageInfo> infoList = null;
         // Check whether custom and end day not today.
         if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                 mContext.getString(R.string.string_Custom))

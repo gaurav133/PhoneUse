@@ -1,8 +1,8 @@
 package com.asgj.android.appusage.activities;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -19,7 +19,11 @@ public class UsageDetailListFragment extends Fragment {
 
 	MusicListAdapter mAdapter = null;
 	private OnDetachFromActivity mOnDetachListener = null;
-	private ArrayList<UsageInfo> mInfoList = null;
+	private HashMap<Long,UsageInfo> mInfoList = null;
+	
+	public UsageDetailListFragment() {
+		// TODO Auto-generated constructor stub
+	}
 	
 	public interface OnDetachFromActivity{
 		public void onDetach();
@@ -38,11 +42,11 @@ public class UsageDetailListFragment extends Fragment {
 	}
 	
 
-	public UsageDetailListFragment(ArrayList<UsageInfo> infoList) {
+	public UsageDetailListFragment(HashMap<Long,UsageInfo> infoList) {
 		mInfoList = infoList;
 	}
 
-	public void updateDetailList(ArrayList<UsageInfo> infoList) {
+	public void updateDetailList(HashMap<Long,UsageInfo> infoList) {
 		mInfoList = infoList;
 		mAdapter = new MusicListAdapter(infoList, getActivity());
 	}

@@ -24,6 +24,23 @@ public class MusicListAdapter implements ExpandableListAdapter {
 	private HashMap<String, ArrayList<UsageInfo>> mList = null;
 	private Context mContext = null;
 	private ArrayList<String> mGroupList = null;
+	
+	private void prepareData(HashMap<Long,UsageInfo> infoList) {
+		mList = new HashMap<String, ArrayList<UsageInfo>>();
+		mGroupList = new ArrayList<String>();
+		for (UsageInfo info : infoList.values()) {
+			String date = Utils.getDateFromMiliSeconds(info
+					.getmIntervalStartTime());
+			if (mGroupList.contains(date)) {
+				mList.get(date).add(info);
+			} else {
+				ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
+				list.add(info);
+				mList.put(date, list);
+				mGroupList.add(date);
+			}
+		}
+	}
 
 	private void prepareData(ArrayList<UsageInfo> list) {
 		mList = new HashMap<String, ArrayList<UsageInfo>>();
@@ -43,6 +60,11 @@ public class MusicListAdapter implements ExpandableListAdapter {
 	}
 
 	public MusicListAdapter(ArrayList<UsageInfo> list, Context context) {
+		mContext = context;
+		prepareData(list);
+	}
+	
+	public MusicListAdapter(HashMap<Long,UsageInfo> list, Context context) {
 		mContext = context;
 		prepareData(list);
 	}
