@@ -85,8 +85,6 @@ public class UsageListFragment<AppData, MusicData> extends
 
 	private MusicData mMusicData = null;
 	
-	private Menu mMenu;
-
 	/**
 	 * A {@link ViewPager} which will be used in conjunction with the
 	 * {@link SlidingTabLayout} above.
@@ -194,11 +192,41 @@ public class UsageListFragment<AppData, MusicData> extends
 	    // TODO Auto-generated method stub
 	    inflater.inflate(R.menu.list_fragment_menu, menu);
 
-	    mMenu = menu;
-        MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_sort_by);
-        menuItem.setVisible(false);
-	    super.onCreateOptionsMenu(menu, inflater);
+        super.onCreateOptionsMenu(menu, inflater);
 	}
+	
+	@Override
+	public void onPrepareOptionsMenu(Menu menu) {
+        // TODO Auto-generated method stub
+
+        MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_sort_by);
+
+        if (mViewPager != null) {
+            switch (mViewPager.getCurrentItem()) {
+            case 0:
+                if (mAppDataListAdapter != null) {
+                    if (mAppDataListAdapter.isEmpty()) {
+                        menuItem.setVisible(false);
+                    } else {
+                        menuItem.setVisible(true);
+                    }
+                }
+                break;
+            case 1:
+                if (mMusicDataListAdapter != null) {
+                    if (mMusicDataListAdapter.getGroupCount() == 0) {
+                        menuItem.setVisible(false);
+                    } else {
+                        menuItem.setVisible(true);
+                    }
+                }
+            default:
+                break;
+            }
+        }
+
+        super.onPrepareOptionsMenu(menu);
+    }
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -367,12 +395,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			// Retrieve a TextView from the inflated View, and update it's text
 			ListView title = (ListView) viewData.findViewById(R.id.usage_list);
 			ExpandableListView musicListView = (ExpandableListView)viewData.findViewById(R.id.music_list);
-			
-			MenuItem menuItem = null;
-			if (mMenu != null) {
-			     menuItem = (MenuItem) mMenu.findItem(R.id.action_sort_by);
-			}
-			
+						
 			if (position == 0 && mAppDataListAdapter != null){
 				title.setVisibility(View.VISIBLE);
 				musicListView.setVisibility(View.GONE);
@@ -381,20 +404,24 @@ public class UsageListFragment<AppData, MusicData> extends
 				title.setAdapter(mAppDataListAdapter);
 				mAppDataListAdapter.notifyDataSetChanged();
 			    if (mAppDataListAdapter.isEmpty()) {
-			        if (menuItem != null) {
-			            menuItem.setVisible(false);
-			        }
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
-			            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+			            Calendar endCalendar;
+	                    endCalendar = Calendar.getInstance();
+	                    endCalendar.setTimeInMillis(UsageSharedPrefernceHelper.getCalendar(getActivity(), "endCalendar"));
+	                    
+	                    if (UsageSharedPrefernceHelper.getShowByType(getActivity()).equals(getString(R.string.string_Custom)) && 
+                        Utils.compareDates(Calendar.getInstance(), endCalendar) > 0) {
+	                        textViewNoData.setVisibility(View.VISIBLE);
+	                    } else {
+	                        textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+	                    }
+			            
 			        }
 			        container.addView(viewNoData);
 			        returnView = viewNoData;
 			    } else {
-                    if (menuItem != null) {
-                        menuItem.setVisible(true);
-                    }
 			        textViewNoData.setVisibility(View.GONE);
 			        textViewNoDataStartTracking.setVisibility(View.GONE);
                     
@@ -410,11 +437,22 @@ public class UsageListFragment<AppData, MusicData> extends
 				musicListView.setGroupIndicator(null);
 				musicListView.setVisibility(View.VISIBLE);
 				musicListView.setAdapter(mMusicDataListAdapter);
-				if (mMusicDataListAdapter.isEmpty()) {
+				if (mMusicDataListAdapter.getGroupCount() == 0) {
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
-			            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+
+			            Calendar endCalendar;
+                        endCalendar = Calendar.getInstance();
+                        endCalendar.setTimeInMillis(UsageSharedPrefernceHelper.getCalendar(getActivity(), "endCalendar"));
+                        
+                        if (UsageSharedPrefernceHelper.getShowByType(getActivity()).equals(getString(R.string.string_Custom)) && 
+                        Utils.compareDates(Calendar.getInstance(), endCalendar) > 0) {
+                            textViewNoData.setVisibility(View.VISIBLE);
+                        } else {
+                            textViewNoDataStartTracking.setVisibility(View.VISIBLE);
+                        }
+                        
 			        }
 			        container.addView(viewNoData);
 			        returnView = viewNoData;
@@ -427,7 +465,6 @@ public class UsageListFragment<AppData, MusicData> extends
 			    }
 			}
 
-			
 			title.setTag(position);
 			title.setOnItemClickListener(this);
 			musicListView.setOnChildClickListener(this);
