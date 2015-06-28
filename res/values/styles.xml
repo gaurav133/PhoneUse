@@ -22,6 +22,7 @@
         <item name="android:background">#ff1ca8f4</item>
         <item name="android:titleTextStyle">@style/actionbartitlestyle</item>
         <item name="android:displayOptions">showTitle</item>
+       
     </style>
 
     <style name="actionbartitlestyle">
@@ -32,6 +33,7 @@
     <style name="mainActionBarStyle" parent="@android:style/Theme.DeviceDefault.Light">
         <item name="android:actionBarStyle">@style/mainActionBarBckgnd</item>
         <item name="android:actionOverflowButtonStyle">@style/MyActionButtonOverflow</item>
+         <item name="android:actionMenuTextColor">@android:color/white</item>
          <item name="android:homeAsUpIndicator">@android:drawable/ic_media_previous</item>
     </style>
 

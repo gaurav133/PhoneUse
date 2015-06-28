@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <com.asgj.android.appusage.ui.widgets.UserDialogPreference android:key="user_packges_pref" />
-
-    <com.asgj.android.appusage.ui.widgets.TrackingTypePreference android:key="tracking_type_pref" />
+    <com.asgj.android.appusage.ui.widgets.UserDialogPreference android:key="filter_pkages" />
+    <com.asgj.android.appusage.ui.widgets.TrackingTypePreference android:key="tracking_type_pref" />
 
 </PreferenceScreen>
