@@ -1,5 +1,6 @@
 package com.asgj.android.appusage.Utility;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -291,6 +292,11 @@ public class Utils {
 		ArrayList<ApplicationInfo> packages = (ArrayList<ApplicationInfo>) pm
 				.getInstalledApplications(PackageManager.GET_META_DATA);
 		return packages;
+	}
+	
+	public static String getDateForDisplay(long miliSec) {
+        Date date = new Date(miliSec);
+        return DateFormat.getDateInstance().format(date);
 	}
 
 	public static String getDateFromMiliSeconds(long miliSec) {
