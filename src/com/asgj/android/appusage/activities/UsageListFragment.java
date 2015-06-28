@@ -66,7 +66,7 @@ import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
  * when scrolling.
  */
 public class UsageListFragment<AppData, MusicData> extends
-		Fragment {
+		Fragment implements ViewPager.OnPageChangeListener {
 
 	static final String LOG_TAG = UsageListFragment.class.getSimpleName();
 
@@ -184,6 +184,7 @@ public class UsageListFragment<AppData, MusicData> extends
 		mSlidingTabLayout = (SlidingTabLayout) view
 				.findViewById(R.id.sliding_tabs);
 		mSlidingTabLayout.setViewPager(mViewPager);
+		mSlidingTabLayout.setOnPageChangeListener(this);
 		// END_INCLUDE (setup_slidingtablayout)
 	}
 
@@ -212,14 +213,8 @@ public class UsageListFragment<AppData, MusicData> extends
                     }
                 }
                 break;
-            case 1:
-                if (mMusicDataListAdapter != null) {
-                    if (mMusicDataListAdapter.getGroupCount() == 0) {
-                        menuItem.setVisible(false);
-                    } else {
-                        menuItem.setVisible(true);
-                    }
-                }
+            case 1: menuItem.setVisible(false);
+                    break;
             default:
                 break;
             }
@@ -502,4 +497,21 @@ public class UsageListFragment<AppData, MusicData> extends
 		}
 
 	}
+
+    @Override
+    public void onPageScrollStateChanged(int arg0) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void onPageScrolled(int arg0, float arg1, int arg2) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void onPageSelected(int arg0) {
+        // TODO Auto-generated method stub
+        getActivity().invalidateOptionsMenu();
+    }
 }
