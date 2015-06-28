@@ -62,6 +62,10 @@ public class UsageDetailListFragment extends Fragment {
 		list.setLayoutParams(params);
 		mAdapter = new MusicListAdapter(mInfoList, getActivity());
 		list.setAdapter(mAdapter);
+		list.setChildDivider(null);
+		list.setDivider(null);
+		list.setDividerHeight(0);
+		list.setGroupIndicator(null);
 		parentLayout.addView(list);
 		return parentLayout;
 	}
