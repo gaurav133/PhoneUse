@@ -40,6 +40,7 @@ public class UserDialogPreference extends DialogPreference implements
 			ResolveInfo infoItem = new ResolveInfo();
 			infoItem.setmApplicationName(info.loadLabel(packageManager)
 					.toString());
+			infoItem.setmPackageName(info.activityInfo.packageName);
 			mResolveInfo.add(infoItem);
 		}
 
@@ -103,10 +104,10 @@ public class UserDialogPreference extends DialogPreference implements
 				if (pkg.isChecked()) {
 					if (mCurrentPref == NOTIFICATION_PREF) {
 						UsageSharedPrefernceHelper.setApplicationForTracking(
-								mContext, pkg.getmApplicationName(),true);
+								mContext, pkg.getmPackageName(),true);
 					} else {
 						UsageSharedPrefernceHelper.setApplicationForFiltering(
-								mContext, pkg.getmApplicationName(),true);
+								mContext, pkg.getmPackageName(),true);
 					}
 					// TODO :: please save time also.
 				}
