@@ -213,6 +213,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         mDetailFragment = new UsageDetailListFragment(intervalList);
         mDetailFragment.setOnDetachListener(this);
         if (!Utils.isTabletDevice(mContext)) {
+        	transaction.setCustomAnimations(R.anim.enter_from_right,
+        			R.anim.exit_to_right,R.anim.exit_to_left,R.anim.enter_from_left);
             transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);
             transaction.addToBackStack(null);
         }
