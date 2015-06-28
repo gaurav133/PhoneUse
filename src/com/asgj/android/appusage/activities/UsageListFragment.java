@@ -32,9 +32,13 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -49,6 +53,7 @@ import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
@@ -199,7 +204,12 @@ public class UsageListFragment<AppData, MusicData> extends
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
         // TODO Auto-generated method stub
-
+		MenuItem filterMenu = (MenuItem) menu.findItem(R.id.filter_menu);
+		if(UsageSharedPrefernceHelper.isFilterMode(getActivity())){
+			filterMenu.setTitle(R.string.string_filter);
+		}else{
+			filterMenu.setTitle(R.string.string_all);
+		}
         MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_sort_by);
 
         if (mViewPager != null) {
@@ -227,6 +237,26 @@ public class UsageListFragment<AppData, MusicData> extends
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // TODO Auto-generated method stub
 	    switch (item.getItemId()) {
+		case R.id.filter_menu:
+			if (UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
+				UsageSharedPrefernceHelper.setFilterMode(getActivity(), false);
+				item.setTitle(R.string.string_all);
+			} else {
+				if (UsageSharedPrefernceHelper
+						.getSelectedApplicationForFiltering(getActivity()) == null
+						|| UsageSharedPrefernceHelper
+								.getSelectedApplicationForFiltering(
+										getActivity()).size() == 0) {
+					Toast.makeText(getActivity(),
+							R.string.string_filter_menu_enable_message,
+							Toast.LENGTH_LONG).show();
+				} else {
+					UsageSharedPrefernceHelper.setFilterMode(getActivity(),
+							true);
+					item.setTitle(R.string.string_filter);
+				}
+			}
+	    	break;
         case R.id.action_sort_by:
             // Open alert dialog.
             AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(getActivity()).setTitle(

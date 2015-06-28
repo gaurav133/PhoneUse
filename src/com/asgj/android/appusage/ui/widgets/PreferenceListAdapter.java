@@ -20,30 +20,44 @@ import com.asgj.android.appusage.Utility.ResolveInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 
 public class PreferenceListAdapter extends BaseAdapter implements
-		View.OnClickListener,OnSeekBarChangeListener {
+		View.OnClickListener, OnSeekBarChangeListener {
 
 	private ArrayList<ResolveInfo> mPackageList = null;
 	private Context mContext = null;
 	private int mSelectedCount = 0;
-	private static int MAXIMUN_APPLICATIONS = 5;
+	private static final int MAXIMUN_APPLICATIONS = 5;
 	private boolean mIsChecked[];
+	private int mCurrentPrefType = 0;
+	private static final int NOTIFICATION_PREF = 1;
+	private static final int PACKAGES_FILTER_PREF = 2;
+	private ArrayList<String> unSelectedList = new ArrayList<String>();
 
-	PreferenceListAdapter(ArrayList<ResolveInfo> packageList, Context context) {
+	PreferenceListAdapter(ArrayList<ResolveInfo> packageList, Context context,
+			int currentPref) {
 		mPackageList = packageList;
 		mContext = context;
 		mIsChecked = new boolean[mPackageList.size()];
-		Set<String> alreadySelectedList = UsageSharedPrefernceHelper
-				.getSelectedApplicationForTracking(mContext);
-		//TODO : need to get time also from prefernce to show on seekbar.
+		mCurrentPrefType = currentPref;
+		Set<String> alreadySelectedList = null;
+		if (mCurrentPrefType == NOTIFICATION_PREF) {
+			alreadySelectedList = UsageSharedPrefernceHelper
+					.getSelectedApplicationForTracking(mContext);
+		} else {
+			alreadySelectedList = UsageSharedPrefernceHelper
+					.getSelectedApplicationForFiltering(mContext);
+		}
+		// TODO : need to get time also from prefernce to show on seekbar.
 		if (alreadySelectedList != null && alreadySelectedList.size() > 0) {
 			mSelectedCount = alreadySelectedList.size();
 			String[] selectionlist = new String[mSelectedCount];
 			selectionlist = alreadySelectedList.toArray(selectionlist);
-			
-			for (int j =0; j< mSelectedCount ; j++) {
-				for(int i = 0; i< mPackageList.size() ; i++){
-					if(mPackageList.get(i).getmApplicationName().equals(selectionlist[j])){
+
+			for (int j = 0; j < mSelectedCount; j++) {
+				for (int i = 0; i < mPackageList.size(); i++) {
+					if (mPackageList.get(i).getmApplicationName()
+							.equals(selectionlist[j])) {
 						mPackageList.get(i).setChecked(true);
+						mIsChecked[i] = true;
 					}
 				}
 			}
@@ -54,6 +68,10 @@ public class PreferenceListAdapter extends BaseAdapter implements
 
 	public ArrayList<ResolveInfo> getSelectedPackages() {
 		return mPackageList;
+	}
+	
+	public ArrayList<String> getUnSelectedPackages(){
+		return unSelectedList;
 	}
 
 	@Override
@@ -75,93 +93,105 @@ public class PreferenceListAdapter extends BaseAdapter implements
 	}
 
 	@Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder = new ViewHolder();
+	public View getView(int position, View convertView, ViewGroup parent) {
+		ViewHolder holder = new ViewHolder();
 
-        if (convertView == null) {
-            LayoutInflater inflater = LayoutInflater.from(mContext);
-            convertView = inflater.inflate(R.layout.prefernce_list_item_layout, null);
+		if (convertView == null) {
+			LayoutInflater inflater = LayoutInflater.from(mContext);
+			convertView = inflater.inflate(R.layout.prefernce_list_item_layout,
+					null);
 
-            holder.labelTextView = (TextView) convertView.findViewById(R.id.title_package);
-            holder.checkbox = (CheckBox) convertView.findViewById(R.id.checkBox_package);
-            holder.timeBar = (SeekBar) convertView.findViewById(R.id.seekBar1);
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
-        }
+			holder.labelTextView = (TextView) convertView
+					.findViewById(R.id.title_package);
+			holder.checkbox = (CheckBox) convertView
+					.findViewById(R.id.checkBox_package);
+			holder.timeBar = (SeekBar) convertView.findViewById(R.id.seekBar1);
+			convertView.setTag(holder);
+		} else {
+			holder = (ViewHolder) convertView.getTag();
+		}
 
-        holder.position = position;
-        if (!mIsChecked[position]) {
-            holder.timeBar.setVisibility(View.GONE);
-            holder.checkbox.setChecked(false);
-        } else {
-            holder.timeBar.setVisibility(View.VISIBLE);
-            holder.checkbox.setChecked(true);
-        }
-        holder.labelTextView.setText(mPackageList.get(position).getmApplicationName());
+		holder.position = position;
+		if (!mIsChecked[position]) {
+			holder.timeBar.setVisibility(View.GONE);
+			holder.checkbox.setChecked(false);
+		} else {
+			if(mCurrentPrefType == NOTIFICATION_PREF)
+			holder.timeBar.setVisibility(View.VISIBLE);
+			holder.checkbox.setChecked(true);
+		}
+		holder.labelTextView.setText(mPackageList.get(position)
+				.getmApplicationName());
 
-        convertView.setOnClickListener(this);
-        return convertView;
-    }
+		convertView.setOnClickListener(this);
+		return convertView;
+	}
 
 	@Override
-    public void onClick(View v) {
+	public void onClick(View v) {
 
-	    if (v instanceof RelativeLayout) {
-            ViewHolder holder = (ViewHolder) v.getTag();
-            int pos = holder.position;
-            SeekBar seekbar = holder.timeBar;
-            CheckBox checkbox = holder.checkbox;
-            
-            if (!mPackageList.get(pos).isChecked()) {
-                mIsChecked[pos] = true;
-                mPackageList.get(pos).setChecked(true);
-                checkbox.setChecked(true);
-                seekbar.setOnSeekBarChangeListener(this);
+		if (v instanceof RelativeLayout) {
+			ViewHolder holder = (ViewHolder) v.getTag();
+			int pos = holder.position;
+			SeekBar seekbar = holder.timeBar;
+			CheckBox checkbox = holder.checkbox;
 
-                seekbar.setTag(holder.position);
-                seekbar.setProgress(mPackageList.get(pos).getmInputtime());
-                seekbar.setVisibility(View.VISIBLE);
+			if (!mPackageList.get(pos).isChecked()) {
+				mIsChecked[pos] = true;
+				mPackageList.get(pos).setChecked(true);
+				checkbox.setChecked(true);
+				if(unSelectedList.contains(mPackageList.get(pos).getmApplicationName())){
+					unSelectedList.remove(mPackageList.get(pos).getmApplicationName());
+				}
+				if (mCurrentPrefType == NOTIFICATION_PREF) {
+					seekbar.setOnSeekBarChangeListener(this);
 
-                if (mSelectedCount < MAXIMUN_APPLICATIONS) {
-                    mSelectedCount++;
-                } else {
-                    ((CheckBox) v).setChecked(false);
-                    Toast.makeText(mContext,
-                            mContext.getString(R.string.string_select_packages_maximum_app_toast),
-                            Toast.LENGTH_LONG).show();
-                }
-            } else {
-                mIsChecked[pos] = false;
-                seekbar.setVisibility(View.GONE);
-                mPackageList.get(pos).setChecked(false);
-                checkbox.setChecked(false);
-                mSelectedCount--;
-            }
-        }
-    }
+					seekbar.setTag(holder.position);
+					seekbar.setProgress(mPackageList.get(pos).getmInputtime());
+					seekbar.setVisibility(View.VISIBLE);
+				}
+
+				if (mSelectedCount < MAXIMUN_APPLICATIONS) {
+					mSelectedCount++;
+				} else {
+					((CheckBox) v).setChecked(false);
+					Toast.makeText(
+							mContext,
+							mContext.getString(R.string.string_select_packages_maximum_app_toast),
+							Toast.LENGTH_LONG).show();
+				}
+			} else {
+				mIsChecked[pos] = false;
+				seekbar.setVisibility(View.GONE);
+				unSelectedList.add(mPackageList.get(pos).getmApplicationName());
+				mPackageList.get(pos).setChecked(false);
+				checkbox.setChecked(false);
+				mSelectedCount--;
+			}
+		}
+	}
 
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress,
 			boolean fromUser) {
-		int position = (Integer)seekBar.getTag();
+		int position = (Integer) seekBar.getTag();
 		mPackageList.get(position).setmInputtime(progress);
 	}
 
 	@Override
 	public void onStartTrackingTouch(SeekBar seekBar) {
-		
+
 	}
 
 	@Override
 	public void onStopTrackingTouch(SeekBar seekBar) {
-		
+
 	}
-	
+
 	private static class ViewHolder {
-	    TextView labelTextView;
-	    CheckBox checkbox;
-	    SeekBar timeBar;
-	    int position;
+		TextView labelTextView;
+		CheckBox checkbox;
+		SeekBar timeBar;
+		int position;
 	}
 }

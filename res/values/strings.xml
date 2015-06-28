@@ -24,9 +24,12 @@
     <string name="string_error_start_date_greater_than_today">Start date cannot be greater than Today date.</string>
     <string name="string_error_end_date_lesser_than_start">End date cannot be lesser than Start date.</string>
     <string name="string_select_packages_dialog_title">Please select packages that you want to track.</string>
+    <string name="string_filter_packages_dialog_title">Please select packages that you want to see on List.</string>
+    <string name="string_filter_menu_enable_message">For enabling the filter menu, Go to Settings and select the packages.</string>
     <string name="string_Ok">OK</string>
     <string name="string_Cancel">Cancel</string>
     <string name="string_select_packages_pref_title">Package Monitoring.</string>
+    <string name="string_filter_packages_pref_title">Select Packages for Filter</string>
     <string name="string_select_packages_maximum_app_toast">You can not select more than 5 applications.</string>
     <string name="string_total_time_apps">Total Time</string>
     <string name="string_start_tracking_no_data_navigate">No Usage Data. Start tracking, and navigate to other applications.</string>
@@ -35,6 +38,8 @@
     <string name="string_user_choice_message_track_pref">User Choice Mode. The service will only run in the specified interval. It will reduce your Battery consumption.</string>
     <string name="string_title_track_pref">Tracking Mode</string>
     <string name="string_sort_by">Sort By</string>
+    <string name="string_all">All</string>
+    <string name="string_filter">Filter</string>
     <string name="string_duration">Duration</string>
     <string name="string_application">Application</string>
     <string name="string_last_time_used">Last Time Used</string>
