@@ -295,6 +295,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
     public ArrayList<UsageInfo> getCurrentDataForMusic() {
         
         ArrayList<UsageInfo> currentDataForMusic = new ArrayList<UsageInfo>();
+        currentDataForMusic.addAll(mListMusicPlayTimes);
 
         if (UsageSharedPrefernceHelper.isServiceRunning(mContext) && isMusicPlaying()) {
             
@@ -586,6 +587,9 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                     doHandlingForApplicationStarted();
                 }
                 mPreviousAppName = mCurrentAppName;
+                
+                /*// Patch for screen dim case. To save data periodically.
+                 * Comment it presently.
                 if (mMusicStopTime != 0) {
                     if (Utils.getTimeInSecFromNano(System.nanoTime() - mMusicStopTime) > MUSIC_THRESHOLD_TIME) {
                         if (mListMusicPlayTimes != null && !mListMusicPlayTimes.isEmpty()) {
@@ -593,7 +597,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                             mListMusicPlayTimes.clear();
                         }
                     }
-                }
+                }*/
 
                 // If music is not playing but it was started after tracking started, then update music time.
                 if (isNeedToHandleMusicClose()) {
