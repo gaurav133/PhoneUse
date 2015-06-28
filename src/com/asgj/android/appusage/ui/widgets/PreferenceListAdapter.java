@@ -54,7 +54,7 @@ public class PreferenceListAdapter extends BaseAdapter implements
 
 			for (int j = 0; j < mSelectedCount; j++) {
 				for (int i = 0; i < mPackageList.size(); i++) {
-					if (mPackageList.get(i).getmApplicationName()
+					if (mPackageList.get(i).getmPackageName()
 							.equals(selectionlist[j])) {
 						mPackageList.get(i).setChecked(true);
 						mIsChecked[i] = true;
@@ -140,8 +140,8 @@ public class PreferenceListAdapter extends BaseAdapter implements
 				mIsChecked[pos] = true;
 				mPackageList.get(pos).setChecked(true);
 				checkbox.setChecked(true);
-				if(unSelectedList.contains(mPackageList.get(pos).getmApplicationName())){
-					unSelectedList.remove(mPackageList.get(pos).getmApplicationName());
+				if(unSelectedList.contains(mPackageList.get(pos).getmPackageName())){
+					unSelectedList.remove(mPackageList.get(pos).getmPackageName());
 				}
 				if (mCurrentPrefType == NOTIFICATION_PREF) {
 					seekbar.setOnSeekBarChangeListener(this);
@@ -163,7 +163,7 @@ public class PreferenceListAdapter extends BaseAdapter implements
 			} else {
 				mIsChecked[pos] = false;
 				seekbar.setVisibility(View.GONE);
-				unSelectedList.add(mPackageList.get(pos).getmApplicationName());
+				unSelectedList.add(mPackageList.get(pos).getmPackageName());
 				mPackageList.get(pos).setChecked(false);
 				checkbox.setChecked(false);
 				mSelectedCount--;

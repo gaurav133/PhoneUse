@@ -21,12 +21,14 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -74,6 +76,8 @@ public class UsageListFragment<AppData, MusicData> extends
 		Fragment implements ViewPager.OnPageChangeListener {
 
 	static final String LOG_TAG = UsageListFragment.class.getSimpleName();
+	
+	private boolean mIsFilteredMap = false;
 
 	/**
 	 * A custom {@link ViewPager} title strip which looks much like Tabs present
@@ -118,7 +122,10 @@ public class UsageListFragment<AppData, MusicData> extends
 
 	@SuppressWarnings("unchecked")
     public void setmUsageAppData(AppData mUsageAppData) {
-		this.mUsageAppData = mUsageAppData;
+	    
+	    if (!mIsFilteredMap) {
+	        this.mUsageAppData = mUsageAppData;
+	    }
 		try {
 			mAppDataListAdapter = new UsageListAdapter<AppData>(getActivity(), mUsageAppData);
 		} catch (Exception e) {
@@ -246,6 +253,8 @@ public class UsageListFragment<AppData, MusicData> extends
 			if (UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
 				UsageSharedPrefernceHelper.setFilterMode(getActivity(), false);
 				item.setTitle(R.string.string_all);
+                mIsFilteredMap = false;
+				setmUsageAppData(mUsageAppData);
 			} else {
 				if (UsageSharedPrefernceHelper
 						.getSelectedApplicationForFiltering(getActivity()) == null
@@ -256,9 +265,25 @@ public class UsageListFragment<AppData, MusicData> extends
 							R.string.string_filter_menu_enable_message,
 							Toast.LENGTH_LONG).show();
 				} else {
+				    HashMap<String, Long> usageMap = (HashMap<String, Long>) mUsageAppData;
+				    Set<String> filterPkg = UsageSharedPrefernceHelper.getSelectedApplicationForFiltering(getActivity());
+				    HashMap<String, Long> filteredMap = new HashMap<>();
+				    
+				    Iterator<String> iterator = filterPkg.iterator();
+				    
+				    while (iterator.hasNext()) {
+				        // Search for each application name in mLabelMap to get it's package name.
+				        String pkgName = iterator.next();
+				        
+				        if (pkgName != null && usageMap.containsKey(pkgName)) {
+				            filteredMap.put(pkgName, usageMap.get(pkgName));
+				        }
+				    }
 					UsageSharedPrefernceHelper.setFilterMode(getActivity(),
 							true);
 					item.setTitle(R.string.string_filter);
+					mIsFilteredMap = true;
+					setmUsageAppData((AppData) filteredMap);
 				}
 			}
 	    	break;
