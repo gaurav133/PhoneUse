@@ -31,7 +31,7 @@ public class MusicListAdapter implements ExpandableListAdapter {
 		mList = new HashMap<String, ArrayList<UsageInfo>>();
 		mGroupList = new ArrayList<String>();
 		for (UsageInfo info : infoList.values()) {
-			String date = Utils.getDateFromMiliSeconds(info
+			String date = Utils.getDateForDisplay(info
 					.getmIntervalStartTime());
 			if (mGroupList.contains(date)) {
 				mList.get(date).add(info);
