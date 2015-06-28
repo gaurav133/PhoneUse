@@ -182,7 +182,12 @@ public class MusicListAdapter implements ExpandableListAdapter {
 			Utils.getScaledImageView(mContext, imageView);
 		}
 		TextView textview = (TextView) convertView.findViewById(R.id.group_title);
-		textview.setText(mGroupList.get(groupPosition));
+		String date = mGroupList.get(groupPosition);
+		if (Utils.isDateToday(date)) {
+			textview.setText(R.string.string_Today);
+		} else {
+			textview.setText(date);
+		}
 		ImageView imageView = (ImageView) convertView.findViewById(R.id.drop_icon);
 		
 		

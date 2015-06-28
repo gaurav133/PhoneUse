@@ -298,7 +298,16 @@ public class Utils {
         Date date = new Date(miliSec);
         return DateFormat.getDateInstance().format(date);
 	}
-
+	
+	public static boolean isDateToday(String arg0){
+		Calendar c = Calendar.getInstance();
+		String arg1 = DateFormat.getDateInstance().format(c.getTime());
+		if (arg1.equals(arg0)) {
+			return true;
+		}
+		return false;
+	}
+	
 	public static String getDateFromMiliSeconds(long miliSec) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		Date resultdate = new Date(miliSec);
