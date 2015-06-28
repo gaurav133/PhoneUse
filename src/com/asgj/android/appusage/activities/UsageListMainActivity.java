@@ -326,46 +326,43 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     public void displayDataForMusic() {
         mMusicList = new ArrayList<>();
 
-                switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
-                case "Today":
-                    mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
-                    mUsageListFragment.setmMusicData(mMusicList);
-                    break;
-                case "Weekly":
-                case "Monthly":
-                case "Yearly":
-                    mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext,
-                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
-                            Calendar.getInstance());
-                    mUsageListFragment.setmMusicData(mMusicList);
-                    break;
-                case "Custom":
-                    if (Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
-                        mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext,
-                                cal1, cal2);
-                    } else {
-                        mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext,
-                                cal1, Calendar.getInstance());
-                    }
-                    mUsageListFragment.setmMusicData(mMusicList);
-                    break;
-                default:
-                    break;
-                }
+        switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
+        case "Today":
+            mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
+            mUsageListFragment.setmMusicData(mMusicList);
+            break;
+        case "Weekly":
+        case "Monthly":
+        case "Yearly":
+            mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext,
+                    UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
+                    Calendar.getInstance());
+            break;
+        case "Custom":
+            if (Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+                mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1, cal2);
+            } else {
+                mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1,
+                        Calendar.getInstance());
+            }
+            break;
+        default:
+            break;
+        }
 
             // Check whether custom and end day not today.
 
-                if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(getString(R.string.string_Custom)) && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
-                    return;
-                } else {
-                if (mMainService != null) {
-                        mMusicList.addAll( mMainService.getCurrentDataForMusic());
-                }
+        if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                getString(R.string.string_Custom))
+                && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+            return;
+        } else {
+            if (mMainService != null) {
+                mMusicList.addAll(mMainService.getCurrentDataForMusic());
             }
-
         }
-
-    
+        mUsageListFragment.setmMusicData(mMusicList);
+    }
 
     /**
      * onResume method to dynamically show data as tracking progresses.
@@ -642,9 +639,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                         public void onClick(DialogInterface dialog, int which) {
 						    if (!mShowList[which].equals(mContext.getString(R.string.string_Custom))) {
 							    UsageSharedPrefernceHelper.setShowByUsage(getBaseContext(),mShowList[which]);
-								if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-								    displayDataForApps();
-								}
+							    displayDataForApps();
 								displayDataForMusic();
 						    } else {
          					    startDateFragment = new MonthViewFragment();
