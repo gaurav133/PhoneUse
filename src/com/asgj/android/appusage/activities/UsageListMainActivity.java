@@ -137,7 +137,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             startServiceIntent.setClass(mContext, UsageTrackingService.class);
             startServiceIntent
                     .setComponent(new ComponentName(mContext, UsageTrackingService.class));
-            bindService(startServiceIntent, mConnection, 0);
+            bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
         }
         
         this.cal1 = Calendar.getInstance();
@@ -444,11 +444,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         // TODO Auto-generated method stub
-        Log.v(LOG_TAG, "onDestroy activity");
+        Log.v(LOG_TAG, "onDestroy activity"+mIsBound);
 
         // Unbind from service to prevent service connection leak.
         if (mIsBound) {
             unbindService(mConnection);
+            mConnection = null;
         }
         
         UsageSharedPrefernceHelper.setCalendar(mContext, cal1.getTimeInMillis(), "startCalendar");
@@ -471,7 +472,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             startServiceIntent.setClass(this, UsageTrackingService.class);
             startServiceIntent.setComponent(new ComponentName(this, UsageTrackingService.class));
             startService(startServiceIntent);
-            bindService(startServiceIntent, mConnection, 0);
+            bindService(startServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
 
             // Home Screen intent.
             Intent intentGoToHomeScreen = new Intent();

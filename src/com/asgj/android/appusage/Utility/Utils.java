@@ -298,6 +298,33 @@ public class Utils {
         Date date = new Date(miliSec);
         return DateFormat.getDateInstance().format(date);
 	}
+	
+	public static boolean isDateToday(String arg0){
+		Calendar c = Calendar.getInstance();
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		c.set(Calendar.MILLISECOND, 0);
+		String arg1 = DateFormat.getDateInstance().format(c.getTime());
+		if (arg1.equals(arg0)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean isDateYesterday(String arg0){
+		Calendar c = Calendar.getInstance();
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		c.set(Calendar.MILLISECOND, 0);
+		c.set(Calendar.DATE, c.get(Calendar.DATE) - 1);
+		String arg1 = DateFormat.getDateInstance().format(c.getTime());
+		if (arg1.equals(arg0)) {
+			return true;
+		}
+		return false;
+	}
 
 	public static String getDateFromMiliSeconds(long miliSec) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
