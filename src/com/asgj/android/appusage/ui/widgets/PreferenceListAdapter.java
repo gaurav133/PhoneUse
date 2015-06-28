@@ -137,29 +137,29 @@ public class PreferenceListAdapter extends BaseAdapter implements
 			CheckBox checkbox = holder.checkbox;
 
 			if (!mPackageList.get(pos).isChecked()) {
-				mIsChecked[pos] = true;
-				mPackageList.get(pos).setChecked(true);
-				checkbox.setChecked(true);
-				if(unSelectedList.contains(mPackageList.get(pos).getmPackageName())){
-					unSelectedList.remove(mPackageList.get(pos).getmPackageName());
-				}
-				if (mCurrentPrefType == NOTIFICATION_PREF) {
-					seekbar.setOnSeekBarChangeListener(this);
+			    
+			    if (mSelectedCount + 1 > MAXIMUN_APPLICATIONS) {
+			        Toast.makeText(
+                            mContext,
+                            mContext.getString(R.string.string_select_packages_maximum_app_toast),
+                            Toast.LENGTH_LONG).show();
+                    return;
+			    } else {
+			        mIsChecked[pos] = true;
+			        mPackageList.get(pos).setChecked(true);
+			        checkbox.setChecked(true);
+			        if(unSelectedList.contains(mPackageList.get(pos).getmPackageName())){
+			            unSelectedList.remove(mPackageList.get(pos).getmPackageName());
+			        }
+			        if (mCurrentPrefType == NOTIFICATION_PREF) {
+			            seekbar.setOnSeekBarChangeListener(this);
 
-					seekbar.setTag(holder.position);
-					seekbar.setProgress(mPackageList.get(pos).getmInputtime());
-					seekbar.setVisibility(View.VISIBLE);
-				}
-
-				if (mSelectedCount < MAXIMUN_APPLICATIONS) {
-					mSelectedCount++;
-				} else {
-					((CheckBox) v).setChecked(false);
-					Toast.makeText(
-							mContext,
-							mContext.getString(R.string.string_select_packages_maximum_app_toast),
-							Toast.LENGTH_LONG).show();
-				}
+			            seekbar.setTag(holder.position);
+			            seekbar.setProgress(mPackageList.get(pos).getmInputtime());
+			            seekbar.setVisibility(View.VISIBLE);
+			        }
+			        mSelectedCount++;
+				} 
 			} else {
 				mIsChecked[pos] = false;
 				seekbar.setVisibility(View.GONE);
