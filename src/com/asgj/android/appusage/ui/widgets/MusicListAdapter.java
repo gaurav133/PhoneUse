@@ -1,6 +1,8 @@
 package com.asgj.android.appusage.ui.widgets;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import android.content.Context;
@@ -46,7 +48,7 @@ public class MusicListAdapter implements ExpandableListAdapter {
 		mList = new HashMap<String, ArrayList<UsageInfo>>();
 		mGroupList = new ArrayList<String>();
 		for (UsageInfo info : list) {
-			String date = Utils.getDateFromMiliSeconds(info
+		    String date = Utils.getDateForDisplay(info
 					.getmIntervalStartTime());
 			if (mGroupList.contains(date)) {
 				mList.get(date).add(info);
@@ -126,6 +128,7 @@ public class MusicListAdapter implements ExpandableListAdapter {
 			// text_right.setTypeface(mNormalTypeface);
 			text_left.setTextColor(mContext.getResources().getColor(
 					android.R.color.black));
+			text_middle.setTextColor(mContext.getResources().getColor(android.R.color.black));
 			text_right.setTextColor(mContext.getResources().getColor(
 					android.R.color.black));
 
