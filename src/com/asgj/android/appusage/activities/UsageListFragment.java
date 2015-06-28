@@ -210,20 +210,25 @@ public class UsageListFragment<AppData, MusicData> extends
 		}else{
 			filterMenu.setTitle(R.string.string_all);
 		}
-        MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_sort_by);
+		
+		MenuItem menuItemFilter = (MenuItem) menu.findItem(R.id.filter_menu);
+        MenuItem menuItemSortBy = (MenuItem) menu.findItem(R.id.action_sort_by);
 
         if (mViewPager != null) {
             switch (mViewPager.getCurrentItem()) {
             case 0:
                 if (mAppDataListAdapter != null) {
                     if (mAppDataListAdapter.isEmpty()) {
-                        menuItem.setVisible(false);
+                        menuItemFilter.setVisible(false);
+                        menuItemSortBy.setVisible(false);
                     } else {
-                        menuItem.setVisible(true);
+                        menuItemFilter.setVisible(true);
+                        menuItemSortBy.setVisible(true);
                     }
                 }
                 break;
-            case 1: menuItem.setVisible(false);
+            case 1: menuItemSortBy.setVisible(false);
+                    menuItemFilter.setVisible(false);
                     break;
             default:
                 break;
