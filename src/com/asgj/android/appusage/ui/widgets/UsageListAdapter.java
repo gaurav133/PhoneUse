@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.asgj.android.appusage.R;
@@ -96,6 +97,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
             holder.text_left = (TextView) convertView.findViewById(R.id.text1);
             holder.text_right = (TextView) convertView.findViewById(R.id.text3);
             holder.text_middle = (TextView) convertView.findViewById(R.id.text2);
+            holder.parent = (RelativeLayout) convertView.findViewById(R.id.parentLayout);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -115,6 +117,8 @@ public class UsageListAdapter<Data> extends BaseAdapter {
                 holder.text_right.setTextColor(mContext.getResources().getColor(
                         R.color.color_total_time_title));
                 holder.text_right.setTypeface(mBoldTypeface);
+                holder.parent.setFocusable(true);
+                holder.parent.setClickable(true);
                 
             } else {
                 holder.image_view_app_icon.setVisibility(View.VISIBLE);
@@ -126,6 +130,8 @@ public class UsageListAdapter<Data> extends BaseAdapter {
                 holder.text_right.setText("" + Utils.getTimeFromSeconds(mMap.get(mKeys.get(position))));
                 holder.text_right.setTextColor(mContext.getResources().getColor(android.R.color.black));
                 holder.text_right.setTypeface(mNormalTypeface);
+                holder.parent.setFocusable(false);
+                holder.parent.setClickable(false);
             }
         }
         return convertView;
@@ -134,5 +140,6 @@ public class UsageListAdapter<Data> extends BaseAdapter {
     private class ViewHolder {
         TextView text_left, text_right, text_middle, text_dash;
         ImageView image_view_app_icon;
+        RelativeLayout parent;
     }
 }
