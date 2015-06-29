@@ -89,7 +89,7 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
         // Build the dialog
         mBuilder = new AlertDialog.Builder(mContext);
         mBuilder.setView(customView); // Set the view of the dialog to your custom layout
-        mBuilder.setTitle("Select start and end date");
+        mBuilder.setTitle(getString(R.string.string_select_start_and_end_date));
 
         // Create and show the dialog
         mDialog = mBuilder.create();

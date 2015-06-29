@@ -545,6 +545,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                         
                     }
                     androidDefaultUEH.uncaughtException(thread, ex);
+                    System.exit(2);
                 }
             };
 
@@ -573,7 +574,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                         && mIsRunningForegroundAppsThread == true) {
                     long time = System.nanoTime();
                     long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
-                
 
                     if (duration > 0) {
                         if (foregroundMap.containsKey(mPreviousAppName)) {

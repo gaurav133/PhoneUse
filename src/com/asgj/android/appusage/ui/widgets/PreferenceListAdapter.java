@@ -25,7 +25,8 @@ public class PreferenceListAdapter extends BaseAdapter implements
 	private ArrayList<ResolveInfo> mPackageList = null;
 	private Context mContext = null;
 	private int mSelectedCount = 0;
-	private static final int MAXIMUN_APPLICATIONS = 5;
+	private static final int MAXIMUM_APPLICATIONS_NOTIFICATION = 5;
+	private static final int MAXIMUM_APPLICATIONS_FILTERING = 10;
 	private boolean mIsChecked[];
 	private int mCurrentPrefType = 0;
 	private static final int NOTIFICATION_PREF = 1;
@@ -138,10 +139,16 @@ public class PreferenceListAdapter extends BaseAdapter implements
 
 			if (!mPackageList.get(pos).isChecked()) {
 			    
-			    if (mSelectedCount + 1 > MAXIMUN_APPLICATIONS) {
+			    if (mCurrentPrefType == NOTIFICATION_PREF && mSelectedCount + 1 > MAXIMUM_APPLICATIONS_NOTIFICATION) {
 			        Toast.makeText(
                             mContext,
-                            mContext.getString(R.string.string_select_packages_maximum_app_toast),
+                            String.format(mContext.getString(R.string.string_select_packages_maximum_app_toast), MAXIMUM_APPLICATIONS_NOTIFICATION),
+                            Toast.LENGTH_LONG).show();
+                    return;
+			    } else if (mCurrentPrefType == PACKAGES_FILTER_PREF && mSelectedCount + 1 > MAXIMUM_APPLICATIONS_FILTERING) {
+                    Toast.makeText(
+                            mContext,
+                            String.format(mContext.getString(R.string.string_select_packages_maximum_app_toast), MAXIMUM_APPLICATIONS_FILTERING),
                             Toast.LENGTH_LONG).show();
                     return;
 			    } else {
