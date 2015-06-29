@@ -17,53 +17,41 @@ import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.ResolveInfo;
-import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 
-public class PreferenceListAdapter extends BaseAdapter implements
-		View.OnClickListener, OnSeekBarChangeListener {
+public class PreferenceListAdapter extends BaseAdapter implements View.OnClickListener,
+        OnSeekBarChangeListener {
 
-	private ArrayList<ResolveInfo> mPackageList = null;
-	private Context mContext = null;
-	private int mSelectedCount = 0;
-	private static final int MAXIMUM_APPLICATIONS_NOTIFICATION = 5;
-	private static final int MAXIMUM_APPLICATIONS_FILTERING = 10;
-	private boolean mIsChecked[];
-	private int mCurrentPrefType = 0;
-	private static final int NOTIFICATION_PREF = 1;
-	private static final int PACKAGES_FILTER_PREF = 2;
-	private ArrayList<String> unSelectedList = new ArrayList<String>();
+    private ArrayList<ResolveInfo> mPackageList = null;
+    private Context mContext = null;
+    private int mSelectedCount = 0;
+    private static final int MAXIMUM_APPLICATIONS_NOTIFICATION = 5;
+    private static final int MAXIMUM_APPLICATIONS_FILTERING = 10;
+    private boolean mIsChecked[];
+    private Set<String> mAlreadySelectedSet;
+    private int mCurrentPrefType = 0;
+    protected static final int NOTIFICATION_PREF = 1;
+    private static final int PACKAGES_FILTER_PREF = 2;
 
-	PreferenceListAdapter(ArrayList<ResolveInfo> packageList, Context context,
-			int currentPref) {
-		mPackageList = packageList;
-		mContext = context;
-		mIsChecked = new boolean[mPackageList.size()];
-		mCurrentPrefType = currentPref;
-		Set<String> alreadySelectedList = null;
-		if (mCurrentPrefType == NOTIFICATION_PREF) {
-			alreadySelectedList = UsageSharedPrefernceHelper
-					.getSelectedApplicationForTracking(mContext);
-		} else {
-			alreadySelectedList = UsageSharedPrefernceHelper
-					.getSelectedApplicationForFiltering(mContext);
-		}
-		// TODO : need to get time also from prefernce to show on seekbar.
-		if (alreadySelectedList != null && alreadySelectedList.size() > 0) {
-			mSelectedCount = alreadySelectedList.size();
-			String[] selectionlist = new String[mSelectedCount];
-			selectionlist = alreadySelectedList.toArray(selectionlist);
+    PreferenceListAdapter(ArrayList<ResolveInfo> packageList, Context context, int currentPref) {
+        mPackageList = packageList;
+        mContext = context;
+        mIsChecked = new boolean[mPackageList.size()];
+        mCurrentPrefType = currentPref;
+    }
 
-			for (int j = 0; j < mSelectedCount; j++) {
-				for (int i = 0; i < mPackageList.size(); i++) {
-					if (mPackageList.get(i).getmPackageName()
-							.equals(selectionlist[j])) {
-						mPackageList.get(i).setChecked(true);
-						mIsChecked[i] = true;
-					}
-				}
-			}
-			this.notifyDataSetChanged();
-		}
+    protected int getCurrentPref() {
+        return mCurrentPrefType;
+    }
+
+    protected void setSelectedCount(int count) {
+        if (count >= 0) {
+            mSelectedCount = count;
+        }
+    }
+
+    protected void setPackageList(ArrayList<ResolveInfo> list) {
+        this.mPackageList = list;
+    }
 
 	}
 
@@ -93,14 +81,17 @@ public class PreferenceListAdapter extends BaseAdapter implements
 		return 0;
 	}
 
-	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
-		ViewHolder holder = new ViewHolder();
+    protected void setCheckedArray(boolean[] mIsChecked) {
+        this.mIsChecked = mIsChecked;
+    }
 
-		if (convertView == null) {
-			LayoutInflater inflater = LayoutInflater.from(mContext);
-			convertView = inflater.inflate(R.layout.prefernce_list_item_layout,
-					null);
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder = new ViewHolder();
+        ResolveInfo info;
+        if (convertView == null) {
+            LayoutInflater inflater = LayoutInflater.from(mContext);
+            convertView = inflater.inflate(R.layout.prefernce_list_item_layout, null);
 
 			holder.labelTextView = (TextView) convertView
 					.findViewById(R.id.title_package);
@@ -137,46 +128,44 @@ public class PreferenceListAdapter extends BaseAdapter implements
 			SeekBar seekbar = holder.timeBar;
 			CheckBox checkbox = holder.checkbox;
 
-			if (!mPackageList.get(pos).isChecked()) {
-			    
-			    if (mCurrentPrefType == NOTIFICATION_PREF && mSelectedCount + 1 > MAXIMUM_APPLICATIONS_NOTIFICATION) {
-			        Toast.makeText(
-                            mContext,
-                            String.format(mContext.getString(R.string.string_select_packages_maximum_app_toast), MAXIMUM_APPLICATIONS_NOTIFICATION),
-                            Toast.LENGTH_LONG).show();
-                    return;
-			    } else if (mCurrentPrefType == PACKAGES_FILTER_PREF && mSelectedCount + 1 > MAXIMUM_APPLICATIONS_FILTERING) {
+            if (!mIsChecked[pos]) {
+
+                if (mCurrentPrefType == NOTIFICATION_PREF
+                        && mSelectedCount + 1 > MAXIMUM_APPLICATIONS_NOTIFICATION) {
                     Toast.makeText(
                             mContext,
-                            String.format(mContext.getString(R.string.string_select_packages_maximum_app_toast), MAXIMUM_APPLICATIONS_FILTERING),
-                            Toast.LENGTH_LONG).show();
+                            String.format(mContext
+                                    .getString(R.string.string_select_packages_maximum_app_toast),
+                                    MAXIMUM_APPLICATIONS_NOTIFICATION), Toast.LENGTH_LONG).show();
                     return;
-			    } else {
-			        mIsChecked[pos] = true;
-			        mPackageList.get(pos).setChecked(true);
-			        checkbox.setChecked(true);
-			        if(unSelectedList.contains(mPackageList.get(pos).getmPackageName())){
-			            unSelectedList.remove(mPackageList.get(pos).getmPackageName());
-			        }
-			        if (mCurrentPrefType == NOTIFICATION_PREF) {
-			            seekbar.setOnSeekBarChangeListener(this);
+                } else if (mCurrentPrefType == PACKAGES_FILTER_PREF
+                        && mSelectedCount + 1 > MAXIMUM_APPLICATIONS_FILTERING) {
+                    Toast.makeText(
+                            mContext,
+                            String.format(mContext
+                                    .getString(R.string.string_select_packages_maximum_app_toast),
+                                    MAXIMUM_APPLICATIONS_FILTERING), Toast.LENGTH_LONG).show();
+                    return;
+                } else {
+                    mIsChecked[pos] = true;
+                    checkbox.setChecked(true);
+                    if (mCurrentPrefType == NOTIFICATION_PREF) {
+                        seekbar.setOnSeekBarChangeListener(this);
 
-			            seekbar.setTag(holder.position);
-			            seekbar.setProgress(mPackageList.get(pos).getmInputtime());
-			            seekbar.setVisibility(View.VISIBLE);
-			        }
-			        mSelectedCount++;
-				} 
-			} else {
-				mIsChecked[pos] = false;
-				seekbar.setVisibility(View.GONE);
-				unSelectedList.add(mPackageList.get(pos).getmPackageName());
-				mPackageList.get(pos).setChecked(false);
-				checkbox.setChecked(false);
-				mSelectedCount--;
-			}
-		}
-	}
+                        seekbar.setTag(holder.position);
+                        seekbar.setProgress(mPackageList.get(pos).getmInputtime());
+                        seekbar.setVisibility(View.VISIBLE);
+                    }
+                    mSelectedCount++;
+                }
+            } else {
+                mIsChecked[pos] = false;
+                seekbar.setVisibility(View.GONE);
+                checkbox.setChecked(false);
+                mSelectedCount--;
+            }
+        }
+    }
 
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress,
