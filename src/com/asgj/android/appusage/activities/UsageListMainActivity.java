@@ -600,8 +600,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         switch (item.getItemId()) {
         case R.id.action_start:
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
-                if (Utils.isSufficientRAMAvailable(mContext)
-                        && Utils.isSufficientBatteryAvailable(mContext)) {
+                if (Utils.isSufficientRAMAvailable(mContext, true)
+                        && Utils.isSufficientBatteryAvailable(mContext, true)) {
                     if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                         if (!Utils.isPermissionGranted(this)) {
                             AlertDialog.Builder builder = new AlertDialog.Builder(this)

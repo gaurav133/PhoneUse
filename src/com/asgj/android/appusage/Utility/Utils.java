@@ -475,7 +475,7 @@ public class Utils {
 	 * @return boolean flag indicating whether device has sufficient battery
 	 *         available.
 	 */
-	public static boolean isSufficientRAMAvailable(Context context) {
+	public static boolean isSufficientRAMAvailable(Context context, boolean isShow) {
 		MemoryInfo info = new MemoryInfo();
 		ActivityManager activityManager = (ActivityManager) context
 				.getSystemService(Context.ACTIVITY_SERVICE);
@@ -484,19 +484,21 @@ public class Utils {
 		Log.v(LOG_TAG, "Availabel precentage: " + percentAvail);
 		if (percentAvail < 2) {
 			// TODO Show some dialog.
-			AlertDialog.Builder builder = new AlertDialog.Builder(context)
-					.setTitle(R.string.string_title_low_memory_dialog)
-					.setMessage(R.string.string_desc_low_memory_dialog)
-					.setPositiveButton(android.R.string.ok,
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									dialog.dismiss();
-								}
-							});
-			AlertDialog dialog = builder.create();
-			dialog.show();
+		    if (isShow) {
+    			AlertDialog.Builder builder = new AlertDialog.Builder(context)
+    					.setTitle(R.string.string_title_low_memory_dialog)
+    					.setMessage(R.string.string_desc_low_memory_dialog)
+    					.setPositiveButton(android.R.string.ok,
+    							new DialogInterface.OnClickListener() {
+    								@Override
+    								public void onClick(DialogInterface dialog,
+    										int which) {
+    									dialog.dismiss();
+    								}
+    							});
+    			AlertDialog dialog = builder.create();
+    			dialog.show();
+		    }
 			return false;
 		} else {
 			return true;
@@ -513,7 +515,7 @@ public class Utils {
 	 * @return boolean flag indicating whether device has sufficient battery
 	 *         available.
 	 */
-	public static boolean isSufficientBatteryAvailable(Context context) {
+	public static boolean isSufficientBatteryAvailable(Context context, boolean isShow) {
 		boolean result = true;
 
 		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
@@ -532,19 +534,21 @@ public class Utils {
 		if (batteryPct * 100 <= 5.0f && !isCharging) {
 			Log.v(LOG_TAG, "Battery percentage low: " + batteryPct);
 			result = false;
-			AlertDialog.Builder builder = new AlertDialog.Builder(context)
-					.setTitle(R.string.string_title_low_battery_dialog)
-					.setMessage(R.string.string_desc_low_battery_dialog)
-					.setPositiveButton(android.R.string.ok,
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									dialog.dismiss();
-								}
-							});
-			AlertDialog dialog = builder.create();
-			dialog.show();
+			if (isShow) {
+    			AlertDialog.Builder builder = new AlertDialog.Builder(context)
+    					.setTitle(R.string.string_title_low_battery_dialog)
+    					.setMessage(R.string.string_desc_low_battery_dialog)
+    					.setPositiveButton(android.R.string.ok,
+    							new DialogInterface.OnClickListener() {
+    								@Override
+    								public void onClick(DialogInterface dialog,
+    										int which) {
+    									dialog.dismiss();
+    								}
+    							});
+    			AlertDialog dialog = builder.create();
+    			dialog.show();
+			}
 		}
 		Log.v(LOG_TAG, "Battery percentage: " + batteryPct);
 		return result;
