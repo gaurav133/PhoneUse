@@ -473,6 +473,7 @@ public class UsageListFragment<AppData, MusicData> extends
 				title.setAdapter(mAppDataListAdapter);
 				mAppDataListAdapter.notifyDataSetChanged();
 			    if (mAppDataListAdapter.isEmpty()) {
+			        textViewNoData.setText(getString(R.string.string_no_data_navigate_apps));
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
@@ -484,6 +485,7 @@ public class UsageListFragment<AppData, MusicData> extends
                         Utils.compareDates(Calendar.getInstance(), endCalendar) > 0) {
 	                        textViewNoData.setVisibility(View.VISIBLE);
 	                    } else {
+	                        textViewNoDataStartTracking.setText(getString(R.string.string_start_tracking_no_data_navigate_apps));
 	                        textViewNoDataStartTracking.setVisibility(View.VISIBLE);
 	                    }
 			            
@@ -507,6 +509,7 @@ public class UsageListFragment<AppData, MusicData> extends
 				musicListView.setVisibility(View.VISIBLE);
 				musicListView.setAdapter(mMusicDataListAdapter);
 				if (mMusicDataListAdapter.getGroupCount() == 0) {
+				    textViewNoData.setText(getString(R.string.string_no_data_music));
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
@@ -519,6 +522,7 @@ public class UsageListFragment<AppData, MusicData> extends
                         Utils.compareDates(Calendar.getInstance(), endCalendar) > 0) {
                             textViewNoData.setVisibility(View.VISIBLE);
                         } else {
+                            textViewNoDataStartTracking.setText(getString(R.string.string_start_tracking_no_data_music));
                             textViewNoDataStartTracking.setVisibility(View.VISIBLE);
                         }
                         
