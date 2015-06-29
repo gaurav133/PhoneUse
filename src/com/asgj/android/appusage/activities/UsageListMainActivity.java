@@ -3,10 +3,16 @@ package com.asgj.android.appusage.activities;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -825,30 +831,30 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	if(mShowByOptions2.getVisibility() == View.VISIBLE)
     	hideFabOption();
         // Check current preference first.
-    	HashMap<Long,UsageInfo> infoList = null;
+    	HashMap<Long,UsageInfo> infoMap = null;
         // Check whether custom and end day not today.
         if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                 mContext.getString(R.string.string_Custom))
                 && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
 
-        	infoList = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
+            infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
         } else {
 
             switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
             case "Today":
-            	infoList = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
+                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
                         Calendar.getInstance());
                 break;
             case "Weekly":
             case "Monthly":
             case "Yearly":
-            	infoList = mDatabase.getAppIntervalsBetweenDates(pkg,
+                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
                         UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
                         Calendar.getInstance());
         	
                 break;
             case "Custom":
-            	infoList = mDatabase.getAppIntervalsBetweenDates(pkg,
+                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
                         cal1, Calendar.getInstance());
                 break;
             default:
@@ -856,10 +862,31 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             }
         }
 
+        // Sort intervals before sending to detail fragment.
+        LinkedList<Map.Entry<Long, UsageInfo>> list = new LinkedList<>();
+        for (Map.Entry<Long, UsageInfo> entry : infoMap.entrySet()) {
+            list.add(entry);
+        }
+        Collections.sort(list, new Comparator<Map.Entry<Long, UsageInfo>>() {
+            @Override
+            public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
+                // TODO Auto-generated method stub
+                return (int) (lhs.getKey() - rhs.getKey());
+            }
+        });
+        
+        LinkedHashMap<Long, UsageInfo> linkedMap = new LinkedHashMap<>();
+        ListIterator<Map.Entry<Long, UsageInfo>> iterator = list.listIterator();
+        
+        while (iterator.hasNext()) {
+            Map.Entry<Long, UsageInfo> entry = iterator.next();
+            linkedMap.put(entry.getKey(), entry.getValue());
+        }
+        
         if (Utils.isTabletDevice(mContext)) {
-            mDetailFragment.updateDetailList(infoList);
+            mDetailFragment.updateDetailList(linkedMap);
         } else {
-            initDetailFragment(infoList, Utils.getApplicationLabelName(mContext, pkg));
+            initDetailFragment(linkedMap, Utils.getApplicationLabelName(mContext, pkg));
 		}
 		
 	}
