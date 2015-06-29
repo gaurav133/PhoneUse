@@ -3,7 +3,6 @@ package com.asgj.android.appusage.Utility;
 public class ResolveInfo {
 	
 	private String mApplicationName;
-	private boolean isChecked;
 	private int mInputtime;
 	private String mPackageName;
 	
@@ -19,12 +18,7 @@ public class ResolveInfo {
 	public void setmApplicationName(String mApplicationName) {
 		this.mApplicationName = mApplicationName;
 	}
-	public boolean isChecked() {
-		return isChecked;
-	}
-	public void setChecked(boolean isChecked) {
-		this.isChecked = isChecked;
-	}
+	
 	public String getmPackageName() {
         return mPackageName;
     }
