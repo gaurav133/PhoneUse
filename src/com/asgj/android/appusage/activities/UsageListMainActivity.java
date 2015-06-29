@@ -40,9 +40,11 @@ import android.os.IBinder;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -91,7 +93,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private float mFifthFabPos = -1f;
     private boolean isFabPositionSet = false;
     private int mFabPosParameter = 20;
-    private int mFabMargins = 50;
+    private int mFabMarginsRight = 50;
+    private int mFabMarginsBottom = 20;
     HashMap<String, UsageStats> mCurrentMap;
 
     private void setFabPositions() {
@@ -155,6 +158,18 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         cal2.setTimeInMillis(endTime);
     }
     
+    public float getListItemHeight() {
+        TypedValue value = new TypedValue();
+        DisplayMetrics metrics = new DisplayMetrics();
+
+        getTheme().resolveAttribute(
+                android.R.attr.listPreferredItemHeight, value, true);
+        ((WindowManager) (getSystemService(Context.WINDOW_SERVICE)))
+                .getDefaultDisplay().getMetrics(metrics);
+
+        return TypedValue.complexToDimension(value.data, metrics);
+    }
+    
     private void initFabTextView(){
     	mShowByOptionsMain = (TextView)findViewById(R.id.showByOptions1);
     	mShowByOptions2 = (TextView)findViewById(R.id.showByOptions2);
@@ -174,8 +189,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mShowByOptionsMain.getLayoutParams();
     		DisplayMetrics metrics = getResources().getDisplayMetrics();
         	float height = metrics.heightPixels;
-        	params.bottomMargin = (int)(height / mFabMargins);
-        	params.rightMargin = (int)(height / mFabMargins);
+        	mFabMarginsBottom = (int)getListItemHeight();
+        	params.bottomMargin = (int)mFabMarginsBottom * 3/4;
+        	params.rightMargin = (int)(height / mFabMarginsRight);
         	mShowByOptionsMain.setLayoutParams(params);
         	mShowByOptions2.setLayoutParams(params);
         	mShowByOptions3.setLayoutParams(params);
@@ -446,6 +462,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         return super.onCreateOptionsMenu(menu);
     }
+    
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
+        	hideFabOption();
+    	return super.onPrepareOptionsMenu(menu);
+    }
 
     @Override
     protected void onDestroy() {
@@ -596,7 +619,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // TODO Auto-generated method stub
+    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
+        	hideFabOption();
         switch (item.getItemId()) {
         case R.id.action_start:
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
@@ -815,6 +839,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         // Set in preference only after date from both pickers have been validated.
         UsageSharedPrefernceHelper.setShowByUsage(mContext,
                 mContext.getString(R.string.string_Custom));
+        mShowByOptionsMain.setText(mShowList[4]);
             displayDataForApps();
             displayDataForMusic();
     }
@@ -822,14 +847,17 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     @Override
     public void onMusicItemClick(String pkg, int groupPosition,
     		int childPosition) {
-    	// TODO Auto-generated method stub
-    	
+    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
+        	hideFabOption();    	
     }
 
     @Override
     public void onUsageItemClick(String pkg, int position) {
     	if(mShowByOptions2.getVisibility() == View.VISIBLE)
     	hideFabOption();
+    	if(pkg.equals("totalTime")){
+    		return;
+    	}
         // Check current preference first.
     	HashMap<Long,UsageInfo> infoMap = null;
         // Check whether custom and end day not today.
