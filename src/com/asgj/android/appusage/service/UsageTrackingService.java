@@ -554,8 +554,8 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                 // TODO Auto-generated method stub
 
                 // In case battery or RAM is low, stop timer.
-                if (!Utils.isSufficientBatteryAvailable(mContext)
-                        || !Utils.isSufficientRAMAvailable(mContext)) {
+                if (!Utils.isSufficientBatteryAvailable(mContext, false)
+                        || !Utils.isSufficientRAMAvailable(mContext, false)) {
                     Log.v(LOG_TAG, "Inside run battery ram low");
                     if (!mIsContinueTracking) {
                         saveDataOnKill();
