@@ -41,12 +41,14 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,6 +62,7 @@ import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
+import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity{
     private Context mContext;
@@ -81,11 +84,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private UsageDetailListFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
-    private TextView mShowByOptionsMain = null;
-    private TextView mShowByOptions2 = null;
-    private TextView mShowByOptions3 = null;
-    private TextView mShowByOptions4 = null;
-    private TextView mShowByOptions5 = null;
+    private TextView mShowByOptionsToday = null;
+    private TextView mShowByOptionsWeekly = null;
+    private TextView mShowByOptionsMonthly = null;
+    private TextView mShowByOptionsYearly = null;
+    private TextView mShowByOptionsCustom = null;
     private float mNormalYPosition = -1f;
     private float mSecondFabPos = -1f;
     private float mThirdFabPos = -1f;
@@ -108,11 +111,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         } else {
             mFabPosParameter = 40;
         }
-        mSecondFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 3);
-        mThirdFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 6);
-        mForthFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 9);
-        mFifthFabPos = mShowByOptions2.getY() - (height / mFabPosParameter * 12);
-        mNormalYPosition = mShowByOptions2.getY();
+        mSecondFabPos = mShowByOptionsWeekly.getY() - (height / mFabPosParameter * 3);
+        mThirdFabPos = mShowByOptionsWeekly.getY() - (height / mFabPosParameter * 6);
+        mForthFabPos = mShowByOptionsWeekly.getY() - (height / mFabPosParameter * 9);
+        mFifthFabPos = mShowByOptionsWeekly.getY() - (height / mFabPosParameter * 12);
+        mNormalYPosition = mShowByOptionsWeekly.getY();
         isFabPositionSet = true;
     }
 
@@ -132,6 +135,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         if(Utils.isTabletDevice(mContext)){
         	initDetailFragment(null, "abc");
         }
+        View view =  findViewById(R.id.usage_tab_height_layout);
+        view.setBackgroundColor(getResources().getColor(R.color.color_action_bar_background));
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        int pixels = (int) (2*(SlidingTabLayout.TAB_VIEW_PADDING_DIPS + SlidingTabLayout.TAB_VIEW_TEXT_SIZE_SP) * scale + 1.0f);
+        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) view.getLayoutParams();
+       layoutParams.height=pixels;
+       view.setLayoutParams(layoutParams);
         mUsageListFragment.setOnUsageItemClickListener(this);
         mIsCreated = true;
 
@@ -171,37 +181,37 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     }
     
     private void initFabTextView(){
-    	mShowByOptionsMain = (TextView)findViewById(R.id.showByOptions1);
-    	mShowByOptions2 = (TextView)findViewById(R.id.showByOptions2);
-    	mShowByOptions3 = (TextView)findViewById(R.id.showByOptions3);
-    	mShowByOptions4 = (TextView)findViewById(R.id.showByOptions4);
-    	mShowByOptions5 = (TextView)findViewById(R.id.showByOptions5);
+    	mShowByOptionsToday = (TextView)findViewById(R.id.showByOptionsToday);
+    	mShowByOptionsWeekly = (TextView)findViewById(R.id.showByOptionsWeekly);
+    	mShowByOptionsMonthly = (TextView)findViewById(R.id.showByOptionsMonthly);
+    	mShowByOptionsYearly = (TextView)findViewById(R.id.showByOptionsYearly);
+    	mShowByOptionsCustom = (TextView)findViewById(R.id.showByOptionsCustom);
         
-    	mShowByOptionsMain.setOnClickListener(this);
-    	mShowByOptions2.setOnClickListener(this);
-    	mShowByOptions3.setOnClickListener(this);
-    	mShowByOptions4.setOnClickListener(this);
-    	mShowByOptions5.setOnClickListener(this);
+    	mShowByOptionsToday.setOnClickListener(this);
+    	mShowByOptionsWeekly.setOnClickListener(this);
+    	mShowByOptionsMonthly.setOnClickListener(this);
+    	mShowByOptionsYearly.setOnClickListener(this);
+    	mShowByOptionsCustom.setOnClickListener(this);
     	if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
-    		mShowByOptionsMain.setVisibility(View.GONE);
+    		mShowByOptionsToday.setVisibility(View.GONE);
     	}else{
-    		mShowByOptionsMain.setText(UsageSharedPrefernceHelper.getShowByType(mContext));
-    		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mShowByOptionsMain.getLayoutParams();
+    		mShowByOptionsToday.setText(UsageSharedPrefernceHelper.getShowByType(mContext));
+    		FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mShowByOptionsToday.getLayoutParams();
     		DisplayMetrics metrics = getResources().getDisplayMetrics();
         	float height = metrics.heightPixels;
         	mFabMarginsBottom = (int)getListItemHeight();
         	params.bottomMargin = (int)mFabMarginsBottom * 3/4;
         	params.rightMargin = (int)(height / mFabMarginsRight);
-        	mShowByOptionsMain.setLayoutParams(params);
-        	mShowByOptions2.setLayoutParams(params);
-        	mShowByOptions3.setLayoutParams(params);
-        	mShowByOptions4.setLayoutParams(params);
-        	mShowByOptions5.setLayoutParams(params);
-    		mShowByOptionsMain.setElevation(20f);
-    		mShowByOptions2.setElevation(20f);
-    		mShowByOptions3.setElevation(20f);
-    		mShowByOptions4.setElevation(20f);
-    		mShowByOptions5.setElevation(20f);
+        	mShowByOptionsToday.setLayoutParams(params);
+        	mShowByOptionsWeekly.setLayoutParams(params);
+        	mShowByOptionsMonthly.setLayoutParams(params);
+        	mShowByOptionsYearly.setLayoutParams(params);
+        	mShowByOptionsCustom.setLayoutParams(params);
+    		mShowByOptionsToday.setElevation(20f);
+    		mShowByOptionsWeekly.setElevation(20f);
+    		mShowByOptionsMonthly.setElevation(20f);
+    		mShowByOptionsYearly.setElevation(20f);
+    		mShowByOptionsCustom.setElevation(20f);
         }
     }
 
@@ -218,7 +228,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     
     private void setFabButtonsVisibility(boolean visible){
     	int visibility = visible ? View.VISIBLE : View.INVISIBLE;
-    	mShowByOptionsMain.setVisibility(visibility);		
+    	mShowByOptionsToday.setVisibility(visibility);		
     }
 
     
@@ -465,7 +475,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
+    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
         	hideFabOption();
     	return super.onPrepareOptionsMenu(menu);
     }
@@ -619,7 +629,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
+    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
         	hideFabOption();
         switch (item.getItemId()) {
         case R.id.action_start:
@@ -692,17 +702,17 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
     private void showFabOptions(){
-		mShowByOptions2.animate().y(mSecondFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
-		mShowByOptions3.animate().y(mThirdFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();;
-		mShowByOptions4.animate().y(mForthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
-		mShowByOptions5.animate().y(mFifthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
+		mShowByOptionsWeekly.animate().y(mSecondFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
+		mShowByOptionsMonthly.animate().y(mThirdFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();;
+		mShowByOptionsYearly.animate().y(mForthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
+		mShowByOptionsCustom.animate().y(mFifthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
     }
     
     private void hideFabOption(){
-		mShowByOptions2.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
-		mShowByOptions3.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
-		mShowByOptions4.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
-		mShowByOptions5.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
+		mShowByOptionsWeekly.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
+		mShowByOptionsMonthly.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
+		mShowByOptionsYearly.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
+		mShowByOptionsCustom.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
     	
     }
     
@@ -710,15 +720,15 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		
 		@Override
 		public void onAnimationStart(Animator animation) {
-			mShowByOptionsMain.setClickable(false);
-			mShowByOptions2.setClickable(false);
-			mShowByOptions3.setClickable(false);
-			mShowByOptions4.setClickable(false);
-			mShowByOptions5.setClickable(false);
-			mShowByOptions2.setVisibility(View.VISIBLE);
-			mShowByOptions3.setVisibility(View.VISIBLE);
-			mShowByOptions4.setVisibility(View.VISIBLE);
-			mShowByOptions5.setVisibility(View.VISIBLE);
+			mShowByOptionsToday.setClickable(false);
+			mShowByOptionsWeekly.setClickable(false);
+			mShowByOptionsMonthly.setClickable(false);
+			mShowByOptionsYearly.setClickable(false);
+			mShowByOptionsCustom.setClickable(false);
+			mShowByOptionsWeekly.setVisibility(View.VISIBLE);
+			mShowByOptionsMonthly.setVisibility(View.VISIBLE);
+			mShowByOptionsYearly.setVisibility(View.VISIBLE);
+			mShowByOptionsCustom.setVisibility(View.VISIBLE);
 		}
 		
 		@Override
@@ -729,11 +739,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		
 		@Override
 		public void onAnimationEnd(Animator animation) {
-			mShowByOptionsMain.setClickable(true);
-			mShowByOptions2.setClickable(true);
-			mShowByOptions3.setClickable(true);
-			mShowByOptions4.setClickable(true);
-			mShowByOptions5.setClickable(true);
+			mShowByOptionsToday.setClickable(true);
+			mShowByOptionsWeekly.setClickable(true);
+			mShowByOptionsMonthly.setClickable(true);
+			mShowByOptionsYearly.setClickable(true);
+			mShowByOptionsCustom.setClickable(true);
 			
 		}
 		
@@ -748,11 +758,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		
 		@Override
 		public void onAnimationStart(Animator animation) {
-			mShowByOptionsMain.setClickable(false);
-			mShowByOptions2.setClickable(false);
-			mShowByOptions3.setClickable(false);
-			mShowByOptions4.setClickable(false);
-			mShowByOptions5.setClickable(false);
+			mShowByOptionsToday.setClickable(false);
+			mShowByOptionsWeekly.setClickable(false);
+			mShowByOptionsMonthly.setClickable(false);
+			mShowByOptionsYearly.setClickable(false);
+			mShowByOptionsCustom.setClickable(false);
 			
 		}
 		
@@ -765,15 +775,15 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		@Override
 		public void onAnimationEnd(Animator animation) {
 			
-			mShowByOptions2.setVisibility(View.INVISIBLE);
-			mShowByOptions3.setVisibility(View.INVISIBLE);
-			mShowByOptions4.setVisibility(View.INVISIBLE);
-			mShowByOptions5.setVisibility(View.INVISIBLE);
-			mShowByOptionsMain.setClickable(true);
-			mShowByOptions2.setClickable(true);
-			mShowByOptions3.setClickable(true);
-			mShowByOptions4.setClickable(true);
-			mShowByOptions5.setClickable(true);
+			mShowByOptionsWeekly.setVisibility(View.INVISIBLE);
+			mShowByOptionsMonthly.setVisibility(View.INVISIBLE);
+			mShowByOptionsYearly.setVisibility(View.INVISIBLE);
+			mShowByOptionsCustom.setVisibility(View.INVISIBLE);
+			mShowByOptionsToday.setClickable(true);
+			mShowByOptionsWeekly.setClickable(true);
+			mShowByOptionsMonthly.setClickable(true);
+			mShowByOptionsYearly.setClickable(true);
+			mShowByOptionsCustom.setClickable(true);
 			
 		}
 		
@@ -787,41 +797,45 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 	@Override
 	public void onClick(View v) {
 		switch(v.getId()){
-		case R.id.showByOptions1:
+		case R.id.showByOptionsToday:
 			setFabPositions();
-			if(mShowByOptions2.getVisibility() == View.INVISIBLE){
+			if(mShowByOptionsWeekly.getVisibility() == View.INVISIBLE){
 			    showFabOptions();
-			    mShowByOptionsMain.setText(mShowList[0]);
+			    mShowByOptionsToday.setText(mShowList[0]);
 			}else{
 				UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[0]);
 				hideFabOption();
-				mShowByOptionsMain.setText(mShowList[0]);
+				mShowByOptionsToday.setText(mShowList[0]);
 							}
             displayDataForApps();
             displayDataForMusic();
+            updateDetailFragment(null);
 			break;
-		case R.id.showByOptions2:
+		case R.id.showByOptionsWeekly:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[1]);
 			hideFabOption();
-			mShowByOptionsMain.setText(mShowList[1]);
-			             displayDataForApps();
+			mShowByOptionsToday.setText(mShowList[1]);
+			displayDataForApps();
             displayDataForMusic();
+            updateDetailFragment(null);
 			break;
-		case R.id.showByOptions3:
+		case R.id.showByOptionsMonthly:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[2]);
 			hideFabOption();
-			mShowByOptionsMain.setText(mShowList[2]);
+			mShowByOptionsToday.setText(mShowList[2]);
 			 			displayDataForApps();
             displayDataForMusic();
+            updateDetailFragment(null);
 			break;
-		case R.id.showByOptions4:
+		case R.id.showByOptionsYearly:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[3]);
 			hideFabOption();
-			mShowByOptionsMain.setText(mShowList[3]);
+			mShowByOptionsToday.setText(mShowList[3]);
 			            displayDataForApps();
             displayDataForMusic();
+            updateDetailFragment(null);
 			break;
-		case R.id.showByOptions5:
+		case R.id.showByOptionsCustom:
 			startDateFragment = new MonthViewFragment();
             startDateFragment.show(getFragmentManager(), "startMonthViewPicker");
 			hideFabOption();
@@ -839,25 +853,20 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         // Set in preference only after date from both pickers have been validated.
         UsageSharedPrefernceHelper.setShowByUsage(mContext,
                 mContext.getString(R.string.string_Custom));
-        mShowByOptionsMain.setText(mShowList[4]);
+        mShowByOptionsToday.setText(mShowList[4]);
             displayDataForApps();
             displayDataForMusic();
+            updateDetailFragment(null);
     }
     
     @Override
     public void onMusicItemClick(String pkg, int groupPosition,
     		int childPosition) {
-    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
+    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
         	hideFabOption();    	
     }
-
-    @Override
-    public void onUsageItemClick(String pkg, int position) {
-    	if(mShowByOptions2.getVisibility() == View.VISIBLE)
-    	hideFabOption();
-    	if(pkg.equals("totalTime")){
-    		return;
-    	}
+    
+    private void updateDetailFragment(String pkg) {
         // Check current preference first.
     	HashMap<Long,UsageInfo> infoMap = null;
         // Check whether custom and end day not today.
@@ -910,12 +919,19 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             Map.Entry<Long, UsageInfo> entry = iterator.next();
             linkedMap.put(entry.getKey(), entry.getValue());
         }
+        initDetailFragment(linkedMap, Utils.getApplicationLabelName(mContext, pkg));
+    }
+
+    @Override
+    public void onUsageItemClick(String pkg, int position) {
+    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
+    	hideFabOption();
+    	if(pkg.equals("totalTime")){
+    		return;
+    	}
+       
+        updateDetailFragment(pkg);
         
-        if (Utils.isTabletDevice(mContext)) {
-            mDetailFragment.updateDetailList(linkedMap);
-        } else {
-            initDetailFragment(linkedMap, Utils.getApplicationLabelName(mContext, pkg));
-		}
 		
 	}
 

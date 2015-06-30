@@ -10,7 +10,7 @@
           android:layout_width="match_parent"
           android:layout_height="match_parent" >
           <TextView
-              android:id="@+id/showByOptions1"
+              android:id="@+id/showByOptionsToday"
               android:layout_width="wrap_content"
               android:minWidth="@dimen/activity_show_by_textview_width"
               android:textSize="15dp"
@@ -18,11 +18,11 @@
               android:gravity="center"
               android:layout_height="wrap_content"
               android:textColor="@android:color/white"
-              android:background="@color/color_action_bar_background"
+              android:background="@drawable/holo_blue_ripple"
               android:layout_gravity="bottom|right" />
           
            <TextView
-              android:id="@+id/showByOptions2"
+              android:id="@+id/showByOptionsWeekly"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:minWidth="@dimen/activity_show_by_textview_width"
@@ -32,25 +32,25 @@
               android:gravity="center"
               android:text="@string/string_Weekly"
               android:textColor="@android:color/white"
-              android:background="@color/color_action_bar_background"
+              android:background="@drawable/holo_blue_ripple"
               android:layout_gravity="bottom|right" />
            
             <TextView
-              android:id="@+id/showByOptions3"
+              android:id="@+id/showByOptionsMonthly"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:minWidth="@dimen/activity_show_by_textview_width"
               android:visibility="invisible"
               android:textSize="15dp"
               android:gravity="center"
-              android:padding="3dp"
+              android:padding="5dp"
               android:text="@string/string_Monthly"
               android:textColor="@android:color/white"
-              android:background="@color/color_action_bar_background"
+              android:background="@drawable/holo_blue_ripple"
               android:layout_gravity="bottom|right" />
             
              <TextView
-              android:id="@+id/showByOptions4"
+              android:id="@+id/showByOptionsYearly"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:minWidth="@dimen/activity_show_by_textview_width"
@@ -60,11 +60,11 @@
               android:padding="5dp"
               android:text="@string/string_Yearly"
               android:textColor="@android:color/white"
-              android:background="@color/color_action_bar_background"
+              android:background="@drawable/holo_blue_ripple"
               android:layout_gravity="bottom|right" />
              
               <TextView
-              android:id="@+id/showByOptions5"
+              android:id="@+id/showByOptionsCustom"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:minWidth="@dimen/activity_show_by_textview_width"
@@ -74,7 +74,7 @@
               android:gravity="center"
               android:text="@string/string_Custom"
               android:textColor="@android:color/white"
-              android:background="@color/color_action_bar_background"
+              android:background="@drawable/holo_blue_ripple"
               android:layout_gravity="bottom|right" />
 
           </FrameLayout>

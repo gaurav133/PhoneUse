@@ -54,11 +54,12 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
     }
 
 
+
 	public ArrayList<ResolveInfo> getSelectedPackages() {
 		return mPackageList;
 	}
 	
-	
+
 
 	@Override
 	public int getCount() {
