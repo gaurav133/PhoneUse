@@ -1,6 +1,5 @@
 package com.asgj.android.appusage.activities;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.app.Fragment;
@@ -12,8 +11,10 @@ import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
+import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.ui.widgets.MusicListAdapter;
+import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
 public class UsageDetailListFragment extends Fragment {
 
@@ -45,12 +46,6 @@ public class UsageDetailListFragment extends Fragment {
 	public UsageDetailListFragment(HashMap<Long,UsageInfo> infoList) {
 		mInfoList = infoList;
 	}
-
-	public void updateDetailList(HashMap<Long,UsageInfo> infoList) {
-		mInfoList = infoList;
-		mAdapter = new MusicListAdapter(infoList, getActivity());
-	}
-
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
