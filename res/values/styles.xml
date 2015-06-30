@@ -34,7 +34,7 @@
         <item name="android:actionBarStyle">@style/mainActionBarBckgnd</item>
         <item name="android:actionOverflowButtonStyle">@style/MyActionButtonOverflow</item>
          <item name="android:actionMenuTextColor">@android:color/white</item>
-         <item name="android:homeAsUpIndicator">@android:drawable/ic_media_previous</item>
+         <item name="android:homeAsUpIndicator">@drawable/ic_action_back</item>
     </style>
 
     <style name="MyActionButtonOverflow" parent="android:style/Widget.Holo.ActionButton.Overflow">
