@@ -21,12 +21,12 @@ import com.asgj.android.appusage.Utility.Utils;
 
 public class MusicListAdapter implements ExpandableListAdapter {
 
-	private HashMap<String, ArrayList<UsageInfo>> mList = null;
+	private HashMap<String, ArrayList<UsageInfo>> mIntervalMap = null;
 	private Context mContext = null;
 	private ArrayList<String> mGroupList = null;
 	
 	private void prepareDataFromMap(HashMap<Long,UsageInfo> infoMap) {
-		mList = new HashMap<String, ArrayList<UsageInfo>>();
+		mIntervalMap = new HashMap<String, ArrayList<UsageInfo>>();
 		mGroupList = new ArrayList<String>();
 		
         if (infoMap != null && !infoMap.isEmpty()) {
@@ -34,11 +34,11 @@ public class MusicListAdapter implements ExpandableListAdapter {
                 String date = Utils.getDateForDisplay(info
                         .getmIntervalStartTime());
                 if (mGroupList.contains(date)) {
-                    mList.get(date).add(info);
+                    mIntervalMap.get(date).add(info);
                 } else {
                     ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
                     list.add(info);
-                    mList.put(date, list);
+                    mIntervalMap.put(date, list);
                     mGroupList.add(date);
                 }
             }
@@ -46,7 +46,7 @@ public class MusicListAdapter implements ExpandableListAdapter {
 	}
 
 	private void prepareDataFromList(ArrayList<UsageInfo> list) {
-		mList = new HashMap<String, ArrayList<UsageInfo>>();
+		mIntervalMap = new HashMap<String, ArrayList<UsageInfo>>();
 		mGroupList = new ArrayList<String>();
 		
         if (list != null && !list.isEmpty()) {
@@ -54,11 +54,11 @@ public class MusicListAdapter implements ExpandableListAdapter {
                 String date = Utils.getDateForDisplay(info
                         .getmIntervalStartTime());
                 if (mGroupList.contains(date)) {
-                    mList.get(date).add(info);
+                    mIntervalMap.get(date).add(info);
                 } else {
                     ArrayList<UsageInfo> infoList = new ArrayList<UsageInfo>();
                     infoList.add(info);
-                    mList.put(date, infoList);
+                    mIntervalMap.put(date, infoList);
                     mGroupList.add(date);
                 }
             }
@@ -106,10 +106,10 @@ public class MusicListAdapter implements ExpandableListAdapter {
 		ImageView image_view_app_icon = (ImageView) convertView
 				.findViewById(R.id.app_icon);
 
-		if (mList != null) {
+		if (mIntervalMap != null) {
 			image_view_app_icon.setVisibility(View.GONE);
 			text_middle.setVisibility(View.VISIBLE);
-			UsageInfo info = mList.get(mGroupList.get(groupPosition)).get(
+			UsageInfo info = mIntervalMap.get(mGroupList.get(groupPosition)).get(
 					childPosition);
 			text_left.setText(""
 					+ Utils.getTimeFromTimeStamp(mContext,
@@ -142,7 +142,7 @@ public class MusicListAdapter implements ExpandableListAdapter {
 
 	@Override
 	public int getChildrenCount(int groupPosition) {
-		return mList.get(mGroupList.get(groupPosition)).size();
+		return mIntervalMap.get(mGroupList.get(groupPosition)).size();
 	}
 
 	@Override
