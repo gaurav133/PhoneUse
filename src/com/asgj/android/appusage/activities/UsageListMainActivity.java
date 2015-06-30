@@ -64,7 +64,7 @@ import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
-public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity{
+public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity, Comparator<Map.Entry<Long, UsageInfo>>{
     private Context mContext;
     private MonthViewFragment startDateFragment;
     private Calendar cal1, cal2;
@@ -133,15 +133,17 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
         if(Utils.isTabletDevice(mContext)){
+            if (mContext.getResources().getConfiguration().equals(Configuration.ORIENTATION_LANDSCAPE)) {
+            View view =  findViewById(R.id.usage_tab_height_layout);
+            view.setBackgroundColor(getResources().getColor(R.color.color_action_bar_background));
+            final float scale = mContext.getResources().getDisplayMetrics().density;
+            int pixels = (int) (2*(SlidingTabLayout.TAB_VIEW_PADDING_DIPS + SlidingTabLayout.TAB_VIEW_TEXT_SIZE_SP) * scale + 1.0f);
+            LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) view.getLayoutParams();
+           layoutParams.height=pixels;
+           view.setLayoutParams(layoutParams);
+            }
         	initDetailFragment(null, "abc");
         }
-        View view =  findViewById(R.id.usage_tab_height_layout);
-        view.setBackgroundColor(getResources().getColor(R.color.color_action_bar_background));
-        final float scale = mContext.getResources().getDisplayMetrics().density;
-        int pixels = (int) (2*(SlidingTabLayout.TAB_VIEW_PADDING_DIPS + SlidingTabLayout.TAB_VIEW_TEXT_SIZE_SP) * scale + 1.0f);
-        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) view.getLayoutParams();
-       layoutParams.height=pixels;
-       view.setLayoutParams(layoutParams);
         mUsageListFragment.setOnUsageItemClickListener(this);
         mIsCreated = true;
 
@@ -240,9 +242,16 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	super.onAttachFragment(fragment);
     }
     
-    private void initDetailFragment(HashMap<Long,UsageInfo> intervalList, String applicationName) {
+    private void initDetailFragment(HashMap<Long,UsageInfo> intervalMap, String applicationName) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        mDetailFragment = new UsageDetailListFragment(intervalList);
+        
+        LinkedHashMap<Long, UsageInfo> linkedMap = null;
+        // First sort map by key (start duration).
+        if (intervalMap != null && !intervalMap.isEmpty()) {
+             linkedMap = sortMapByKey(intervalMap);
+        }
+        
+        mDetailFragment = new UsageDetailListFragment(linkedMap);
         mDetailFragment.setOnDetachListener(this);
         if (!Utils.isTabletDevice(mContext)) {
         	transaction.setCustomAnimations(R.anim.enter_from_right,
@@ -360,10 +369,18 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     public void displayDataForMusic() {
         mMusicList = new ArrayList<>();
 
+        Comparator<UsageInfo> startTimeSortComparator = new Comparator<UsageInfo>() {
+
+            @Override
+            public int compare(UsageInfo lhs, UsageInfo rhs) {
+                // TODO Auto-generated method stub
+                return (int) (rhs.getmIntervalStartTime() - lhs.getmIntervalStartTime());
+            }
+            
+        };
         switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
         case "Today":
             mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
-            mUsageListFragment.setmMusicData(mMusicList);
             break;
         case "Weekly":
         case "Monthly":
@@ -395,6 +412,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 mMusicList.addAll(mMainService.getCurrentDataForMusic());
             }
         }
+        Collections.sort(mMusicList, startTimeSortComparator);
         mUsageListFragment.setmMusicData(mMusicList);
     }
 
@@ -898,19 +916,19 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 break;
             }
         }
+        
+        LinkedHashMap<Long, UsageInfo> linkedMap = sortMapByKey(infoMap);
+        initDetailFragment(linkedMap, Utils.getApplicationLabelName(mContext, pkg));
+    }
+
+    private LinkedHashMap<Long, UsageInfo> sortMapByKey(HashMap<Long,UsageInfo> infoMap) {
 
         // Sort intervals before sending to detail fragment.
         LinkedList<Map.Entry<Long, UsageInfo>> list = new LinkedList<>();
         for (Map.Entry<Long, UsageInfo> entry : infoMap.entrySet()) {
             list.add(entry);
         }
-        Collections.sort(list, new Comparator<Map.Entry<Long, UsageInfo>>() {
-            @Override
-            public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
-                // TODO Auto-generated method stub
-                return (int) (lhs.getKey() - rhs.getKey());
-            }
-        });
+        Collections.sort(list, this);
         
         LinkedHashMap<Long, UsageInfo> linkedMap = new LinkedHashMap<>();
         ListIterator<Map.Entry<Long, UsageInfo>> iterator = list.listIterator();
@@ -919,9 +937,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             Map.Entry<Long, UsageInfo> entry = iterator.next();
             linkedMap.put(entry.getKey(), entry.getValue());
         }
-        initDetailFragment(linkedMap, Utils.getApplicationLabelName(mContext, pkg));
+        return linkedMap;
     }
-
     @Override
     public void onUsageItemClick(String pkg, int position) {
     	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
@@ -942,4 +959,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		}
 		
 	}
+
+    @Override
+    public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
+        // TODO Auto-generated method stub
+        return (int) (rhs.getKey() - lhs.getKey());
+    }
 }
