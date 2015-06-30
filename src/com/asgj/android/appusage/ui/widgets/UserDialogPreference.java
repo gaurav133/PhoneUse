@@ -58,7 +58,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     protected void showDialog(Bundle state) {
         // TODO Auto-generated method stub
     	
-    	if(mResolveInfo == null || mResolveInfo.size() == 0)
+    	if(mAdapter==null || mResolveInfo == null || mResolveInfo.size() == 0)
     		return;
         Set<String> mAlreadySelectedSet = null;
         int selectedCount = 0;
