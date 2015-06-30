@@ -133,15 +133,17 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
         if(Utils.isTabletDevice(mContext)){
+            if (mContext.getResources().getConfiguration().equals(Configuration.ORIENTATION_LANDSCAPE)) {
+            View view =  findViewById(R.id.usage_tab_height_layout);
+            view.setBackgroundColor(getResources().getColor(R.color.color_action_bar_background));
+            final float scale = mContext.getResources().getDisplayMetrics().density;
+            int pixels = (int) (2*(SlidingTabLayout.TAB_VIEW_PADDING_DIPS + SlidingTabLayout.TAB_VIEW_TEXT_SIZE_SP) * scale + 1.0f);
+            LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) view.getLayoutParams();
+           layoutParams.height=pixels;
+           view.setLayoutParams(layoutParams);
+            }
         	initDetailFragment(null, "abc");
         }
-        View view =  findViewById(R.id.usage_tab_height_layout);
-        view.setBackgroundColor(getResources().getColor(R.color.color_action_bar_background));
-        final float scale = mContext.getResources().getDisplayMetrics().density;
-        int pixels = (int) (2*(SlidingTabLayout.TAB_VIEW_PADDING_DIPS + SlidingTabLayout.TAB_VIEW_TEXT_SIZE_SP) * scale + 1.0f);
-        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) view.getLayoutParams();
-       layoutParams.height=pixels;
-       view.setLayoutParams(layoutParams);
         mUsageListFragment.setOnUsageItemClickListener(this);
         mIsCreated = true;
 
@@ -908,7 +910,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             @Override
             public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
                 // TODO Auto-generated method stub
-                return (int) (lhs.getKey() - rhs.getKey());
+                return (int) (rhs.getKey() - lhs.getKey());
             }
         });
         
