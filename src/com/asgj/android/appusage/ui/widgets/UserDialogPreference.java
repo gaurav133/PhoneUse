@@ -30,6 +30,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     private static final int NOTIFICATION_PREF = 1;
     private static final int PACKAGES_FILTER_PREF = 2;
     private int mCurrentPref = 0;
+    
 
 	private void initPackageList() {
 		mResolveInfo = new ArrayList<ResolveInfo>();
@@ -56,6 +57,9 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     @Override
     protected void showDialog(Bundle state) {
         // TODO Auto-generated method stub
+    	
+    	if(mAdapter==null || mResolveInfo == null || mResolveInfo.size() == 0)
+    		return;
         Set<String> mAlreadySelectedSet = null;
         int selectedCount = 0;
         if (mAdapter.getCurrentPref() == PreferenceListAdapter.NOTIFICATION_PREF) {
@@ -111,7 +115,14 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
             this.setTitle(R.string.string_filter_packages_pref_title);
             this.setSummary(R.string.string_filter_packages_dialog_title);
         }
-        initPackageList();
+        new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				  initPackageList();
+			}
+		}).start();
+      
         super.onAttachedToActivity();
     }
 
@@ -119,8 +130,6 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
 			throws Exception {
 		super(context, attrs);
 		mContext = context;
-		
-
 	}
 
 	@Override

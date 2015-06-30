@@ -53,15 +53,13 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
         this.mPackageList = list;
     }
 
-	
+
 
 	public ArrayList<ResolveInfo> getSelectedPackages() {
 		return mPackageList;
 	}
 	
-	protected boolean[] getCheckedArray() {
-	    return mIsChecked;
-	}
+
 
 	@Override
 	public int getCount() {
@@ -189,5 +187,10 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 		CheckBox checkbox;
 		SeekBar timeBar;
 		int position;
+	}
+
+	public boolean[] getCheckedArray() {
+		// TODO Auto-generated method stub
+		return mIsChecked;
 	}
 }
