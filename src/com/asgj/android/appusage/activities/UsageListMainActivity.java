@@ -817,17 +817,19 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		switch(v.getId()){
 		case R.id.showByOptionsToday:
 			setFabPositions();
-			if(mShowByOptionsWeekly.getVisibility() == View.INVISIBLE){
-			    showFabOptions();
-			    mShowByOptionsToday.setText(mShowList[0]);
-			}else{
+			if (mShowByOptionsWeekly.getVisibility() == View.INVISIBLE) {
+				showFabOptions();
+				mShowByOptionsToday.setText(mShowList[0]);
+			} else {
 				UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[0]);
 				hideFabOption();
 				mShowByOptionsToday.setText(mShowList[0]);
-							}
-            displayDataForApps();
-            displayDataForMusic();
-            updateDetailFragment(null);
+				displayDataForApps();
+				displayDataForMusic();
+				if(Utils.isTabletDevice(mContext))
+				updateDetailFragment(null);
+			}
+           
 			break;
 		case R.id.showByOptionsWeekly:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[1]);
@@ -835,6 +837,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 			mShowByOptionsToday.setText(mShowList[1]);
 			displayDataForApps();
             displayDataForMusic();
+            if(Utils.isTabletDevice(mContext))
             updateDetailFragment(null);
 			break;
 		case R.id.showByOptionsMonthly:
@@ -843,6 +846,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 			mShowByOptionsToday.setText(mShowList[2]);
 			 			displayDataForApps();
             displayDataForMusic();
+            if(Utils.isTabletDevice(mContext))
             updateDetailFragment(null);
 			break;
 		case R.id.showByOptionsYearly:
@@ -851,6 +855,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 			mShowByOptionsToday.setText(mShowList[3]);
 			            displayDataForApps();
             displayDataForMusic();
+            if(Utils.isTabletDevice(mContext))
             updateDetailFragment(null);
 			break;
 		case R.id.showByOptionsCustom:
@@ -874,6 +879,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         mShowByOptionsToday.setText(mShowList[4]);
             displayDataForApps();
             displayDataForMusic();
+            if(Utils.isTabletDevice(mContext))
             updateDetailFragment(null);
     }
     
