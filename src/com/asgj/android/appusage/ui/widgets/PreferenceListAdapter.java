@@ -53,14 +53,14 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
         this.mPackageList = list;
     }
 
-	}
+	
 
 	public ArrayList<ResolveInfo> getSelectedPackages() {
 		return mPackageList;
 	}
 	
-	public ArrayList<String> getUnSelectedPackages(){
-		return unSelectedList;
+	protected boolean[] getCheckedArray() {
+	    return mIsChecked;
 	}
 
 	@Override

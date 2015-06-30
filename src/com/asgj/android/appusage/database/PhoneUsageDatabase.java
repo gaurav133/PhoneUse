@@ -140,7 +140,7 @@ public class PhoneUsageDatabase {
                 info.setmIntervalStartTime(cursor.getLong(startIntervalIndex));
                 info.setmIntervalEndTime(cursor.getLong(endIntervalIndex));
                 info.setmIntervalDuration(cursor.getLong(durationIndex));
-                map.put(info.getmIntervalDuration(), info);
+                map.put(info.getmIntervalStartTime(), info);
                 //mInfoList.add(info);
                 Log.v(LOG_TAG, "This loop  cursor iteration took : " + Utils.getTimeInSecFromNano(System.nanoTime() - startTime) + " ms.");
             } while (cursor.moveToNext());

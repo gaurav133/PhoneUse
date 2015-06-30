@@ -187,7 +187,6 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
         case android.R.id.button3:
 
             if (mAdapter != null && mAdapter.getSelectedPackages().size() != 0) {
-                Log.v("gaurav", "Selected size: " + mAdapter.getSelectedPackages().size());
 
                 mIsChecked = new boolean[mAdapter.getSelectedPackages().size()];
                 Arrays.fill(mIsChecked, false);

@@ -1,8 +1,6 @@
 package com.asgj.android.appusage.ui.widgets;
 
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 
 import android.content.Context;
@@ -27,48 +25,54 @@ public class MusicListAdapter implements ExpandableListAdapter {
 	private Context mContext = null;
 	private ArrayList<String> mGroupList = null;
 	
-	private void prepareData(HashMap<Long,UsageInfo> infoList) {
+	private void prepareDataFromMap(HashMap<Long,UsageInfo> infoMap) {
 		mList = new HashMap<String, ArrayList<UsageInfo>>();
 		mGroupList = new ArrayList<String>();
-		for (UsageInfo info : infoList.values()) {
-			String date = Utils.getDateForDisplay(info
-					.getmIntervalStartTime());
-			if (mGroupList.contains(date)) {
-				mList.get(date).add(info);
-			} else {
-				ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
-				list.add(info);
-				mList.put(date, list);
-				mGroupList.add(date);
-			}
-		}
+		
+        if (infoMap != null && !infoMap.isEmpty()) {
+            for (UsageInfo info : infoMap.values()) {
+                String date = Utils.getDateForDisplay(info
+                        .getmIntervalStartTime());
+                if (mGroupList.contains(date)) {
+                    mList.get(date).add(info);
+                } else {
+                    ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
+                    list.add(info);
+                    mList.put(date, list);
+                    mGroupList.add(date);
+                }
+            }
+        }
 	}
 
-	private void prepareData(ArrayList<UsageInfo> list) {
+	private void prepareDataFromList(ArrayList<UsageInfo> list) {
 		mList = new HashMap<String, ArrayList<UsageInfo>>();
 		mGroupList = new ArrayList<String>();
-		for (UsageInfo info : list) {
-		    String date = Utils.getDateForDisplay(info
-					.getmIntervalStartTime());
-			if (mGroupList.contains(date)) {
-				mList.get(date).add(info);
-			} else {
-				ArrayList<UsageInfo> infoList = new ArrayList<UsageInfo>();
-				infoList.add(info);
-				mList.put(date, infoList);
-				mGroupList.add(date);
-			}
-		}
+		
+        if (list != null && !list.isEmpty()) {
+            for (UsageInfo info : list) {
+                String date = Utils.getDateForDisplay(info
+                        .getmIntervalStartTime());
+                if (mGroupList.contains(date)) {
+                    mList.get(date).add(info);
+                } else {
+                    ArrayList<UsageInfo> infoList = new ArrayList<UsageInfo>();
+                    infoList.add(info);
+                    mList.put(date, infoList);
+                    mGroupList.add(date);
+                }
+            }
+        }
 	}
 
 	public MusicListAdapter(ArrayList<UsageInfo> list, Context context) {
 		mContext = context;
-		prepareData(list);
+		prepareDataFromList(list);
 	}
 	
-	public MusicListAdapter(HashMap<Long,UsageInfo> list, Context context) {
+	public MusicListAdapter(HashMap<Long,UsageInfo> map, Context context) {
 		mContext = context;
-		prepareData(list);
+		prepareDataFromMap(map);
 	}
 
 	@Override
