@@ -5,6 +5,8 @@ import java.util.HashMap;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
@@ -13,6 +15,7 @@ import android.widget.LinearLayout.LayoutParams;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.ui.widgets.MusicListAdapter;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
@@ -42,6 +45,19 @@ public class UsageDetailListFragment extends Fragment {
 		super.onDetach();
 	}
 	
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+	    // TODO Auto-generated method stub
+	    super.onCreateOptionsMenu(menu, inflater);
+	    
+	    if (!Utils.isTabletDevice(getActivity())) {
+	        if (menu != null) {
+	            menu.findItem(R.id.action_start).setVisible(false);
+	            menu.findItem(R.id.action_settings).setVisible(false);
+	            menu.findItem(R.id.action_showBy).setVisible(false);
+	        }
+	    }
+	}
 
 	public UsageDetailListFragment(HashMap<Long,UsageInfo> infoList) {
 		mInfoList = infoList;
@@ -62,6 +78,8 @@ public class UsageDetailListFragment extends Fragment {
 		list.setDividerHeight(0);
 		list.setGroupIndicator(null);
 		parentLayout.addView(list);
+		
+		setHasOptionsMenu(true);
 		return parentLayout;
 	}
 
