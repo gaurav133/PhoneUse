@@ -1,11 +1,14 @@
 package com.asgj.android.appusage.receivers;
 
+import java.util.Calendar;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.service.UsageTrackingService;
 
 public class DeviceRebootReceiver extends BroadcastReceiver {
@@ -28,6 +31,15 @@ public class DeviceRebootReceiver extends BroadcastReceiver {
 		//else case is for reboot
 		else {
 			if (UsageSharedPrefernceHelper.isNeedToServiceOnReboot(context)) {
+			    
+			    // Clear preference if necessary.
+			    Calendar datePref = Calendar.getInstance();
+			    datePref.setTimeInMillis(UsageSharedPrefernceHelper.getDateStoredInPref(context));
+			    
+			    if (Utils.compareDates(Calendar.getInstance(), datePref) == 1) {
+			        // Day has changed while phone was shut down, so clear preferences.
+			        UsageSharedPrefernceHelper.clearPreference(context);
+			    }
 				Intent startServiceIntent = new Intent();
 				startServiceIntent
 						.setClass(context, UsageTrackingService.class);
