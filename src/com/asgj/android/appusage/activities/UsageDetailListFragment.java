@@ -53,7 +53,7 @@ public class UsageDetailListFragment extends Fragment {
 	    if (!Utils.isTabletDevice(getActivity())) {
 	        if (menu != null) {
 	            menu.findItem(R.id.action_start).setVisible(false);
-	            menu.findItem(R.id.action_settings).setVisible(false);
+	            menu.findItem(R.id.action_setting).setVisible(false);
 	            menu.findItem(R.id.action_showBy).setVisible(false);
 	        }
 	    }
