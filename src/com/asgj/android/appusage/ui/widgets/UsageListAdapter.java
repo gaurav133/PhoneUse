@@ -165,9 +165,6 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 			x_touchDown = event.getX();
 			break;
 		case MotionEvent.ACTION_MOVE:
-			float x_touchMove = event.getX() + v.getTranslationX();
-			v.setTranslationX((x_touchMove - x_touchDown));
-			// v.setAlpha(0.5f);
 			break;
 		case MotionEvent.ACTION_CANCEL:
 		case MotionEvent.ACTION_UP:
