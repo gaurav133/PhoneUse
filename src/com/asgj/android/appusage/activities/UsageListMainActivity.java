@@ -971,4 +971,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         // TODO Auto-generated method stub
         return (int) (rhs.getKey() - lhs.getKey());
     }
+	@Override
+	public void onUsageItemSwiped(String pkg, int position) {
+		Intent intent = new Intent(Intent.ACTION_SEND);
+    	intent.setType("text/plain");
+    	intent.putExtra(Intent.EXTRA_TEXT, "I used "+ Utils.getApplicationLabelName(mContext, pkg) + "for duration :"+
+    	Utils.getTimeFromSeconds(mDataMap.get(pkg).longValue())+ "\n" + "Sent from PhoneUse App");
+    	startActivity(Intent.createChooser(intent, "Share with"));
+		
+	}
 }

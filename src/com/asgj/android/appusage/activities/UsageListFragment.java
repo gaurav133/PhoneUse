@@ -34,13 +34,10 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.graphics.Color;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -49,7 +46,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
@@ -65,6 +61,7 @@ import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.ui.widgets.MusicListAdapter;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
+import com.asgj.android.appusage.ui.widgets.UsageListAdapter.OnItemTouchListener;
 
 /**
  * A basic sample which shows how to use
@@ -114,6 +111,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	
 	public interface OnUsageItemClickListener {
 		public void onUsageItemClick(String pkg,int position);
+		public void onUsageItemSwiped(String pkg,int position);
 		public void onMusicItemClick(String pkg,int groupPosition,int childPosition);
 	}
 
@@ -281,6 +279,13 @@ public class UsageListFragment<AppData, MusicData> extends
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // TODO Auto-generated method stub
 	    switch (item.getItemId()) {
+	    case R.id.menu_share_via:
+	    	Intent intent = new Intent(Intent.ACTION_SEND);
+	    	intent.setType("text/plain");
+	    	intent.putExtra(Intent.EXTRA_TEXT, "Shared from PhoneUse App "
+	    			+ "https://play.google.com/store/apps/details?id=com.macropinch.swan&hl=en");
+	    	startActivity(Intent.createChooser(intent, "Share with"));
+	    	break;
 		case R.id.filter_menu:
 			if (UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
 				UsageSharedPrefernceHelper.setFilterMode(getActivity(), false);
@@ -403,7 +408,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	 * {@link #getPageTitle(int)} method which controls what is displayed in the
 	 * {@link SlidingTabLayout}.
 	 */
-	class SamplePagerAdapter extends PagerAdapter implements OnItemClickListener , OnChildClickListener{
+	class SamplePagerAdapter extends PagerAdapter implements OnItemTouchListener , OnChildClickListener{
 
 		String[] mList = new String[] { "Apps", "Media" };
 
@@ -470,6 +475,7 @@ public class UsageListFragment<AppData, MusicData> extends
 				musicListView.setVisibility(View.GONE);
 			    textViewNoData.setVisibility(View.GONE);
                 textViewNoDataStartTracking.setVisibility(View.GONE);
+                mAppDataListAdapter.setOnItemTouchListener(this);
 				title.setAdapter(mAppDataListAdapter);
 				mAppDataListAdapter.notifyDataSetChanged();
 			    if (mAppDataListAdapter.isEmpty()) {
@@ -539,7 +545,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			}
 
 			title.setTag(position);
-			title.setOnItemClickListener(this);
+			
 			musicListView.setOnChildClickListener(this);
 			musicListView.setTag(position);
 			Log.i(LOG_TAG, "instantiateItem() [position: " + position + "]");
@@ -557,9 +563,10 @@ public class UsageListFragment<AppData, MusicData> extends
 			container.removeView((View) object);
 			Log.i(LOG_TAG, "destroyItem() [position: " + position + "]");
 		}
+	
+		
 		@Override
-		public void onItemClick(AdapterView<?> parentView, View v, int position,
-				long id) {
+		public void onItemClicked(int position) {
 			if(mItemClickListener != null){
 				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}
@@ -572,6 +579,13 @@ public class UsageListFragment<AppData, MusicData> extends
 				mItemClickListener.onMusicItemClick("a", groupPosition, childPosition);
 			}
 			return false;
+		}
+		@Override
+		public void onItemSwiped(int position) {
+			if(mItemClickListener != null){
+				mItemClickListener.onUsageItemSwiped(mAppDataListAdapter.getPackageNameKeys().get(position), position);
+			}
+			
 		}
 
 	}

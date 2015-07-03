@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.phoneuse.MainActivity" >
     
+     <item android:id="@+id/menu_share_via"
+           android:title="@string/string_share"
+           android:showAsAction="always"/>
      <item android:id="@+id/filter_menu"
            android:title="@string/string_all"
            android:showAsAction="ifRoom"/>

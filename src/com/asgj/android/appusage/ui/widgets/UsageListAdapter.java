@@ -6,6 +6,7 @@ import java.util.HashMap;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -18,7 +19,8 @@ import com.asgj.android.appusage.Utility.HttpImageLoader;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.Utils;
 
-public class UsageListAdapter<Data> extends BaseAdapter {
+public class UsageListAdapter<Data> extends BaseAdapter implements
+		View.OnTouchListener {
 
     private static final String LOG_TAG = UsageListAdapter.class.getSimpleName();
     public static final String mTotalTimeKey = "totalTime";
@@ -30,7 +32,21 @@ public class UsageListAdapter<Data> extends BaseAdapter {
     ArrayList<String> mKeys;
     HttpImageLoader mImageLoader = null;
     Typeface mNormalTypeface, mBoldTypeface;
+	private static final int MININUM_DISTANCE_FOR_SWIPE = 50;
+	private static final int MAX_DISTANCE_FOR_CLICK = 0;
+	OnItemTouchListener mTouchListener = null;
+	private static final int SWIPE_DURATION = 400;
+	float x_touchDown = 0;
+	
+	public interface OnItemTouchListener {
+		public void onItemSwiped(int position);
 
+		public void onItemClicked(int position);
+	}
+
+	public void setOnItemTouchListener(OnItemTouchListener listener) {
+		mTouchListener = listener;
+	}
     @SuppressWarnings("unchecked")
     public UsageListAdapter(Context context, Data data) throws Exception {
         mContext = context;
@@ -98,12 +114,16 @@ public class UsageListAdapter<Data> extends BaseAdapter {
             holder.text_right = (TextView) convertView.findViewById(R.id.text3);
             holder.text_middle = (TextView) convertView.findViewById(R.id.text2);
             holder.parent = (RelativeLayout) convertView.findViewById(R.id.parentLayout);
+			holder.parent = (RelativeLayout) convertView
+					.findViewById(R.id.parentLayout);
+
+			holder.parent.setOnTouchListener(this);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-
-        
+		holder.position = position;
+		holder.parent.setTag(holder);
         if (mMap != null) {
             holder.text_dash.setVisibility(View.GONE);
             if (position == 0) {
@@ -136,10 +156,69 @@ public class UsageListAdapter<Data> extends BaseAdapter {
         }
         return convertView;
     }
-    
-    private class ViewHolder {
-        TextView text_left, text_right, text_middle, text_dash;
-        ImageView image_view_app_icon;
-        RelativeLayout parent;
-    }
+	
+
+	@Override
+	public boolean onTouch(final View v, MotionEvent event) {
+		switch (event.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			x_touchDown = event.getX();
+			break;
+		case MotionEvent.ACTION_MOVE:
+			float x_touchMove = event.getX() + v.getTranslationX();
+			v.setTranslationX((x_touchMove - x_touchDown));
+			// v.setAlpha(0.5f);
+			break;
+		case MotionEvent.ACTION_CANCEL:
+		case MotionEvent.ACTION_UP:
+			if (x_touchDown != 0) {
+				float x_touchUp = event.getX();
+				final ViewHolder holder = (ViewHolder) v.getTag();
+
+				if ((x_touchUp - x_touchDown) > MININUM_DISTANCE_FOR_SWIPE) {
+					if (mTouchListener != null) {
+						if (event.getAction() == MotionEvent.ACTION_CANCEL) {
+							float x = event.getX() + v.getTranslationX();
+							float deltaX = x - x_touchDown;
+							float deltaXAbs = Math.abs(deltaX);
+							float fractionCovered = 0;
+							float endX = 0;
+							float endAlpha = 0;
+							fractionCovered = deltaXAbs / v.getWidth();
+							endX = deltaX < 0 ? -v.getWidth() : v.getWidth();
+							endAlpha = 0;
+							long duration = (int) ((1 - fractionCovered) * SWIPE_DURATION);
+							v.animate().setDuration(duration).alpha(endAlpha)
+									.translationX(endX)
+									.withEndAction(new Runnable() {
+										@Override
+										public void run() {
+											 v.setAlpha(1);
+											v.setTranslationX(0);
+											mTouchListener.onItemSwiped(holder.position);
+										}
+									});
+						}else{
+							v.setAlpha(1);
+							v.setTranslationX(0);
+						}
+
+					}
+				} else if ((x_touchUp - x_touchDown) == MAX_DISTANCE_FOR_CLICK) {
+					v.setAlpha(1);
+					v.setTranslationX(0);
+					mTouchListener.onItemClicked(holder.position);
+				}
+			}
+			break;
+		}
+		return true;
+	}
+
+	private class ViewHolder {
+		TextView text_left, text_right, text_middle, text_dash;
+		ImageView image_view_app_icon;
+		RelativeLayout parent;
+		int position;
+	}
 }
