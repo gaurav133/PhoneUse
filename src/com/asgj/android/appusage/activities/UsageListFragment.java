@@ -255,11 +255,10 @@ public class UsageListFragment<AppData, MusicData> extends
             switch (mViewPager.getCurrentItem()) {
             case 0:
                 if (mAppDataListAdapter != null) {
+                	menuItemFilter.setVisible(true);
                     if (mAppDataListAdapter.isEmpty()) {
-                        menuItemFilter.setVisible(false);
                         menuItemSortBy.setVisible(false);
                     } else {
-                        menuItemFilter.setVisible(true);
                         menuItemSortBy.setVisible(true);
                     }
                 }
