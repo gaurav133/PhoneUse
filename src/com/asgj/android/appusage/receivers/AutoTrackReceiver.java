@@ -23,30 +23,25 @@ public class AutoTrackReceiver extends BroadcastReceiver {
         // Start service if not running at 2 AM.
         if (intent.getBooleanExtra("startService", false) == true) {
             if (!UsageSharedPrefernceHelper.isServiceRunning(context)) {
-                // Calendar calendar = Calendar.getInstance();
                 Log.v("gaurav", "Start service");
-                //WakeLocker.acquire(context);
                 Intent startServiceIntent = new Intent();
                 startServiceIntent
                         .setClass(context, UsageTrackingService.class);
                 startServiceIntent.setComponent(new ComponentName(context,
                         UsageTrackingService.class));
                 context.startService(startServiceIntent);
-                //WakeLocker.release();
             }
         }
 
         if (intent.getBooleanExtra("stopService", false) == true) {
             if (UsageSharedPrefernceHelper.isServiceRunning(context)) {
                 Log.v("gaurav", "Stop service");
-                //WakeLocker.acquire(context);
                 Intent startServiceIntent = new Intent();
                 startServiceIntent
                         .setClass(context, UsageTrackingService.class);
                 startServiceIntent.setComponent(new ComponentName(context,
                         UsageTrackingService.class));
                 context.stopService(startServiceIntent);
-                //WakeLocker.release();
             }
         }
     }

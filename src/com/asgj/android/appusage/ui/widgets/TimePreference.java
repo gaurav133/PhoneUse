@@ -46,35 +46,17 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
         return (Integer.parseInt(pieces[1]));
     }
 
-    @Override
-    protected View onCreateView(ViewGroup parent) {
-        // TODO Auto-generated method stub
-        Log.v ("gaurav", "Created");
-        return super.onCreateView(parent);
-        
-    }
-    
-    @Override
-    protected void onAttachedToHierarchy(PreferenceManager preferenceManager) {
-        // TODO Auto-generated method stub
-        super.onAttachedToHierarchy(preferenceManager);
-        mIsClicked = false;
-        Log.v ("gaurav", "onAtachedToHierarchy");
-    }
-
     public TimePreference(Context ctxt, AttributeSet attrs) {
         super(ctxt, attrs);
 
         is24HourFormat = DateFormat.is24HourFormat(ctxt);
         setPositiveButtonText("Set");
         setNegativeButtonText("Cancel");
-        Log.v ("gaurav","Open time preference");
     }
 
     @Override
     protected View onCreateDialogView() {
         picker = new TimePicker(getContext());
-
         return (picker);
     }
 
@@ -92,10 +74,6 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
 
         if (positiveResult) {
 
-            /*
-             * Preference preference = findPreferenceInHierarchy(key)
-             * SharedPreferences prefs = getContext().
-             */
             lastHour = picker.getCurrentHour();
             lastMinute = picker.getCurrentMinute();
 
@@ -166,7 +144,6 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
     protected void onBindView(View view) {
         // TODO Auto-generated method stub
         super.onBindView(view);
-        Log.v ("gaurav", "onBindView call");
         View widgetLayout;
         int childCounter = 0;
         do {
@@ -272,15 +249,4 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
         mIsClicked = true;
         return false;
     }
-
-    /*
-     * if (restoreValue) { if (defaultValue==null) {
-     * time=getPersistedString("00:00"); } else {
-     * time=getPersistedString(defaultValue.toString()); } } else {
-     * time=defaultValue.toString(); }
-     * 
-     * lastHour=getHour(time); lastMinute=getMinute(time);
-     */
-
 }
-// }
