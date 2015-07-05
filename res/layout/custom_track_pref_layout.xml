@@ -47,41 +47,4 @@
             android:textColor="?android:attr/textColorSecondary" />
     </LinearLayout>
 
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp" >
-
-        <TextView
-            android:id="@+id/timeSelectedStart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_gravity="left"
-            android:focusable="false"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/timeSelectedEnd"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_gravity="right"
-            android:focusable="false"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:visibility="gone" />
-    </RelativeLayout>
-
-    <com.asgj.android.appusage.ui.widgets.RangeSeekBar
-        android:id="@+id/timeRangeView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="start"
-        android:focusable="false"
-        android:padding="16dp"
-        android:text="@string/action_settings"
-        android:visibility="gone" />
-
 </LinearLayout>
