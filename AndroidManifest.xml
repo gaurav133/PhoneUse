@@ -33,7 +33,7 @@
         <activity
             android:name="com.asgj.android.appusage.activities.SettingActivity"
             android:label="@string/string_settings"
-			android:configChanges="layoutDirection|screenSize"
+			android:configChanges="layoutDirection|screenSize|orientation">
             android:theme="@style/mainActionBarStyle" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -70,6 +70,12 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-            
+        <receiver
+            android:name="com.asgj.android.appusage.receivers.AutoTrackReceiver"
+            android:enabled="true" >
+            <intent-filter>
+                <action android:name="com.asgj.android.appusage.action.AUTO_TRACK" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -20,6 +20,15 @@
     <string name="string_Custom">Custom</string>
     <string name="string_start_date">Start Date</string>
     <string name="string_end_date">End Date</string>
+    <string name="string_start_time">Start Time</string>
+    <string name="string_stop_time">End Time</string>
+    <string name="string_time_settings">Time Settings</string>
+    <string name="string_other_settings">Other Settings</string>
+    <string name="string_enabled">Enabled</string>
+    <string name="string_auto_track">Auto Track</string>
+    <string name="string_when_to_start_tracking">When to start tracking.</string>
+    <string name="string_when_to_stop_tracking">When to stop tracking.</string>
+    <string name="string_turn_on_off_auto_track_mode">Turn On/Off Auto-Track mode to reduce battery consumption. Tracking will only be done between selected intervals.</string>
     <string name="string_error_end_date_greater_than_today">End date cannot be greater than Today date.</string>
     <string name="string_error_start_date_greater_than_today">Start date cannot be greater than Today date.</string>
     <string name="string_error_end_date_lesser_than_start">End date cannot be lesser than Start date.</string>
