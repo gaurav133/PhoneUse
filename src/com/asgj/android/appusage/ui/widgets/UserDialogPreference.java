@@ -84,10 +84,11 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     	mAdapter = new PreferenceListAdapter(mResolveInfo, mContext,mCurrentPref);
     }
 
-    @Override
-    protected void onAttachedToActivity() {
-
-        if (this.getKey().equals("user_packges_pref")) {
+	public UserDialogPreference(Context context, AttributeSet attrs)
+			throws Exception {
+		super(context, attrs);
+		mContext = context;
+		if (this.getKey().equals("user_packges_pref")) {
             mCurrentPref = NOTIFICATION_PREF;
             this.setTitle(R.string.string_select_packages_pref_title);
             this.setSummary(R.string.string_select_packages_dialog_title);
@@ -96,20 +97,6 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
             this.setTitle(R.string.string_filter_packages_pref_title);
             this.setSummary(R.string.string_filter_packages_dialog_title);
         }
-      
-        super.onAttachedToActivity();
-    }
-
-	public UserDialogPreference(Context context, AttributeSet attrs)
-			throws Exception {
-		super(context, attrs);
-		mContext = context;
-	}
-
-	@Override
-	protected void onBindView(View view) {
-
-		super.onBindView(view);
 	}
 
     @Override
