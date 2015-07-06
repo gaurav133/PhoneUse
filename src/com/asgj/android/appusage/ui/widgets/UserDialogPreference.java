@@ -30,29 +30,6 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     private static final int NOTIFICATION_PREF = 1;
     private static final int PACKAGES_FILTER_PREF = 2;
     private int mCurrentPref = 0;
-    
-
-	private void initPackageList() {
-		mResolveInfo = new ArrayList<ResolveInfo>();
-
-		PackageManager packageManager = mContext.getPackageManager();
-		Intent launcherIntent = new Intent(Intent.ACTION_MAIN, null);
-		launcherIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-		ArrayList<android.content.pm.ResolveInfo> mAppInfo = new ArrayList<>();
-		mAppInfo = (ArrayList<android.content.pm.ResolveInfo>) packageManager
-				.queryIntentActivities(launcherIntent, 0);
-
-		for (android.content.pm.ResolveInfo info : mAppInfo) {
-			ResolveInfo infoItem = new ResolveInfo();
-			infoItem.setmApplicationName(info.loadLabel(packageManager)
-					.toString());
-			infoItem.setmPackageName(info.activityInfo.packageName);
-			mResolveInfo.add(infoItem);
-		}
-
-		mAdapter = new PreferenceListAdapter(mResolveInfo, mContext,mCurrentPref);
-	}
 
     @Override
     protected void showDialog(Bundle state) {
@@ -102,6 +79,10 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
         negativeBtn.setOnClickListener(this);
         uncheckAllBtn.setOnClickListener(this);
     }
+    public void setPackageList(ArrayList<ResolveInfo> pkgList){
+    	mResolveInfo = pkgList;
+    	mAdapter = new PreferenceListAdapter(mResolveInfo, mContext,mCurrentPref);
+    }
 
     @Override
     protected void onAttachedToActivity() {
@@ -115,13 +96,6 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
             this.setTitle(R.string.string_filter_packages_pref_title);
             this.setSummary(R.string.string_filter_packages_dialog_title);
         }
-        new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				  initPackageList();
-			}
-		}).start();
       
         super.onAttachedToActivity();
     }
