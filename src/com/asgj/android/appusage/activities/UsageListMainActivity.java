@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -54,6 +55,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.Utility.ResolveInfo;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
@@ -63,6 +65,7 @@ import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
+import com.asgj.android.appusage.ui.widgets.PreferenceListAdapter;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity, Comparator<Map.Entry<Long, UsageInfo>>{
@@ -100,6 +103,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private int mFabMarginsRight = 50;
     private int mFabMarginsBottom = 20;
     HashMap<String, UsageStats> mCurrentMap;
+    ArrayList<ResolveInfo> mResolveInfo = null;
 
     private void setFabPositions() {
         if (isFabPositionSet) {
@@ -293,6 +297,15 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         this.cal2 = Calendar.getInstance();
         long endTime = UsageSharedPrefernceHelper.getCalendar(mContext, "endCalendar");
         cal2.setTimeInMillis(endTime);
+        
+        new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				initPackageList();
+				
+			}
+		}).start();
     }
     
     public float getListItemHeight() {
@@ -470,6 +483,29 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         Collections.sort(mMusicList, startTimeSortComparator);
         mUsageListFragment.setmMusicData(mMusicList);
     }
+    private void initPackageList() {
+    	mResolveInfo = new ArrayList<ResolveInfo>();
+
+		PackageManager packageManager = mContext.getPackageManager();
+		Intent launcherIntent = new Intent(Intent.ACTION_MAIN, null);
+		launcherIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+		ArrayList<android.content.pm.ResolveInfo> mAppInfo = new ArrayList<>();
+		mAppInfo = (ArrayList<android.content.pm.ResolveInfo>) packageManager
+				.queryIntentActivities(launcherIntent, 0);
+
+		for (android.content.pm.ResolveInfo info : mAppInfo) {
+			ResolveInfo infoItem = new ResolveInfo();
+			infoItem.setmApplicationName(info.loadLabel(packageManager)
+					.toString());
+			infoItem.setmPackageName(info.activityInfo.packageName);
+			mResolveInfo.add(infoItem);
+		}
+
+		
+	}
+
+    
 
     /**
      * onResume method to dynamically show data as tracking progresses.
@@ -480,7 +516,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         super.onResume();
 
         Log.v(LOG_TAG, "mainService onResume is: " + mMainService);
-
         // IF service not running, show data from xml.
         if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
            
@@ -564,6 +599,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             unbindService(mConnection);
             mConnection = null;
         }
+        
+        mResolveInfo = null;
         
         UsageSharedPrefernceHelper.setCalendar(mContext, cal1.getTimeInMillis(), "startCalendar");
         UsageSharedPrefernceHelper.setCalendar(mContext, cal2.getTimeInMillis(), "endCalendar");
@@ -769,7 +806,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             dialog.show();
             break;
         case R.id.action_setting:
+        	if(mResolveInfo == null || mResolveInfo.size() == 0){
+        		break;
+        	}
         	Intent intent = new Intent(this, SettingActivity.class);
+        	intent.putParcelableArrayListExtra("packageList", mResolveInfo);
         	startActivity(intent);
         	break;
         }
