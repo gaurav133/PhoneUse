@@ -37,13 +37,11 @@ import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -65,7 +63,6 @@ import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
-import com.asgj.android.appusage.ui.widgets.PreferenceListAdapter;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity, Comparator<Map.Entry<Long, UsageInfo>>{
@@ -75,13 +72,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
     private long mTimeStamp;
-    private Handler mHandler;
     private HashMap<String, Long> mDataMap;
     private ArrayList<UsageInfo> mMusicList;
     private List<UsageStats> mQueryUsageStats;
-    private boolean mIsCreated = false;
     private boolean mIsBound = false;
     private LocalBinder mBinder;
+    private boolean mIsCreated = true;
     private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
     private UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>> mUsageListFragment;
@@ -416,12 +412,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             mBinder = (LocalBinder) service;
             mIsBound = true;
 
-/*            if (mIsCreated) {
+            if (mIsCreated) {
                 
-                displayDataForApps();
-                 
-                displayDataForMusic();
-            }*/
+                loadDataTask task = new loadDataTask(mContext);
+                task.execute();
+                
+                mIsCreated = false;
+            }
             Log.v(LOG_TAG, "Service connected, mMainService is: " + mMainService);
         }
     };
