@@ -160,13 +160,28 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
             timeDisplay.setEnabled(false);
             if (mIsClicked) {
                 Log.v("gaurav", "Flag not null, stop alarm");
-                if (mStartPendingIntent != null) {
+                
+                    mStartTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
+                    mStartTimeIntent.putExtra("startService", true);
+                    mStartPendingIntent = PendingIntent.getBroadcast(getContext(), 0, mStartTimeIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
                     mStartPendingIntent.cancel();
-                }
+                    if (mStartAlarmManager == null) {
+                        mStartAlarmManager = (AlarmManager) getContext().getSystemService(Service.ALARM_SERVICE);
+                    }
+                    mStartAlarmManager.cancel(mStartPendingIntent);
+             
 
-                if (mStopPendingIntent != null) {
+
+                    mStopTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
+                    mStopTimeIntent.putExtra("stopService", true);
+                    mStopPendingIntent = PendingIntent.getBroadcast(getContext(), 1, mStopTimeIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
                     mStopPendingIntent.cancel();
-                }
+                    if (mStopAlarmManager == null) {
+                        mStopAlarmManager = (AlarmManager) getContext().getSystemService(Service.ALARM_SERVICE);
+                    }
+                    mStopAlarmManager.cancel(mStopPendingIntent);
 
                  UsageSharedPrefernceHelper.setTrackingMode(getContext(), false);
             }

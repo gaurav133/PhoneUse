@@ -35,6 +35,7 @@
     <string name="string_select_packages_dialog_title">Please select packages that you want to track.</string>
     <string name="string_filter_packages_dialog_title">Please select packages that you want to see on List.</string>
     <string name="string_filter_menu_enable_message">For enabling the filter menu, Go to Settings and select the packages.</string>
+    <string name="string_no_data_available_filtered_apps">No Usage Data available for filtered apps for selected interval.</string>
     <string name="string_Ok">OK</string>
     <string name="string_Cancel">Cancel</string>
     <string name="string_select_packages_pref_title">Package Monitoring.</string>

@@ -202,7 +202,7 @@ public class MusicListAdapter implements ExpandableListAdapter {
 			imageView.animate();
 		}else if(!isExpanded && (imageView.getTag() == null || (Boolean)imageView.getTag())){
 		    
-		    if (Utils.isTabletDevice(mContext) && imageView.getTag() == null) {
+		    if (imageView.getTag() == null) {
 		        imageView.setTag(false);
 		        return convertView;
 		    } 
