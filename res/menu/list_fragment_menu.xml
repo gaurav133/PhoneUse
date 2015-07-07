@@ -5,10 +5,10 @@
     
      <item android:id="@+id/menu_share_via"
            android:title="@string/string_share"
-           android:showAsAction="always"/>
+           android:showAsAction="ifRoom"/>
      <item android:id="@+id/filter_menu"
            android:title="@string/string_all"
-           android:showAsAction="ifRoom"/>
+           android:showAsAction="always"/>
 
      <item 
          android:id="@+id/action_sort_by"
