@@ -260,18 +260,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         		,getString(R.string.string_Yearly),getString(R.string.string_Custom)};
         mDatabase = new PhoneUsageDatabase(mContext);
         initListFragment();
-        if(Utils.isTabletDevice(mContext)){
-            if (mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            View view =  findViewById(R.id.usage_tab_height_layout);
-            view.setBackgroundColor(getResources().getColor(R.color.color_action_bar_background));
-            final float scale = mContext.getResources().getDisplayMetrics().density;
-            int pixels = (int) (2*(SlidingTabLayout.TAB_VIEW_PADDING_DIPS + SlidingTabLayout.TAB_VIEW_TEXT_SIZE_SP) * scale + 1.0f);
-            LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) view.getLayoutParams();
-           layoutParams.height=pixels;
-           view.setLayoutParams(layoutParams);
-            }
-        	initDetailFragment(null, "abc");
-        }
         mUsageListFragment.setOnUsageItemClickListener(this);
 
         initFabTextView();
@@ -382,7 +370,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         LinkedHashMap<Long, UsageInfo> linkedMap = null;
         // First sort map by key (start duration).
         if (intervalMap != null && !intervalMap.isEmpty()) {
-             linkedMap = sortMapByKey(intervalMap);
+             linkedMap = Utils.sortMapByKey(intervalMap,this);
         }
         
         mDetailFragment = new UsageDetailListFragment(linkedMap);
@@ -392,9 +380,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         			R.anim.exit_to_right,R.anim.exit_to_left,R.anim.enter_from_left);
             transaction.replace(R.id.usage_list_main_fragment, mDetailFragment);
             transaction.addToBackStack(null);
-        }
-        else {
-        transaction.replace(R.id.usage_detail_main_fragment, mDetailFragment);
         }
         transaction.commit();
     }
@@ -967,6 +952,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
         this.cal1 = startCalendar;
         this.cal2 = endCalendar;
+        mUsageListFragment.setStartEndCalForCustomInterval(startCalendar, endCalendar);
         // Set in preference only after date from both pickers have been validated.
         UsageSharedPrefernceHelper.setShowByUsage(mContext,
                 mContext.getString(R.string.string_Custom));
@@ -1017,28 +1003,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             }
         }
         
-        LinkedHashMap<Long, UsageInfo> linkedMap = sortMapByKey(infoMap);
+        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap,this);
         initDetailFragment(linkedMap, Utils.getApplicationLabelName(mContext, pkg));
     }
 
-    private LinkedHashMap<Long, UsageInfo> sortMapByKey(HashMap<Long,UsageInfo> infoMap) {
-
-        // Sort intervals before sending to detail fragment.
-        LinkedList<Map.Entry<Long, UsageInfo>> list = new LinkedList<>();
-        for (Map.Entry<Long, UsageInfo> entry : infoMap.entrySet()) {
-            list.add(entry);
-        }
-        Collections.sort(list, this);
-        
-        LinkedHashMap<Long, UsageInfo> linkedMap = new LinkedHashMap<>();
-        ListIterator<Map.Entry<Long, UsageInfo>> iterator = list.listIterator();
-        
-        while (iterator.hasNext()) {
-            Map.Entry<Long, UsageInfo> entry = iterator.next();
-            linkedMap.put(entry.getKey(), entry.getValue());
-        }
-        return linkedMap;
-    }
     @Override
     public void onUsageItemClick(String pkg, int position) {
     	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)

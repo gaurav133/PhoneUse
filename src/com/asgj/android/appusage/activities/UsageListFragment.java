@@ -32,6 +32,7 @@ import java.util.Set;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
@@ -49,6 +50,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -103,7 +106,9 @@ public class UsageListFragment<AppData, MusicData> extends
 	private UsageListAdapter<AppData> mAppDataListAdapter = null;
 	private MusicListAdapter mMusicDataListAdapter = null;
 	private OnUsageItemClickListener mItemClickListener = null;
-	
+	private UsageDetailListFragment mDetailFragment = null;
+	private Calendar cal2;
+	private Calendar cal1;
 	public void setOnUsageItemClickListener(OnUsageItemClickListener listener){
 		mItemClickListener = listener;
 	}
@@ -185,6 +190,11 @@ public class UsageListFragment<AppData, MusicData> extends
             mIsFilteredMap = true;
         }
         super.onCreate(savedInstanceState);
+    }
+    
+    public void setStartEndCalForCustomInterval(Calendar cal1,Calendar cal2){
+    	this.cal1 = cal1;
+    	this.cal2 = cal2;
     }
 
     @Override
@@ -407,7 +417,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	 * {@link #getPageTitle(int)} method which controls what is displayed in the
 	 * {@link SlidingTabLayout}.
 	 */
-	class SamplePagerAdapter extends PagerAdapter implements OnItemTouchListener , OnChildClickListener{
+	class SamplePagerAdapter extends PagerAdapter implements OnItemTouchListener , OnChildClickListener,Comparator<Map.Entry<Long, UsageInfo>>{
 
 		String[] mList = new String[] { "Apps", "Media" };
 
@@ -432,6 +442,43 @@ public class UsageListFragment<AppData, MusicData> extends
 		public boolean isViewFromObject(View view, Object o) {
 			return o == view;
 		}
+		private void updateDetailFragment(String pkg) {
+	        // Check current preference first.
+	    	HashMap<Long,UsageInfo> infoMap = null;
+	        // Check whether custom and end day not today.
+	        if (UsageSharedPrefernceHelper.getShowByType(getActivity()).equals(
+	                getActivity().getString(R.string.string_Custom))
+	                && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+
+	            infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
+	        } else {
+
+	            switch (UsageSharedPrefernceHelper.getShowByType(getActivity())) {
+	            case "Today":
+	                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
+	                        Calendar.getInstance());
+	                break;
+	            case "Weekly":
+	            case "Monthly":
+	            case "Yearly":
+	                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
+	                        UsageSharedPrefernceHelper.getCalendarByShowType(getActivity()),
+	                        Calendar.getInstance());
+	        	
+	                break;
+	            case "Custom":
+	                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
+	                        cal1, Calendar.getInstance());
+	                break;
+	            default:
+	                break;
+	            }
+	        }
+	        
+	        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap,this);
+	        initDetailFragment(linkedMap, Utils.getApplicationLabelName(getActivity(), pkg));
+	    }
+
 
 		// BEGIN_INCLUDE (pageradapter_getpagetitle)
 		/**
@@ -446,6 +493,25 @@ public class UsageListFragment<AppData, MusicData> extends
 		public CharSequence getPageTitle(int position) {
 			return mList[position];
 		}
+		private void initDetailFragment(HashMap<Long,UsageInfo> intervalMap, String applicationName) {
+	        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+	        
+	        LinkedHashMap<Long, UsageInfo> linkedMap = null;
+	        // First sort map by key (start duration).
+	        if (intervalMap != null && !intervalMap.isEmpty()) {
+	             linkedMap = Utils.sortMapByKey(intervalMap,this);
+	        }
+	        
+	        mDetailFragment = new UsageDetailListFragment(linkedMap);
+	        transaction.replace(R.id.usage_detail_fragment_layout, mDetailFragment);
+	        transaction.commit();
+	    }
+		
+		@Override
+	    public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
+	        // TODO Auto-generated method stub
+	        return (int) (rhs.getKey() - lhs.getKey());
+	    }
 
 		// END_INCLUDE (pageradapter_getpagetitle)
 
@@ -458,8 +524,21 @@ public class UsageListFragment<AppData, MusicData> extends
 		public Object instantiateItem(ViewGroup container, int position) {
 			// Inflate a new layout from our resources
 		    View returnView = null;
-			View viewData = getActivity().getLayoutInflater().inflate(
+		    View viewData = null;
+		    FrameLayout mDetailFragmentLayout = null;
+		    LinearLayout mAppListLayout = null;
+		    LinearLayout mMusicListLayout = null;
+		    if(!Utils.isTabletDevice(getActivity())){
+			viewData = getActivity().getLayoutInflater().inflate(
                     R.layout.usage_list, container, false);
+		    }else{
+		    	viewData = getActivity().getLayoutInflater().inflate(
+	                    R.layout.usage_list_tablet_layout, container, false);
+		    	mDetailFragmentLayout = (FrameLayout)viewData.findViewById(R.id.usage_detail_fragment_layout);
+		    	mAppListLayout = (LinearLayout)viewData.findViewById(R.id.usage_parent_tab_layout);
+		    	mMusicListLayout = (LinearLayout)viewData.findViewById(R.id.music_parent_tab_layout);
+		    	
+		    }
 			View viewNoData = getActivity().getLayoutInflater().inflate(R.layout.layout_no_data_tracking_info, container, false);
 			TextView textViewNoDataStartTracking = (TextView) viewNoData.findViewById(R.id.textView_start_tracking_no_data_navigate);
 			TextView textViewNoData = (TextView) viewNoData.findViewById(R.id.textView_no_data_navigate);
@@ -470,6 +549,10 @@ public class UsageListFragment<AppData, MusicData> extends
 			ExpandableListView musicListView = (ExpandableListView)viewData.findViewById(R.id.music_list);
 						
 			if (position == 0 && mAppDataListAdapter != null){
+				if(Utils.isTabletDevice(getActivity())){
+					mMusicListLayout.setVisibility(View.GONE);
+					mAppListLayout.setVisibility(View.VISIBLE);
+				}
 				title.setVisibility(View.VISIBLE);
 				musicListView.setVisibility(View.GONE);
 			    textViewNoData.setVisibility(View.GONE);
@@ -513,6 +596,10 @@ public class UsageListFragment<AppData, MusicData> extends
 			    }
 			}
 			else if (position == 1 && mMusicDataListAdapter != null){
+				if(Utils.isTabletDevice(getActivity())){
+					mMusicListLayout.setVisibility(View.VISIBLE);
+					mAppListLayout.setVisibility(View.GONE);
+				}
 				title.setVisibility(View.GONE);
 				musicListView.setChildDivider(null);
 				musicListView.setDivider(null);
@@ -573,8 +660,11 @@ public class UsageListFragment<AppData, MusicData> extends
 		
 		@Override
 		public void onItemClicked(int position) {
-			if(mItemClickListener != null){
+			
+			if(!Utils.isTabletDevice(getActivity()) && mItemClickListener != null){
 				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
+			}else{
+				updateDetailFragment(mAppDataListAdapter.getPackageNameKeys().get(position));
 			}
 			
 		}
