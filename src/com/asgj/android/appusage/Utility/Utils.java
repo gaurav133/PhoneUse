@@ -5,11 +5,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import android.annotation.TargetApi;
@@ -47,6 +52,24 @@ public class Utils {
 	public static boolean isTabletDevice(Context context) {
 		return context.getResources().getBoolean(R.bool.isTablet);
 	}
+	public static LinkedHashMap<Long, UsageInfo> sortMapByKey(HashMap<Long,UsageInfo> infoMap,Comparator<Map.Entry<Long, UsageInfo>> compare) {
+
+        // Sort intervals before sending to detail fragment.
+        LinkedList<Map.Entry<Long, UsageInfo>> list = new LinkedList<>();
+        for (Map.Entry<Long, UsageInfo> entry : infoMap.entrySet()) {
+            list.add(entry);
+        }
+        Collections.sort(list, compare);
+        
+        LinkedHashMap<Long, UsageInfo> linkedMap = new LinkedHashMap<>();
+        ListIterator<Map.Entry<Long, UsageInfo>> iterator = list.listIterator();
+        
+        while (iterator.hasNext()) {
+            Map.Entry<Long, UsageInfo> entry = iterator.next();
+            linkedMap.put(entry.getKey(), entry.getValue());
+        }
+        return linkedMap;
+    }
 
     /**
      * Returns time in seconds from given nanoseconds.

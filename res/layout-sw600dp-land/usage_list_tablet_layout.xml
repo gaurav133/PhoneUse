@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+
+    <LinearLayout
+        android:id="@+id/usage_parent_tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:visibility="visible" >
+
+        <ListView
+            android:id="@+id/usage_list"
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="5" />
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:background="@color/color_action_bar_background" />
+
+        <FrameLayout
+            android:id="@+id/usage_detail_fragment_layout"
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="7"
+            android:orientation="vertical" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/music_parent_tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" >
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_weight="8"
+            android:layout_height="match_parent" />
+        
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:background="@color/color_action_bar_background" />
+
+        <ExpandableListView
+            android:id="@+id/music_list"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:background="@color/color_action_bar_background" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_weight="8"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+
+</FrameLayout>

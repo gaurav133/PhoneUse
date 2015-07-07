@@ -7,31 +7,11 @@
 
     <FrameLayout
         android:id="@+id/usage_list_main_fragment"
-        android:layout_width="0dip"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="5" >
-    </FrameLayout>
+        >
+   
     
-    <View
-        android:id="@+id/divider"
-        android:layout_width="2dp"
-        android:layout_height="match_parent"
-        android:background="@color/color_action_bar_background" />
-
-    <LinearLayout
-        android:layout_width="0dip"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_weight="7" >
-    <LinearLayout 
-        android:id="@+id/usage_tab_height_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/color_action_bar_background"/>
-    <FrameLayout
-        android:id="@+id/usage_detail_main_fragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
 
         <TextView
             android:id="@+id/showByOptionsToday"
@@ -96,5 +76,4 @@
             android:textSize="15dp"
             android:visibility="invisible" />
     </FrameLayout>
-	</LinearLayout>
 </LinearLayout>
