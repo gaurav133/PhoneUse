@@ -479,6 +479,9 @@ public class UsageListFragment<AppData, MusicData> extends
 				mAppDataListAdapter.notifyDataSetChanged();
 			    if (mAppDataListAdapter.isEmpty()) {
 			        textViewNoData.setText(getString(R.string.string_no_data_navigate_apps));
+			        if (UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
+			            textViewNoData.setText(getString(R.string.string_no_data_available_filtered_apps));
+			        }
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
 			        } else {
@@ -491,6 +494,10 @@ public class UsageListFragment<AppData, MusicData> extends
 	                        textViewNoData.setVisibility(View.VISIBLE);
 	                    } else {
 	                        textViewNoDataStartTracking.setText(getString(R.string.string_start_tracking_no_data_navigate_apps));
+	                        
+	                        if (UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
+	                            textViewNoDataStartTracking.setText(getString(R.string.string_no_data_available_filtered_apps));
+	                        }
 	                        textViewNoDataStartTracking.setVisibility(View.VISIBLE);
 	                    }
 			            
