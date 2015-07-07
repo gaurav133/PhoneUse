@@ -2,8 +2,9 @@ package com.asgj.android.appusage.ui.widgets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -13,7 +14,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.HttpImageLoader;
 import com.asgj.android.appusage.Utility.UsageInfo;
@@ -37,6 +37,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 	OnItemTouchListener mTouchListener = null;
 	private static final int SWIPE_DURATION = 400;
 	float x_touchDown = 0;
+	private int mCurrentSelectedItem = -1;
 	
 	public interface OnItemTouchListener {
 		public void onItemSwiped(int position);
@@ -53,7 +54,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         mData = data;
         mImageLoader = HttpImageLoader.getInstance(context);
         mKeys = new ArrayList<>();
-        
+        mCurrentSelectedItem = -1;
        if (mData instanceof HashMap) {
             mMap = (HashMap<String, Long>) ((HashMap<String, Long>) mData).clone();
 
@@ -99,7 +100,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         return 0;
     }
 
-    @Override
+	@Override
     public View getView(int position, View convertView, ViewGroup parent) {
         
         ViewHolder holder;
@@ -124,6 +125,15 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         }
 		holder.position = position;
 		holder.parent.setTag(holder);
+		if (Utils.isTabletDevice(mContext)) {
+			if (mCurrentSelectedItem == position) {
+				holder.parent
+						.setBackgroundColor(mContext.getResources().getColor(R.color.color_action_bar_background));
+			} else if (mCurrentSelectedItem != -1) {
+				holder.parent.setBackgroundColor(Color.WHITE);
+			}
+		}
+		
         if (mMap != null) {
             holder.text_dash.setVisibility(View.GONE);
             if (position == 0) {
@@ -204,6 +214,8 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 				} else if ((x_touchUp - x_touchDown) == MAX_DISTANCE_FOR_CLICK) {
 					v.setAlpha(1);
 					v.setTranslationX(0);
+					mCurrentSelectedItem = holder.position;
+					notifyDataSetChanged();
 					mTouchListener.onItemClicked(holder.position);
 				}
 			}
