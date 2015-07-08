@@ -63,7 +63,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
 
     private boolean mIsRunningForegroundAppsThread = false,
             mIsFirstTimeStartForgroundAppService = false, mIsMusicPlaying = false,
-            mIsMusicStarted = false, mIsContinueTracking = false, mIsMusicPlayingAtStart = false, mIsTrackingOn = false,
+            mIsMusicStarted = false, mIsContinueTracking = false, mIsMusicPlayingAtStart = false,
             mIsScreenOff = false;
 
     private KeyguardManager mKeyguardManager;
@@ -171,7 +171,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                 if (Utils.compareDates(presentCalendar, previousCalendar) == 1) {
 
                     Log.v (LOG_TAG, "It's midnight, dump data to DB");
-                    UsageSharedPrefernceHelper.clearPreference(mContext);
 
                     if (mIsScreenOff == false) {
                         long currentTime = System.nanoTime();
@@ -372,7 +371,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         mStartTime = System.nanoTime();
         mPreviousAppStartTimeStamp = System.currentTimeMillis();
 
-        mIsTrackingOn = true;
         // Initialize thread to set up default values.
         initThread(true);
         UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
@@ -422,7 +420,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
          mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
          
          // Insert data to preference too.
-         UsageSharedPrefernceHelper.updateTodayDataForApps(mContext, mBgTrackingTask.foregroundMap);
          initializeMap(mBgTrackingTask.foregroundMap);
     }
 
@@ -527,7 +524,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
             mTimer.cancel();
             mTimer.purge();
         }
-        mIsTrackingOn = false;
     }
 
     private final class BackgroundTrackingTask {
@@ -686,7 +682,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         // Dump data to xml shared preference.
         
         if (!mListMusicPlayTimes.isEmpty()) {
-            UsageSharedPrefernceHelper.updateTodayDataForMusic(mContext, mListMusicPlayTimes);
             
             // Dump data to DB for music.
             ListIterator<UsageInfo> iterator = mListMusicPlayTimes.listIterator();

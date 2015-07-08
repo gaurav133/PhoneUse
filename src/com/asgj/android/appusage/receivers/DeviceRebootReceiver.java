@@ -36,10 +36,6 @@ public class DeviceRebootReceiver extends BroadcastReceiver {
 			    Calendar datePref = Calendar.getInstance();
 			    datePref.setTimeInMillis(UsageSharedPrefernceHelper.getDateStoredInPref(context));
 			    
-			    if (Utils.compareDates(Calendar.getInstance(), datePref) == 1) {
-			        // Day has changed while phone was shut down, so clear preferences.
-			        UsageSharedPrefernceHelper.clearPreference(context);
-			    }
 				Intent startServiceIntent = new Intent();
 				startServiceIntent
 						.setClass(context, UsageTrackingService.class);

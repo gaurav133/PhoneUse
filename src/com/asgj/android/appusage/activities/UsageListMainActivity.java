@@ -8,9 +8,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
@@ -48,7 +46,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,7 +60,6 @@ import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
-import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity, Comparator<Map.Entry<Long, UsageInfo>>{
     private Context mContext;
@@ -71,14 +67,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private Calendar cal1, cal2;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
-    private long mTimeStamp;
     private HashMap<String, Long> mDataMap;
     private ArrayList<UsageInfo> mMusicList;
     private List<UsageStats> mQueryUsageStats;
     private boolean mIsBound = false;
     private LocalBinder mBinder;
     private boolean mIsCreated = true;
-    private boolean mIsDateInPref = true;
     private PhoneUsageDatabase mDatabase;
     private UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>> mUsageListFragment;
     private UsageDetailListFragment mDetailFragment;
@@ -135,8 +129,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
             switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
             case "Today":
-                mDataMap = UsageSharedPrefernceHelper.getAllKeyValuePairsApp(mContext);
-                break;
             case "Weekly":
             case "Monthly":
             case "Yearly":
@@ -203,8 +195,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             };
             switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
             case "Today":
-                mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
-                break;
             case "Weekly":
             case "Monthly":
             case "Yearly":
@@ -408,63 +398,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
     };
     
-    /**
-     * Displays data as per different scenarios and preferences.
-     */
-    
-
-   /**
-    * Display data for music as per user preferences.
-    */
-    public void displayDataForMusic() {
-        mMusicList = new ArrayList<>();
-
-        Comparator<UsageInfo> startTimeSortComparator = new Comparator<UsageInfo>() {
-
-            @Override
-            public int compare(UsageInfo lhs, UsageInfo rhs) {
-                // TODO Auto-generated method stub
-                return (int) (rhs.getmIntervalStartTime() - lhs.getmIntervalStartTime());
-            }
-            
-        };
-        switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
-        case "Today":
-            mMusicList = UsageSharedPrefernceHelper.getTotalInfoOfMusic(mContext);
-            break;
-        case "Weekly":
-        case "Monthly":
-        case "Yearly":
-            mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext,
-                    UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
-                    Calendar.getInstance());
-            break;
-        case "Custom":
-            if (Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
-                mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1, cal2);
-            } else {
-                mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1,
-                        Calendar.getInstance());
-            }
-            break;
-        default:
-            break;
-        }
-
-            // Check whether custom and end day not today.
-
-        if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
-                getString(R.string.string_Custom))
-                && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
-            return;
-        } else {
-            if (mMainService != null) {
-                mMusicList.addAll(mMainService.getCurrentDataForMusic());
-            }
-        }
-        Collections.sort(mMusicList, startTimeSortComparator);
-        mUsageListFragment.setmMusicData(mMusicList);
-    }
     private void initPackageList() {
     	mResolveInfo = new ArrayList<ResolveInfo>();
 
@@ -498,50 +431,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         super.onResume();
 
         Log.v(LOG_TAG, "mainService onResume is: " + mMainService);
-        // IF service not running, show data from xml.
-        if (!UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
-           
-            if (mIsDateInPref == true) {
-                
-                // Fetch date from preferences and compare.
-                Date presentDate = new Date(System.currentTimeMillis());
-                Date prefsDate = new Date(UsageSharedPrefernceHelper.getDateStoredInPref(mContext));
-
-                Calendar c1 = Calendar.getInstance();
-                c1.setTime(presentDate);
-                
-                Calendar c2 = Calendar.getInstance();
-                c2.setTime(prefsDate);
-
-                // Compare with present time.
-                if (Utils.compareDates(c1, c2) == 1) {
-                    // Clear preference.
-                    UsageSharedPrefernceHelper.clearPreference(mContext);
-                }
-                mIsDateInPref = false;
-
-                // Store timestamp to check if day has changed.
-                mTimeStamp = System.currentTimeMillis();
-            } else {
-                Date presentDate = new Date(System.currentTimeMillis());
-                Date prevDate = new Date(mTimeStamp);
-
-                Calendar c1 = Calendar.getInstance();
-                c1.setTime(presentDate);
-
-                Calendar c2 = Calendar.getInstance();
-                c2.setTime(prevDate);
-
-                if (Utils.compareDates(c1, c2) == 1) {
-                    // Clear prefs.
-                    UsageSharedPrefernceHelper.clearPreference(mContext);
-                }
-                
-                mTimeStamp = System.currentTimeMillis();
-            }
-        }
-        
-
         loadDataTask dataTask = new loadDataTask(mContext);
         dataTask.execute();
         
@@ -615,20 +504,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_LONG)
                 .show();
         startActivity(intentGoToHomeScreen);
-
-        // Service started, fetch updated data.
-        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            mCurrentMap = Utils.getCurrentUsageMapForL(mContext);
-
-            HashMap<String, Long> map = new HashMap<>();
-
-            for (Map.Entry<String, UsageStats> entry : mCurrentMap.entrySet()) {
-                map.put(entry.getKey(), entry.getValue().getTotalTimeInForeground());
-            }
-
-            // Store this data in preferences for future calculations.
-            UsageSharedPrefernceHelper.updatePreviousDataForAppsForL(mContext, map);
-        }
 
         finish();
 
