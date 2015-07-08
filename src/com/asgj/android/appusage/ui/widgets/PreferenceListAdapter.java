@@ -1,6 +1,7 @@
 package com.asgj.android.appusage.ui.widgets;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 
 import android.content.Context;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.ResolveInfo;
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 
 public class PreferenceListAdapter extends BaseAdapter implements View.OnClickListener,
         OnSeekBarChangeListener {
@@ -31,6 +33,7 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
     private int mCurrentPrefType = 0;
     protected static final int NOTIFICATION_PREF = 1;
     private static final int PACKAGES_FILTER_PREF = 2;
+    private HashMap<String,Integer> mMoniterMap = new HashMap<String, Integer>();
 
     PreferenceListAdapter(ArrayList<ResolveInfo> packageList, Context context, int currentPref) {
         mPackageList = packageList;
@@ -59,6 +62,7 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 		return mPackageList;
 	}
 	
+	
 
 
 	@Override
@@ -79,8 +83,18 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 		return 0;
 	}
 
-    protected void setCheckedArray(boolean[] mIsChecked) {
+    protected void setCheckedArray(boolean[] mIsChecked,HashMap<String,Integer> map) {
         this.mIsChecked = mIsChecked;
+        if(map == null) {
+        	mMoniterMap.clear();
+        }else{
+        	mMoniterMap = map;
+        }
+        
+    }
+    
+    protected int getMoniterTimeFromMap(String pkg){
+    	return mMoniterMap.get(pkg);
     }
 
     @Override
@@ -96,6 +110,9 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 			holder.checkbox = (CheckBox) convertView
 					.findViewById(R.id.checkBox_package);
 			holder.timeBar = (SeekBar) convertView.findViewById(R.id.seekBar1);
+			holder.seekbarValueText = (TextView)convertView.findViewById(R.id.seekbar_value);
+			holder.timeBar.setOnSeekBarChangeListener(this);
+			holder.timeBar.setTag(holder);
 			convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
@@ -105,13 +122,25 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 		if (!mIsChecked[position]) {
 			holder.timeBar.setVisibility(View.GONE);
 			holder.checkbox.setChecked(false);
+			holder.seekbarValueText.setVisibility(View.GONE);
 		} else {
-			if(mCurrentPrefType == NOTIFICATION_PREF)
+			if(mCurrentPrefType == NOTIFICATION_PREF){
+			holder.seekbarValueText.setVisibility(View.VISIBLE);
+				if (mMoniterMap.get(mPackageList.get(position)
+						.getmPackageName()) != null) {
+					holder.timeBar.setProgress(mMoniterMap.get(mPackageList
+							.get(position).getmPackageName()));
+				} else {
+					holder.timeBar.setProgress(0);
+				}
+			holder.seekbarValueText.setText(mContext.getResources().getString(R.string.string_notify, holder.timeBar.getProgress()));
 			holder.timeBar.setVisibility(View.VISIBLE);
+			}
 			holder.checkbox.setChecked(true);
 		}
 		holder.labelTextView.setText(mPackageList.get(position)
 				.getmApplicationName());
+		
 
 		convertView.setOnClickListener(this);
 		return convertView;
@@ -149,16 +178,17 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
                     checkbox.setChecked(true);
                     if (mCurrentPrefType == NOTIFICATION_PREF) {
                         seekbar.setOnSeekBarChangeListener(this);
-
-                        seekbar.setTag(holder.position);
+                        seekbar.setTag(holder);
                         seekbar.setProgress(mPackageList.get(pos).getmInputtime());
                         seekbar.setVisibility(View.VISIBLE);
+                        holder.seekbarValueText.setVisibility(View.VISIBLE);
                     }
                     mSelectedCount++;
                 }
             } else {
                 mIsChecked[pos] = false;
                 seekbar.setVisibility(View.GONE);
+                holder.seekbarValueText.setVisibility(View.GONE);
                 checkbox.setChecked(false);
                 mSelectedCount--;
             }
@@ -168,8 +198,10 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress,
 			boolean fromUser) {
-		int position = (Integer) seekBar.getTag();
-		mPackageList.get(position).setmInputtime(progress);
+		ViewHolder holder = (ViewHolder) seekBar.getTag();
+		mPackageList.get(holder.position).setmInputtime(progress);
+		holder.seekbarValueText.setText(mContext.getResources().getString(R.string.string_notify, holder.timeBar.getProgress()));
+		mMoniterMap.put(mPackageList.get(holder.position).getmPackageName(), progress);
 	}
 
 	@Override
@@ -185,6 +217,7 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 	private static class ViewHolder {
 		TextView labelTextView;
 		CheckBox checkbox;
+		TextView seekbarValueText;
 		SeekBar timeBar;
 		int position;
 	}

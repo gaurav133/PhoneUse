@@ -15,6 +15,7 @@
         android:layout_toRightOf="@+id/checkBox_package"
         android:gravity="center"
         android:orientation="vertical" >
+        
 
         <TextView
             android:id="@+id/title_package"
@@ -22,6 +23,14 @@
             android:layout_height="wrap_content"
             android:textColor="@android:color/black"
             android:textSize="20sp" />
+        
+        <TextView
+            android:id="@+id/seekbar_value"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
 
         <SeekBar
             android:id="@+id/seekBar1"

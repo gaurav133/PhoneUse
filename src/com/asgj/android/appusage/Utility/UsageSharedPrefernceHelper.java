@@ -16,6 +16,7 @@ public class UsageSharedPrefernceHelper {
 	private static String PREFERNCE_NAME = "phone.usage";
 	private static final String LOG_TAG = UsageSharedPrefernceHelper.class
 			.getSimpleName();
+	private static String PREFERNCE_NAME_MONTIERING_INFO = "phone.usage.moniter.info";
 	private static String PREF_NAME_AUTO_TRACKING_INFO = "phone.usage.app.auto.tracking.info";
 
 	public static void insertTotalDurationAppInPref(Context context,
@@ -113,6 +114,33 @@ public class UsageSharedPrefernceHelper {
 		return prefs.getStringSet("applicationtracking", null);
 
 	}
+	
+	
+	public static void setMoniterTimeForPackage(Context context, String pkgName,int hours) {
+		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME_MONTIERING_INFO,
+				Context.MODE_PRIVATE);
+		Editor editor = prefs.edit();
+		editor.putInt(pkgName, hours);
+		editor.commit();
+	}
+	
+	public static void removeMoniterTimeForPackage(Context context,String pkgName){
+
+		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME_MONTIERING_INFO,
+				Context.MODE_PRIVATE);
+		Editor editor = prefs.edit();
+		editor.remove(pkgName);
+		editor.commit();
+	
+		
+	}
+
+	public static int getMoniterTimeForPackage(Context context,String pkgName) {
+		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME_MONTIERING_INFO,
+				Context.MODE_PRIVATE);
+		return prefs.getInt(pkgName, 0);
+	}
+
 
 	public static void setApplicationForTracking(Context context, String info,
 			boolean isAdded) {
