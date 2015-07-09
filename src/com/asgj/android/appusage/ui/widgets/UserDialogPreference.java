@@ -2,6 +2,7 @@ package com.asgj.android.appusage.ui.widgets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -9,8 +10,6 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -26,6 +25,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     Context mContext = null;
     ArrayList<ResolveInfo> mResolveInfo;
     boolean mIsChecked[];
+    
     PreferenceListAdapter mAdapter = null;
     private static final int NOTIFICATION_PREF = 1;
     private static final int PACKAGES_FILTER_PREF = 2;
@@ -48,7 +48,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
         }
         ArrayList<ResolveInfo> list = mAdapter.getSelectedPackages();
         mIsChecked = new boolean[list.size()];
-
+        HashMap<String,Integer> map = new HashMap<String, Integer>();
         // TODO : need to get time also from prefernce to show on seekbar.
         if (mAlreadySelectedSet != null && mAlreadySelectedSet.size() > 0) {
 
@@ -56,6 +56,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
                 ResolveInfo info = list.get(i);
                 if (mAlreadySelectedSet.contains(info.getmPackageName())) {
                     mIsChecked[i] = true;
+                    map.put(info.getmPackageName() , UsageSharedPrefernceHelper.getMoniterTimeForPackage(mContext, info.getmPackageName()));
                     // info.setChecked(true);
                     selectedCount++;
                 } else {
@@ -67,7 +68,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
 
         // mAdapter.setPackageList(list);
         mAdapter.setSelectedCount(selectedCount);
-        mAdapter.setCheckedArray(mIsChecked);
+        mAdapter.setCheckedArray(mIsChecked,map);
 
         super.showDialog(state);
         Button positiveBtn = ((AlertDialog) getDialog()).getButton(DialogInterface.BUTTON_POSITIVE);
@@ -131,6 +132,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
 
                 if (mIsChecked[i]) {
                     if (mCurrentPref == NOTIFICATION_PREF) {
+                    	UsageSharedPrefernceHelper.setMoniterTimeForPackage(mContext, info.getmPackageName(), mAdapter.getMoniterTimeFromMap(info.getmPackageName()));
                         UsageSharedPrefernceHelper.setApplicationForTracking(mContext,
                                 info.getmPackageName(), true);
                     } else {
@@ -140,6 +142,7 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
                     // TODO :: please save time also.
                 } else {
                     if (mCurrentPref == NOTIFICATION_PREF) {
+                    	UsageSharedPrefernceHelper.removeMoniterTimeForPackage(mContext, info.getmPackageName());
                         UsageSharedPrefernceHelper.setApplicationForTracking(mContext,
                                 info.getmPackageName(), false);
                     } else {
@@ -167,13 +170,14 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
                     ResolveInfo info = iterator.next();
                     String pkg = info.getmPackageName();
                     if (mCurrentPref == NOTIFICATION_PREF) {
+                    	UsageSharedPrefernceHelper.removeMoniterTimeForPackage(mContext, pkg);
                         UsageSharedPrefernceHelper.setApplicationForTracking(mContext, pkg, false);
                     } else {
                         UsageSharedPrefernceHelper.setApplicationForFiltering(mContext, pkg, false);
                     }
                     // info.setChecked(false);
                 }
-                mAdapter.setCheckedArray(mIsChecked);
+                mAdapter.setCheckedArray(mIsChecked,null);
                 mAdapter.setSelectedCount(0);
                 mAdapter.notifyDataSetChanged();
             }

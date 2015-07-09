@@ -62,4 +62,5 @@
     <string name="string_select_start_and_end_date">Select Start and End Date</string>
     <string name="string_desc_low_memory_dialog">Your device is running low on memory. Kill some applications using task manager and then retry starting tracking.</string>
     <string name="string_share">Share</string>
+    <string name="string_notify">Notify after %d hours</string>
 </resources>
