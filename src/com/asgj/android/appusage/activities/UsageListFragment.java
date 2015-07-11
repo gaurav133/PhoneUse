@@ -49,6 +49,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -417,7 +418,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	 * {@link #getPageTitle(int)} method which controls what is displayed in the
 	 * {@link SlidingTabLayout}.
 	 */
-	class SamplePagerAdapter extends PagerAdapter implements OnItemTouchListener , OnChildClickListener,Comparator<Map.Entry<Long, UsageInfo>>{
+	class SamplePagerAdapter extends PagerAdapter implements OnItemTouchListener ,OnItemClickListener, OnChildClickListener,Comparator<Map.Entry<Long, UsageInfo>>{
 
 		String[] mList = new String[] { "Apps", "Media" };
 
@@ -558,6 +559,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			    textViewNoData.setVisibility(View.GONE);
                 textViewNoDataStartTracking.setVisibility(View.GONE);
                 mAppDataListAdapter.setOnItemTouchListener(this);
+                title.setOnItemClickListener(this);
 				title.setAdapter(mAppDataListAdapter);
 				mAppDataListAdapter.notifyDataSetChanged();
 			    if (mAppDataListAdapter.isEmpty()) {
@@ -683,6 +685,16 @@ public class UsageListFragment<AppData, MusicData> extends
 			}
 			
 		}
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View arg1, int position,
+				long arg3) {
+			if(!Utils.isTabletDevice(getActivity()) && mItemClickListener != null){
+				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
+			}else{
+				updateDetailFragment(mAppDataListAdapter.getPackageNameKeys().get(position));
+			}
+			
+		}
 
 	}
 
@@ -694,12 +706,12 @@ public class UsageListFragment<AppData, MusicData> extends
 
     @Override
     public void onPageScrolled(int arg0, float arg1, int arg2) {
-        // TODO Auto-generated method stub
+       Log.d("anurag","page scrolled.. "+ arg0 + " "+ arg1 + " "+ arg2);
     }
 
     @Override
     public void onPageSelected(int arg0) {
-        // TODO Auto-generated method stub
+    	 Log.d("anurag","page selected.. "+ arg0);
         getActivity().invalidateOptionsMenu();
     }
 }

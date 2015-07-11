@@ -35,7 +35,7 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
-            android:src="@drawable/previous_arrow" />
+            android:src="@drawable/ic_action_next_item" />
     </RelativeLayout>
 
 </RelativeLayout>

@@ -886,7 +886,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     public void onUsageItemClick(String pkg, int position) {
     	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
     	hideFabOption();
-    	if(pkg.equals("totalTime")){
+    	if(pkg== null || pkg.equals("totalTime")){
     		return;
     	}
        
