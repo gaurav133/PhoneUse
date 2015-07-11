@@ -2,6 +2,7 @@ package com.asgj.android.appusage.ui.widgets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
@@ -9,14 +10,17 @@ import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.HttpImageLoader;
 import com.asgj.android.appusage.Utility.UsageInfo;
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 
 public class UsageListAdapter<Data> extends BaseAdapter implements
@@ -38,6 +42,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 	private static final int SWIPE_DURATION = 400;
 	float x_touchDown = 0;
 	private int mCurrentSelectedItem = -1;
+	
 	
 	public interface OnItemTouchListener {
 		public void onItemSwiped(int position);
@@ -125,6 +130,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         }
 		holder.position = position;
 		holder.parent.setTag(holder);
+		
 		if (Utils.isTabletDevice(mContext)) {
 			if (mCurrentSelectedItem == position) {
 				holder.parent
@@ -170,11 +176,15 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 
 	@Override
 	public boolean onTouch(final View v, MotionEvent event) {
+		if(!UsageSharedPrefernceHelper.getSwipeFeatureEnable(mContext)){
+			return false;
+		}
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			x_touchDown = event.getX();
 			break;
 		case MotionEvent.ACTION_MOVE:
+			float deltaX = event.getRawX() - x_touchDown;
 			break;
 		case MotionEvent.ACTION_CANCEL:
 		case MotionEvent.ACTION_UP:
@@ -186,7 +196,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 					if (mTouchListener != null) {
 						if (event.getAction() == MotionEvent.ACTION_CANCEL) {
 							float x = event.getX() + v.getTranslationX();
-							float deltaX = x - x_touchDown;
+							deltaX = x - x_touchDown;
 							float deltaXAbs = Math.abs(deltaX);
 							float fractionCovered = 0;
 							float endX = 0;

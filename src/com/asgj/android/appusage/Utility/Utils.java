@@ -52,6 +52,7 @@ public class Utils {
 	public static boolean isTabletDevice(Context context) {
 		return context.getResources().getBoolean(R.bool.isTablet);
 	}
+	
 	public static LinkedHashMap<Long, UsageInfo> sortMapByKey(HashMap<Long,UsageInfo> infoMap,Comparator<Map.Entry<Long, UsageInfo>> compare) {
 
         // Sort intervals before sending to detail fragment.

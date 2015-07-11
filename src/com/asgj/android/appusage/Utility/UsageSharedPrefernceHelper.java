@@ -188,6 +188,21 @@ public class UsageSharedPrefernceHelper {
 		editor.commit();
 
 	}
+	
+	public static void setSwipeFeatureEnable(Context context, boolean enable) {
+		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+				Context.MODE_PRIVATE);
+		Editor editor = prefs.edit();
+		editor.putBoolean("swipeFeature", enable);
+		editor.commit();
+	}
+
+	public static boolean getSwipeFeatureEnable(Context context) {
+		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+				Context.MODE_PRIVATE);
+		return prefs.getBoolean("swipeFeature", false);
+	}
+
 
 	public static void setFilterMode(Context context, boolean isFilterMode) {
 		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
