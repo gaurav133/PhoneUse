@@ -117,6 +117,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
      class loadDataTask extends AsyncTask<Void, Void, Void> {
 
         private Context mContext; 
+        long totalMusicDuration = 0;
         loadDataTask(Context context) {
             mContext = context;
         }
@@ -225,6 +226,10 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 }
             }
             Collections.sort(mMusicList, startTimeSortComparator);
+            totalMusicDuration = 0;
+            for(int i =0; i< mMusicList.size() ; i++){
+            	totalMusicDuration = totalMusicDuration + mMusicList.get(i).getmIntervalDuration();
+            }
             return null;
         }        
         @Override
@@ -232,7 +237,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             // TODO Auto-generated method stub
             super.onPostExecute(result);
             mUsageListFragment.setmUsageAppData(mDataMap);
-            mUsageListFragment.setmMusicData(mMusicList);
+            mUsageListFragment.setmMusicData(mMusicList,totalMusicDuration);
         }
         
     }
@@ -354,7 +359,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	super.onAttachFragment(fragment);
     }
     
-    private void initDetailFragment(HashMap<Long,UsageInfo> intervalMap, String applicationName) {
+    private void initDetailFragment(HashMap<Long,UsageInfo> intervalMap, String applicationName,int position) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         
         LinkedHashMap<Long, UsageInfo> linkedMap = null;
@@ -364,6 +369,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         
         mDetailFragment = new UsageDetailListFragment(linkedMap);
+        mDetailFragment.setPackageNameAndDuration(Utils.getApplicationLabelName(mContext,applicationName),
+        		Utils.getTimeFromSeconds(mDataMap.get(applicationName)));
         mDetailFragment.setOnDetachListener(this);
         if (!Utils.isTabletDevice(mContext)) {
         	transaction.setCustomAnimations(R.anim.enter_from_right,
@@ -781,7 +788,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		        loadDataTask dataTaskToday = new loadDataTask(mContext);
 		        dataTaskToday.execute();
 				if(Utils.isTabletDevice(mContext))
-				updateDetailFragment(null);
+				updateDetailFragment(null,0);
 			}
            
 			break;
@@ -792,7 +799,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             loadDataTask dataTaskWeekly = new loadDataTask(mContext);
             dataTaskWeekly.execute();
             if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null);
+            updateDetailFragment(null,0);
 			break;
 		case R.id.showByOptionsMonthly:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[2]);
@@ -801,7 +808,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             loadDataTask dataTaskMonthly = new loadDataTask(mContext);
             dataTaskMonthly.execute();
             if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null);
+            updateDetailFragment(null,0);
 			break;
 		case R.id.showByOptionsYearly:
 			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[3]);
@@ -810,7 +817,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             loadDataTask dataTaskYearly = new loadDataTask(mContext);
             dataTaskYearly.execute();
             if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null);
+            updateDetailFragment(null,0);
 			break;
 		case R.id.showByOptionsCustom:
 			startDateFragment = new MonthViewFragment();
@@ -835,7 +842,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         loadDataTask dataTask = new loadDataTask(mContext);
         dataTask.execute();
             if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null);
+            updateDetailFragment(null,0);
     }
     
     @Override
@@ -845,7 +852,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         	hideFabOption();    	
     }
     
-    private void updateDetailFragment(String pkg) {
+    private void updateDetailFragment(String pkg,int position) {
         // Check current preference first.
     	HashMap<Long,UsageInfo> infoMap = null;
         // Check whether custom and end day not today.
@@ -879,7 +886,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         
         LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap,this);
-        initDetailFragment(linkedMap, Utils.getApplicationLabelName(mContext, pkg));
+        initDetailFragment(linkedMap, pkg,position);
     }
 
     @Override
@@ -890,7 +897,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     		return;
     	}
        
-        updateDetailFragment(pkg);
+        updateDetailFragment(pkg,position-1);
         
 		
 	}

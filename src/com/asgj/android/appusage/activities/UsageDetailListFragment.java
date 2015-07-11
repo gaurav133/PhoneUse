@@ -24,9 +24,16 @@ public class UsageDetailListFragment extends Fragment {
 	MusicListAdapter mAdapter = null;
 	private OnDetachFromActivity mOnDetachListener = null;
 	private HashMap<Long,UsageInfo> mInfoList = null;
+	private String mCurrentPackageName = null;
+	private String mTotalDuration = null;
 	
 	public UsageDetailListFragment() {
 		// TODO Auto-generated constructor stub
+	}
+	
+	public void setPackageNameAndDuration(String pkgName,String totalDur){
+		mCurrentPackageName = pkgName;
+		mTotalDuration = totalDur;
 	}
 	
 	public interface OnDetachFromActivity{
@@ -72,6 +79,7 @@ public class UsageDetailListFragment extends Fragment {
 				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		list.setLayoutParams(params);
 		mAdapter = new MusicListAdapter(mInfoList, getActivity());
+		mAdapter.setPackageNameAndDuration(mCurrentPackageName, mTotalDuration);
 		list.setAdapter(mAdapter);
 		list.setChildDivider(null);
 		list.setDivider(null);
