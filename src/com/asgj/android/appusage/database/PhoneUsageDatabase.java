@@ -256,14 +256,11 @@ public class PhoneUsageDatabase {
 
 	}
 
-	public long getTotalDurationOfAppInInternal(String packageName, String date, long start_time, long end_time,
-			boolean isShowExtendDurationIntervals) {
-		String selection = Columns.COLUMN_APP_NAME + "=" + packageName
-				+ " AND " + Columns.COLUMN_DATE + "=" + date + " AND "
-				+ Columns.COLUMN_START_INTERVAL_TIME + ">" + start_time;
-		if (!isShowExtendDurationIntervals)
-			selection = selection + " AND " + Columns.COLUMN_END_INTERVAL_TIME
-					+ "<" + end_time;
+	public long getTotalDurationOfAppInInternal(String packageName, Calendar calendar) {
+		String date = Utils.getDateFromMiliSeconds(calendar.getTimeInMillis());
+	    String selection = Columns.COLUMN_APP_NAME + "= '" + packageName
+				+ "'  AND " + Columns.COLUMN_DATE + "= '" + date + "'";
+		
 		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
 				null, null, null);
 		long total_time = 0;
@@ -303,11 +300,11 @@ public class PhoneUsageDatabase {
 	}
 
 	public long getTotalDurationOfApplicationOfAppByDate(String packageName,
-			String date) {
-		long time_start = Utils.getMiliSecFromDate(date);
-		long time_end = time_start + (24 * 3600 * 1000);
-		return getTotalDurationOfAppInInternal(packageName, date, time_start,
-				time_end, false);
+			long miliSec) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(miliSec);
+	    
+		return getTotalDurationOfAppInInternal(packageName, calendar);
 	}
 	
 	public ArrayList<String> getAllPackagesUsedByDate(String date){

@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -51,6 +52,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
     private static final String LOG_TAG = UsageTrackingService.class.getSimpleName();
     private PhoneUsageDatabase mDatabase;
     private Timer mTimer;
+    private int mNotificationId = 0;
 
     // Hash-map to hold time values for foreground and background activity time values.
     public HashMap<String, Integer> mCallDetailsMap;
@@ -75,6 +77,11 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
     private long mPreviousStartTime;
     private String mPackageName;
     private String mCurrentAppName, mPreviousAppName;
+
+    // Alert maps.
+    private HashMap<String, Long> mAlertDurationMap;
+    private HashMap<String, Boolean> mAlertNotifiedMap;
+    private HashMap<String, Long> mPresentDurationMap;
 
     private Context mContext = null;
     private long mStartTime;
@@ -112,6 +119,37 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                     }
                 }
             }
+        }
+    };
+
+    private BroadcastReceiver notificationAlertReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // TODO Auto-generated method stub
+
+            // Get alert packages from preferences.
+            // Firstly clear previous map.
+            mAlertDurationMap.clear();
+            mAlertNotifiedMap.clear();
+
+            mAlertNotifiedMap = UsageSharedPrefernceHelper.getApplicationsAlertForTracking(context);
+            mAlertDurationMap = UsageSharedPrefernceHelper
+                    .getApplicationsDurationForTracking(context);
+            
+            if (!mAlertDurationMap.isEmpty()) {
+                for (Map.Entry<String, Long> entry : mAlertDurationMap.entrySet()) {
+                    String pkg = entry.getKey();
+
+                    if (mAlertNotifiedMap.containsKey(pkg) && !mAlertNotifiedMap.get(pkg)) {
+                        mPresentDurationMap.put(
+                                pkg,
+                                mDatabase.getTotalDurationOfApplicationOfAppByDate(pkg,
+                                        System.currentTimeMillis()));
+                    }
+                }
+            }
+
         }
     };
 
@@ -184,6 +222,36 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                         mPreviousStartTime = currentTime;
                         mPreviousAppStartTimeStamp = System.currentTimeMillis();
                     }
+                    
+                    // Day change scenario, no applications have been notified.
+                    HashMap<String, Long> map = UsageSharedPrefernceHelper.getApplicationsDurationForTracking(mContext);
+                    
+                    if (map != null && !map.isEmpty()) {
+                        for (Map.Entry<String, Long> entry : map.entrySet()) {
+                            String pkg = entry.getKey();
+                            UsageSharedPrefernceHelper.setApplicationAlert(mContext, pkg, false);
+                        }
+                    }
+                    
+                    mAlertDurationMap.clear();
+                    mAlertNotifiedMap.clear();
+                    mPresentDurationMap.clear();
+                    
+                    mAlertDurationMap = map;
+                    mAlertNotifiedMap = UsageSharedPrefernceHelper.getApplicationsAlertForTracking(mContext);
+                    if (!mAlertDurationMap.isEmpty()) {
+                        for (Map.Entry<String, Long> entry : mAlertDurationMap.entrySet()) {
+                            String pkg = entry.getKey();
+
+                            if (mAlertNotifiedMap.containsKey(pkg) && !mAlertNotifiedMap.get(pkg)) {
+                                mPresentDurationMap.put(
+                                        pkg,
+                                        mDatabase.getTotalDurationOfApplicationOfAppByDate(pkg,
+                                                System.currentTimeMillis()));
+                            }
+                        }
+                    } 
+                    
 
                     initializeMap(mBgTrackingTask.foregroundMap);
 
@@ -375,6 +443,25 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         initThread(true);
         UsageSharedPrefernceHelper.setServiceRunning(mContext, true);
         Log.v(LOG_TAG, "Service 1 created");
+        mAlertDurationMap = new HashMap<>();
+        mAlertNotifiedMap = new HashMap<>();
+        mPresentDurationMap = new HashMap<>();
+        
+        mAlertDurationMap = UsageSharedPrefernceHelper.getApplicationsDurationForTracking(mContext);
+        mAlertNotifiedMap = UsageSharedPrefernceHelper.getApplicationsAlertForTracking(mContext);
+        
+        if (!mAlertDurationMap.isEmpty()) {
+            for (Map.Entry<String, Long> entry : mAlertDurationMap.entrySet()) {
+                String pkg = entry.getKey();
+
+                if (mAlertNotifiedMap.containsKey(pkg) && !mAlertNotifiedMap.get(pkg)) {
+                    mPresentDurationMap.put(
+                            pkg,
+                            mDatabase.getTotalDurationOfApplicationOfAppByDate(pkg,
+                                    System.currentTimeMillis()));
+                }
+            }
+        }
     }
 
     private void setUpReceivers(boolean register) {
@@ -385,18 +472,69 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
             IntentFilter timeTickFilter = new IntentFilter("android.intent.action.TIME_TICK");
             
             IntentFilter dataProvideFilter = new IntentFilter("com.android.asgj.appusage.action.DATA_PROVIDE");
+            IntentFilter notificationAlertFilter = new IntentFilter(
+                    "com.android.asgj.appusage.action.NOTIFICATION_ALERT");
             // Register receivers.
             registerReceiver(screenWakeUpReceiver, wakeUpFilter);
             registerReceiver(screenDimReceiver, dimFilter);
             registerReceiver(screenUserPresentReceiver, userPresentFilter);
             registerReceiver(timeTickReceiver, timeTickFilter);
             registerReceiver(dataProvideReceiver, dataProvideFilter);
+            registerReceiver(notificationAlertReceiver, notificationAlertFilter);
         } else {
             unregisterReceiver(screenUserPresentReceiver);
             unregisterReceiver(screenWakeUpReceiver);
             unregisterReceiver(screenDimReceiver);
             unregisterReceiver(timeTickReceiver);
             unregisterReceiver(dataProvideReceiver);
+            unregisterReceiver(notificationAlertReceiver);
+        }
+    }
+
+    private void sendAlertNotification() {
+
+        long time;
+        for (Map.Entry<String, Long> entry : mAlertDurationMap.entrySet()) {
+            String pkg = entry.getKey();
+
+            // If package has not been notified yet.
+            if (mAlertNotifiedMap.containsKey(pkg) && mAlertNotifiedMap.get(pkg) == false) {
+                time = mPresentDurationMap.get(pkg);
+                // If time is already exceeded. (i.e. prior to setting alert, usage has been more than alert time).
+                if (time > entry.getValue()) {
+                    Utils.sendNotification(mContext, pkg, mNotificationId);
+                    mNotificationId++;
+                    
+                    if (mNotificationId >= Integer.MAX_VALUE) {
+                        mNotificationId = 0;
+                    }
+                    mAlertNotifiedMap.put(pkg, true);
+                    mPresentDurationMap.remove(pkg);
+                    
+                    UsageSharedPrefernceHelper.setApplicationAlert(mContext, pkg, true);
+                } else {
+                    if (mCurrentAppName.equals(pkg)) {
+                        if (time > entry.getValue()) {
+                            // Issue a notification.
+                            Utils.sendNotification(mContext, pkg, mNotificationId);
+                            mNotificationId++;
+                            
+                            if (mNotificationId >= Integer.MAX_VALUE) {
+                                mNotificationId = 0;
+                            }
+                            mAlertNotifiedMap.put(pkg, true);
+                            mPresentDurationMap.remove(pkg);
+                            
+                            UsageSharedPrefernceHelper.setApplicationAlert(mContext, pkg, true);
+
+                        } else {
+                            mPresentDurationMap.put(pkg, mPresentDurationMap.get(pkg) + 1);
+                        }
+
+                    }
+                }
+                
+            }
         }
     }
 
@@ -621,10 +759,12 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                             mMusicStartTimeStamp = System.currentTimeMillis();
                         }
                     }
+                if (mPresentDurationMap != null && !mPresentDurationMap.isEmpty()) {
+                    sendAlertNotification();
                 }
             }
         }
-
+    }
        /**
     /**
      * Starts a new thread to track foreground and background application time.
