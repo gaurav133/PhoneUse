@@ -480,6 +480,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         
         mDetailFragment = new UsageDetailListFragment(linkedMap);
+        if(packageName != null)
         mDetailFragment.setPackageNameAndDuration(Utils.getApplicationLabelName(mContext,packageName),
         		Utils.getTimeFromSeconds(mDataMap.get(packageName)));
         mDetailFragment.setOnDetachListener(this);
@@ -1019,6 +1020,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
 	@Override
 	public void onDetach() {
+		initActionBar();
 		if(!Utils.isTabletDevice(mContext)){
 			setFabButtonsVisibility(true);
 		}

@@ -25,10 +25,10 @@ public class MusicListAdapter implements ExpandableListAdapter {
 	private HashMap<String, ArrayList<UsageInfo>> mIntervalMap = null;
 	private Context mContext = null;
 	private ArrayList<String> mGroupList = null;
-	private boolean isDetailFragmentAdapter = false;
 	Typeface mNormalTypeface, mBoldTypeface;
 	private String mCurrentPackageName = null;
 	private String mTotalDuration = null;
+	private boolean isDetailFragmentAdapter = false;
 	
 	public void setPackageNameAndDuration(String pkgName,String totalDur){
 		mCurrentPackageName = pkgName;
@@ -124,12 +124,9 @@ public class MusicListAdapter implements ExpandableListAdapter {
 		if (mIntervalMap != null) {
 			image_view_app_icon.setVisibility(View.GONE);
 			text_middle.setVisibility(View.VISIBLE);
-			int position = 0;
-			if(isDetailFragmentAdapter){
-				position = groupPosition - 2;
-			}else{
+			int position = groupPosition;
+				if(!Utils.isTabletDevice(mContext) || !isDetailFragmentAdapter)
 				position = groupPosition - 1;
-			}
 			UsageInfo info = mIntervalMap.get(mGroupList.get(position)).get(
 					childPosition);
 			text_left.setText(""
@@ -163,16 +160,12 @@ public class MusicListAdapter implements ExpandableListAdapter {
 
 	@Override
 	public int getChildrenCount(int groupPosition) {
-		if ((isDetailFragmentAdapter && (groupPosition == 0 || groupPosition == 1))
-				|| (!isDetailFragmentAdapter && groupPosition == 0)) {
+		if ((!Utils.isTabletDevice(mContext) || !isDetailFragmentAdapter) && groupPosition == 0) {
 			return 0;
 		} else {
-			int position = 0;
-			if(isDetailFragmentAdapter){
-				position = groupPosition - 2;
-			}else{
+			int position = groupPosition;
+				if(!Utils.isTabletDevice(mContext) || !isDetailFragmentAdapter)
 				position = groupPosition - 1;
-			}
 			return mIntervalMap.get(mGroupList.get(position)).size();
 		}
 
@@ -201,7 +194,7 @@ public class MusicListAdapter implements ExpandableListAdapter {
 	@Override
 	public int getGroupCount() {
 		// TODO Auto-generated method stub
-		return isDetailFragmentAdapter ? mGroupList.size() + 2 : mGroupList.size() + 1;
+		return (!Utils.isTabletDevice(mContext) || !isDetailFragmentAdapter) ? mGroupList.size() + 1 : mGroupList.size();
 	}
 
 	@Override
@@ -221,22 +214,9 @@ public class MusicListAdapter implements ExpandableListAdapter {
 			Utils.getScaledImageView(mContext, imageView);
 		}
 		TextView textview = (TextView) convertView.findViewById(R.id.group_title);
-		TextView packageTitle = (TextView) convertView.findViewById(R.id.group_package_title);
 		TextView totalDuration = (TextView) convertView.findViewById(R.id.group_total_duration);
 		ImageView imageView = (ImageView) convertView.findViewById(R.id.drop_icon);
-			if(isDetailFragmentAdapter && groupPosition == 0){
-				packageTitle.setVisibility(View.VISIBLE);
-				totalDuration.setVisibility(View.GONE);
-				textview.setVisibility(View.GONE);
-				imageView.setVisibility(View.GONE);
-				packageTitle.setTextColor(mContext.getResources().getColor(
-                        R.color.color_total_time_title));
-				packageTitle.setTypeface(mBoldTypeface);
-				packageTitle.setText(mCurrentPackageName.toUpperCase());
-                convertView.setFocusable(true);
-                convertView.setClickable(true);
-			}else if((isDetailFragmentAdapter && groupPosition == 1) || (!isDetailFragmentAdapter && groupPosition == 0)){
-				packageTitle.setVisibility(View.GONE);
+		  if((!Utils.isTabletDevice(mContext) || !isDetailFragmentAdapter ) && groupPosition == 0){
 				totalDuration.setVisibility(View.VISIBLE);
 				textview.setVisibility(View.VISIBLE);
 				imageView.setVisibility(View.GONE);
@@ -251,7 +231,6 @@ public class MusicListAdapter implements ExpandableListAdapter {
                 convertView.setFocusable(true);
                 convertView.setClickable(true);
 			}else{
-				packageTitle.setVisibility(View.GONE);
 				totalDuration.setVisibility(View.GONE);
 				textview.setVisibility(View.VISIBLE);
 				imageView.setVisibility(View.VISIBLE);
@@ -260,16 +239,12 @@ public class MusicListAdapter implements ExpandableListAdapter {
 				convertView.setFocusable(false);
                 convertView.setClickable(false);
 			}
-		if((isDetailFragmentAdapter && (groupPosition == 0 || groupPosition == 1))
-				|| (!isDetailFragmentAdapter && groupPosition == 0)){
+		if((!Utils.isTabletDevice(mContext) || !isDetailFragmentAdapter ) && groupPosition == 0){
 			return convertView;
 		}
-		int position = 0;
-		if(isDetailFragmentAdapter){
-			position = groupPosition - 2;
-		}else{
+		int position = groupPosition;
+			if(!Utils.isTabletDevice(mContext) || !isDetailFragmentAdapter)
 			position = groupPosition - 1;
-		}
 		String date = mGroupList.get(position);
 		if (Utils.isDateToday(date)) {
 			textview.setText(R.string.string_Today);
