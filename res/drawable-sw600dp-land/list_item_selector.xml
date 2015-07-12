@@ -2,8 +2,7 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true"  android:drawable="@drawable/drawable_selected_state"/>
     <item android:state_selected="true"  android:drawable="@drawable/drawable_selected_state"/>
-    <item android:state_activated="true" android:drawable="@drawable/drawable_activated_state"/>
-    <item android:state_activated="false" android:drawable="@drawable/drawable_normal_state"/>    
+    <item android:drawable="@drawable/drawable_normal_state"/>    
 
 
 </selector>
