@@ -174,10 +174,11 @@ public class UsageListFragment<AppData, MusicData> extends
 	}
 
 	@SuppressWarnings("unchecked")
-    public void setmMusicData(MusicData mMusicData) {
+    public void setmMusicData(MusicData mMusicData,long totalDuration) {
 		this.mMusicData = mMusicData;
 		try {
 			mMusicDataListAdapter = new MusicListAdapter((ArrayList<UsageInfo>)this.mMusicData,getActivity());
+			mMusicDataListAdapter.setPackageNameAndDuration(null, Utils.getTimeFromSeconds(totalDuration));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -609,7 +610,7 @@ public class UsageListFragment<AppData, MusicData> extends
 				musicListView.setGroupIndicator(null);
 				musicListView.setVisibility(View.VISIBLE);
 				musicListView.setAdapter(mMusicDataListAdapter);
-				if (mMusicDataListAdapter.getGroupCount() == 0) {
+				if (mMusicDataListAdapter.getGroupCount() == 1) {
 				    textViewNoData.setText(getString(R.string.string_no_data_music));
 			        if (UsageSharedPrefernceHelper.isServiceRunning(getActivity())) {
 			            textViewNoData.setVisibility(View.VISIBLE);
