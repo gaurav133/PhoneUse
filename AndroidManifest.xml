@@ -31,7 +31,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.asgj.android.appusage.activities.SettingActivity"
+            android:name="com.asgj.android.appusage.activities.SettingsActivity"
             android:label="@string/string_settings"
 			android:configChanges="layoutDirection|screenSize|orientation">
             <intent-filter>
