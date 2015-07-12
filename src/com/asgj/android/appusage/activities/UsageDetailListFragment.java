@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.LinearLayout.LayoutParams;
 
 import com.asgj.android.appusage.R;
@@ -76,7 +77,11 @@ public class UsageDetailListFragment extends Fragment {
 	    super.onCreate(savedInstanceState);
         if (!Utils.isTabletDevice(getActivity().getApplicationContext())) {
             if (getActivity() != null && getActivity().getActionBar() != null) {
-                getActivity().getActionBar().setTitle(mActionBarTitle);
+                View view = getActivity().getActionBar().getCustomView();
+                if(view != null){
+                	TextView mTitleTextView = (TextView) view.findViewById(R.id.title_text);
+                	mTitleTextView.setText(mCurrentPackageName);
+                }
             }
         }
 	}
