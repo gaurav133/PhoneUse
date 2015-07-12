@@ -19,7 +19,7 @@
 
     <!-- Main screen theme. -->
     <style name="mainActionBarBckgnd" parent="@android:style/Widget.ActionBar">
-        <item name="android:background">#ff1ca8f4</item>
+        <item name="android:background">@color/color_action_bar_background</item>
         <item name="android:titleTextStyle">@style/actionbartitlestyle</item>
         <item name="android:displayOptions">showTitle</item>
        
@@ -30,16 +30,18 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
     <!-- Main screen action bar style. -->
-    <style name="mainActionBarStyle" parent="@android:style/Theme.DeviceDefault.Light">
+    <style name="applicationTheme" parent="@android:style/Theme.DeviceDefault.Light">
+        <item name="android:contentInsetStart">0dp</item>
         <item name="android:actionBarStyle">@style/mainActionBarBckgnd</item>
         <item name="android:actionOverflowButtonStyle">@style/MyActionButtonOverflow</item>
          <item name="android:actionMenuTextColor">@android:color/white</item>
-         <item name="android:homeAsUpIndicator">@drawable/ic_action_back</item>
+         <item name="android:homeAsUpIndicator">@drawable/abc_ic_ab_back_mtrl_am_alpha</item>
+         <item name="android:windowContentOverlay">@null</item>
     </style>
 
     <style name="MyActionButtonOverflow" parent="android:style/Widget.Holo.ActionButton.Overflow">
-        <item name="android:src">@android:drawable/ic_menu_more</item>
-        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:src">@drawable/abc_ic_menu_moreoverflow_mtrl_alpha</item>
+        
     </style>
 
 </resources>
