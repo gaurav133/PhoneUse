@@ -25,10 +25,12 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -93,7 +95,57 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private int mFabMarginsRight = 50;
     private int mFabMarginsBottom = 20;
     HashMap<String, UsageStats> mCurrentMap;
-    ArrayList<ResolveInfo> mResolveInfo = null;
+    HashMap<String, ResolveInfo> mResolveInfo = null;
+    private ArrayList<ResolveInfo> mList;
+    private Intent mNotificationIntent = null;
+    
+    // Alert maps.
+    private HashMap<String, Long> mAlertDurationMap;
+    private HashMap<String, Boolean> mAlertNotifiedMap;
+    private int mNotificationId = 0;
+
+    private BroadcastReceiver notificationAlertReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // TODO Auto-generated method stub
+
+            // Get alert packages from preferences.
+            // Firstly clear previous map.
+            if (mAlertDurationMap != null && mAlertNotifiedMap != null) {
+                mAlertDurationMap.clear();
+                mAlertNotifiedMap.clear();
+            }
+
+            mAlertNotifiedMap = new HashMap<>();
+            mAlertDurationMap = new HashMap<>();
+            
+            mAlertNotifiedMap = UsageSharedPrefernceHelper.getApplicationsAlertForTracking(context);
+            mAlertDurationMap = UsageSharedPrefernceHelper
+                    .getApplicationsDurationForTracking(context);
+            
+            if (!mAlertDurationMap.isEmpty()) {
+                for (Map.Entry<String, Long> entry : mAlertDurationMap.entrySet()) {
+                    String pkg = entry.getKey();
+
+                    if (mAlertNotifiedMap.containsKey(pkg) && !mAlertNotifiedMap.get(pkg)) {
+                        long time = mDatabase.getTotalDurationOfApplicationOfAppByDate(pkg, System.currentTimeMillis());
+                        if (time > entry.getValue()) {
+                            Utils.sendNotification(context, pkg, mNotificationId);
+                            
+                            mAlertNotifiedMap.put(pkg, true);
+                            UsageSharedPrefernceHelper.setApplicationAlert(mContext, pkg, true);
+                            mNotificationId++;
+                            if (mNotificationId >= Integer.MAX_VALUE) {
+                                mNotificationId = 0;
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+    };
 
     private void setFabPositions() {
         if (isFabPositionSet) {
@@ -114,6 +166,15 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         isFabPositionSet = true;
     }
     
+    @Override
+    protected void onNewIntent(Intent intent) {
+        // TODO Auto-generated method stub
+        super.onNewIntent(intent);
+        mNotificationIntent = intent;
+        initListFragment(true);
+        mUsageListFragment.setOnUsageItemClickListener(this);
+        
+    }
      class loadDataTask extends AsyncTask<Void, Void, Void> {
 
         private Context mContext; 
@@ -127,28 +188,29 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
          // Fetch static data for today.
             mDataMap = new HashMap<>();
 
+            if (mDatabase != null) {
+                switch (UsageSharedPrefernceHelper.getShowByType(getApplicationContext())) {
+                case "Today":
+                case "Weekly":
+                case "Monthly":
+                case "Yearly":
+                    mDataMap = mDatabase.getAppDurationForGivenTimes(getApplicationContext(),
+                            UsageSharedPrefernceHelper.getCalendarByShowType(getApplicationContext()),
+                            Calendar.getInstance());
+                    break;
+                case "Custom":
+                    if (Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+                        mDataMap = mDatabase.getAppDurationForGivenTimes(getApplicationContext(),
+                                cal1, cal2);
+                    } else {
+                        mDataMap = mDatabase.getAppDurationForGivenTimes(getApplicationContext(),
+                                cal1, Calendar.getInstance());
+                    }
 
-            switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
-            case "Today":
-            case "Weekly":
-            case "Monthly":
-            case "Yearly":
-                mDataMap = mDatabase.getAppDurationForGivenTimes(mContext,
-                        UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
-                        Calendar.getInstance());
-                break;
-            case "Custom":
-                if (Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
-                    mDataMap = mDatabase.getAppDurationForGivenTimes(mContext,
-                            cal1, cal2);
-                } else {
-                    mDataMap = mDatabase.getAppDurationForGivenTimes(mContext,
-                            cal1, Calendar.getInstance());
+                    break;
+                default:
+                    break;
                 }
-
-                break;
-            default:
-                break;
             }
 
             // Service running part. Broadcast and get data. 
@@ -165,16 +227,18 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                         @Override
                         public void provideMap(HashMap<String, Long> map) {
                             // TODO Auto-generated method stub
-                                Log.v ("gaurav", "Interface call");
-                                for (Map.Entry<String, Long> dataEntry : map.entrySet()) {
-                                    String key = dataEntry.getKey();
-                                    Log.v ("gaurav", "Data map before entry: " + mDataMap);
-                                    if (mDataMap.containsKey(key)) {
-                                        mDataMap.put(key, dataEntry.getValue() + mDataMap.get(key));
-                                    } else {
-                                        mDataMap.put(key, dataEntry.getValue());
-                                    }
+                            Log.v("gaurav", "Interface call");
+                            for (Map.Entry<String, Long> dataEntry : map.entrySet()) {
+                                String key = dataEntry.getKey();
+                                Log.v("gaurav", "Data map before entry: " + mDataMap);
+                                if (mDataMap != null) {
+                                if (mDataMap.containsKey(key)) {
+                                    mDataMap.put(key, dataEntry.getValue() + mDataMap.get(key));
+                                } else {
+                                    mDataMap.put(key, dataEntry.getValue());
                                 }
+                                }
+                            }
 
                             }
                         });
@@ -194,25 +258,28 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 }
                 
             };
-            switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
-            case "Today":
-            case "Weekly":
-            case "Monthly":
-            case "Yearly":
-                mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext,
-                        UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
-                        Calendar.getInstance());
-                break;
-            case "Custom":
-                if (Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
-                    mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1, cal2);
-                } else {
-                    mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1,
+
+            if (mDatabase != null) {
+                switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
+                case "Today":
+                case "Weekly":
+                case "Monthly":
+                case "Yearly":
+                    mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext,
+                            UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
                             Calendar.getInstance());
+                    break;
+                case "Custom":
+                    if (Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+                        mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1, cal2);
+                    } else {
+                        mMusicList = mDatabase.getMusicIntervalsBetweenDates(mContext, cal1,
+                                Calendar.getInstance());
+                    }
+                    break;
+                default:
+                    break;
                 }
-                break;
-            default:
-                break;
             }
 
                 // Check whether custom and end day not today.
@@ -254,7 +321,16 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         		getString(R.string.string_Weekly),getString(R.string.string_Monthly)
         		,getString(R.string.string_Yearly),getString(R.string.string_Custom)};
         mDatabase = new PhoneUsageDatabase(mContext);
-        initListFragment();
+        
+        IntentFilter notificationFilter = new IntentFilter("com.android.asgj.appusage.action.NOTIFICATION_ALERT_ACTIVITY");
+        registerReceiver(notificationAlertReceiver, notificationFilter);
+        mNotificationIntent = getIntent();
+        
+        if (mNotificationIntent.getAction().equals("com.android.asgj.appusage.action.NOTIFIICATION") && ((mNotificationIntent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0)) {
+            initListFragment(true);
+        } else {
+            initListFragment(false);
+        }
         mUsageListFragment.setOnUsageItemClickListener(this);
 
         initFabTextView();
@@ -276,7 +352,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         this.cal2 = Calendar.getInstance();
         long endTime = UsageSharedPrefernceHelper.getCalendar(mContext, "endCalendar");
         cal2.setTimeInMillis(endTime);
-        
+
+        mList = new ArrayList<ResolveInfo>();
         new Thread(new Runnable() {
 			
 			@Override
@@ -334,13 +411,20 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
     }
 
-    private void initListFragment() {
+    private void initListFragment(boolean isAlertMode) {
     	Fragment fragment = getFragmentManager().findFragmentById(R.id.usage_list_main_fragment); 
     	if(fragment != null){
     		getFragmentManager().popBackStackImmediate();
     	}
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         mUsageListFragment = new UsageListFragment<HashMap<String, Long>, ArrayList<UsageInfo>>();
+        
+        if (isAlertMode) {
+            Bundle bundle = new Bundle();
+            bundle.putString("package", mNotificationIntent.getStringExtra("package"));
+            mUsageListFragment.setArguments(bundle);
+        }
+        
         transaction.replace(R.id.usage_list_main_fragment, mUsageListFragment);
         transaction.commit();
     }
@@ -359,7 +443,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	super.onAttachFragment(fragment);
     }
     
-    private void initDetailFragment(HashMap<Long,UsageInfo> intervalMap, String applicationName,int position) {
+    private void initDetailFragment(HashMap<Long, UsageInfo> intervalMap, String packageName) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         
         LinkedHashMap<Long, UsageInfo> linkedMap = null;
@@ -369,8 +453,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         
         mDetailFragment = new UsageDetailListFragment(linkedMap);
-        mDetailFragment.setPackageNameAndDuration(Utils.getApplicationLabelName(mContext,applicationName),
-        		Utils.getTimeFromSeconds(mDataMap.get(applicationName)));
+        mDetailFragment.setPackageNameAndDuration(Utils.getApplicationLabelName(mContext,packageName),
+        		Utils.getTimeFromSeconds(mDataMap.get(packageName)));
         mDetailFragment.setOnDetachListener(this);
         if (!Utils.isTabletDevice(mContext)) {
         	transaction.setCustomAnimations(R.anim.enter_from_right,
@@ -406,7 +490,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     };
     
     private void initPackageList() {
-    	mResolveInfo = new ArrayList<ResolveInfo>();
+        mResolveInfo = new HashMap<String, ResolveInfo>();
 
 		PackageManager packageManager = mContext.getPackageManager();
 		Intent launcherIntent = new Intent(Intent.ACTION_MAIN, null);
@@ -416,16 +500,19 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		mAppInfo = (ArrayList<android.content.pm.ResolveInfo>) packageManager
 				.queryIntentActivities(launcherIntent, 0);
 
-		for (android.content.pm.ResolveInfo info : mAppInfo) {
-			ResolveInfo infoItem = new ResolveInfo();
-			infoItem.setmApplicationName(info.loadLabel(packageManager)
-					.toString());
-			infoItem.setmPackageName(info.activityInfo.packageName);
-			mResolveInfo.add(infoItem);
-		}
+        for (android.content.pm.ResolveInfo info : mAppInfo) {
+            ResolveInfo infoItem = new ResolveInfo();
+            infoItem.setmApplicationName(Utils.getApplicationLabelName(mContext,
+                    info.activityInfo.packageName));
+            infoItem.setmPackageName(info.activityInfo.packageName);
 
-		
-	}
+            if (!mResolveInfo.containsKey(info.activityInfo.packageName)) {
+                mResolveInfo.put(info.activityInfo.packageName, infoItem);
+            }
+        }
+        mList.addAll(mResolveInfo.values());
+
+    }
 
     
 
@@ -477,7 +564,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             unbindService(mConnection);
             mConnection = null;
         }
-        
+
+        unregisterReceiver(notificationAlertReceiver);
         mResolveInfo = null;
         
         UsageSharedPrefernceHelper.setCalendar(mContext, cal1.getTimeInMillis(), "startCalendar");
@@ -670,13 +758,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             dialog.show();
             break;
         case R.id.action_setting:
-        	if(mResolveInfo == null || mResolveInfo.size() == 0){
-        		break;
-        	}
-        	Intent intent = new Intent(this, SettingActivity.class);
-        	intent.putParcelableArrayListExtra("packageList", mResolveInfo);
-        	startActivity(intent);
-        	break;
+            if (mList == null || mList.size() == 0) {
+                break;
+            }
+            Intent intent = new Intent(this, SettingActivity.class);
+            intent.putParcelableArrayListExtra("packageList", mList);
+            startActivity(intent);
+            break;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -884,9 +972,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 break;
             }
         }
-        
-        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap,this);
-        initDetailFragment(linkedMap, pkg,position);
+
+        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap, this);
+        initDetailFragment(linkedMap, pkg);
     }
 
     @Override

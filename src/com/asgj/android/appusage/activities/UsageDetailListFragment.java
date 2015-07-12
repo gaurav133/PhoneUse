@@ -17,7 +17,6 @@ import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.UsageInfo;
 import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.ui.widgets.MusicListAdapter;
-import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
 public class UsageDetailListFragment extends Fragment {
 
@@ -26,6 +25,7 @@ public class UsageDetailListFragment extends Fragment {
 	private HashMap<Long,UsageInfo> mInfoList = null;
 	private String mCurrentPackageName = null;
 	private String mTotalDuration = null;
+	private String mActionBarTitle;
 	
 	public UsageDetailListFragment() {
 		// TODO Auto-generated constructor stub
@@ -67,7 +67,24 @@ public class UsageDetailListFragment extends Fragment {
 	}
 
 	public UsageDetailListFragment(HashMap<Long,UsageInfo> infoList) {
-		mInfoList = infoList;
+		mInfoList = infoList;		
+	}
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+	    // TODO Auto-generated method stub
+	    super.onCreate(savedInstanceState);
+        if (!Utils.isTabletDevice(getActivity().getApplicationContext())) {
+            if (getActivity() != null && getActivity().getActionBar() != null) {
+                getActivity().getActionBar().setTitle(mActionBarTitle);
+            }
+        }
+	}
+	
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+	    // TODO Auto-generated method stub
+	    super.onActivityCreated(savedInstanceState);
 	}
 
 	@Override
@@ -80,6 +97,7 @@ public class UsageDetailListFragment extends Fragment {
 		list.setLayoutParams(params);
 		mAdapter = new MusicListAdapter(mInfoList, getActivity());
 		mAdapter.setPackageNameAndDuration(mCurrentPackageName, mTotalDuration);
+		getActivity().getActionBar().setTitle(mCurrentPackageName);
 		list.setAdapter(mAdapter);
 		list.setChildDivider(null);
 		list.setDivider(null);

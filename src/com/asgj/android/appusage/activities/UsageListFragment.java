@@ -110,6 +110,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	private UsageDetailListFragment mDetailFragment = null;
 	private Calendar cal2;
 	private Calendar cal1;
+	private String mAlertPackage = null;
 	public void setOnUsageItemClickListener(OnUsageItemClickListener listener){
 		mItemClickListener = listener;
 	}
@@ -191,6 +192,10 @@ public class UsageListFragment<AppData, MusicData> extends
         if (getActivity() != null && UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
             mIsFilteredMap = true;
         }
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            mAlertPackage = bundle.getString("package");
+        }
         super.onCreate(savedInstanceState);
     }
     
@@ -203,6 +208,9 @@ public class UsageListFragment<AppData, MusicData> extends
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         mDatabase = new PhoneUsageDatabase(getActivity());
+        if (!Utils.isTabletDevice(getActivity())) {
+            getActivity().getActionBar().setTitle(getActivity().getResources().getString(R.string.app_name));
+        }
         return inflater.inflate(R.layout.usage_fragment_layout, container, false);
     }
 
@@ -444,7 +452,7 @@ public class UsageListFragment<AppData, MusicData> extends
 		public boolean isViewFromObject(View view, Object o) {
 			return o == view;
 		}
-		private void updateDetailFragment(String pkg) {
+		private void updateDetailFragmentForTablet(String pkg, int position) {
 	        // Check current preference first.
 	    	HashMap<Long,UsageInfo> infoMap = null;
 	        // Check whether custom and end day not today.
@@ -591,6 +599,21 @@ public class UsageListFragment<AppData, MusicData> extends
 			        container.addView(viewNoData);
 			        returnView = viewNoData;
 			    } else {
+			        if (mAlertPackage != null) {
+			            if (mAppDataListAdapter.getPackageNameKeys().contains(mAlertPackage)) {
+			                
+			                if (Utils.isTabletDevice(getActivity())) {
+			                    mAppDataListAdapter.setClickedItem(mAppDataListAdapter.getPackageNameKeys().indexOf(mAlertPackage));
+	                            mAppDataListAdapter.notifyDataSetChanged();
+			                    updateDetailFragmentForTablet(mAlertPackage, mAppDataListAdapter.getPackageNameKeys().indexOf(mAlertPackage));
+			                } else {
+			                    if (mItemClickListener != null) {
+			                        mItemClickListener.onUsageItemClick(mAlertPackage, mAppDataListAdapter.getPackageNameKeys().indexOf(mAlertPackage));
+			                    }
+			                }
+			                mAlertPackage = null;
+			            }
+			        }
 			        textViewNoData.setVisibility(View.GONE);
 			        textViewNoDataStartTracking.setVisibility(View.GONE);
                     
@@ -667,7 +690,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			if(!Utils.isTabletDevice(getActivity()) && mItemClickListener != null){
 				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}else{
-				updateDetailFragment(mAppDataListAdapter.getPackageNameKeys().get(position));
+			    updateDetailFragmentForTablet(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}
 			
 		}
@@ -692,7 +715,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			if(!Utils.isTabletDevice(getActivity()) && mItemClickListener != null){
 				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}else{
-				updateDetailFragment(mAppDataListAdapter.getPackageNameKeys().get(position));
+				updateDetailFragmentForTablet(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}
 			
 		}

@@ -13,11 +13,12 @@ import android.content.SharedPreferences.Editor;
 import com.asgj.android.appusage.R;
 
 public class UsageSharedPrefernceHelper {
-	private static String PREFERNCE_NAME = "phone.usage";
-	private static final String LOG_TAG = UsageSharedPrefernceHelper.class
-			.getSimpleName();
-	private static String PREFERNCE_NAME_MONTIERING_INFO = "phone.usage.moniter.info";
-	private static String PREF_NAME_AUTO_TRACKING_INFO = "phone.usage.app.auto.tracking.info";
+    private static String PREFERNCE_NAME = "phone.usage";
+    private static final String LOG_TAG = UsageSharedPrefernceHelper.class
+            .getSimpleName();
+    private static String PREF_NAME_AUTO_TRACKING_INFO = "phone.usage.app.auto.tracking.info";
+    private static String PREF_NAME_ALERT_DURATION_INFO = "phone.usage.app.alert.duration.info";
+    private static String PREF_NAME_ALERT_NOTIFIED_INFO = "phone.usage.app.alert.notified.info";
 
 	public static void insertTotalDurationAppInPref(Context context,
 			String pkgName, long time, String prefName) {
@@ -28,7 +29,11 @@ public class UsageSharedPrefernceHelper {
 		editor.commit();
 	}
 
-
+    public static long getTotalDurationAppInPref(Context context, String pkgName) {
+        SharedPreferences prefs = context.getSharedPreferences(
+                PREF_NAME_ALERT_DURATION_INFO, Context.MODE_PRIVATE);
+        return prefs.getLong(pkgName, 0);
+    }
 
 	public static void setServiceRunning(Context context,
 			boolean isServiceRunning) {
@@ -115,52 +120,77 @@ public class UsageSharedPrefernceHelper {
 
 	}
 	
-	
-	public static void setMoniterTimeForPackage(Context context, String pkgName,int hours) {
-		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME_MONTIERING_INFO,
-				Context.MODE_PRIVATE);
-		Editor editor = prefs.edit();
-		editor.putInt(pkgName, hours);
-		editor.commit();
-	}
-	
-	public static void removeMoniterTimeForPackage(Context context,String pkgName){
+    public static void setApplicationsForTracking(Context context, HashMap<String, Long> alertMap) {
 
-		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME_MONTIERING_INFO,
-				Context.MODE_PRIVATE);
-		Editor editor = prefs.edit();
-		editor.remove(pkgName);
-		editor.commit();
-	
-		
-	}
+        HashMap<String, Long> previousMapDuration = getApplicationsDurationForTracking(context);
+        HashMap<String, Boolean> previousMapAlert = getApplicationsAlertForTracking(context);
+		// First remove old entries from previous map which don't require to be notified now.
+        if (previousMapDuration != null && alertMap != null && previousMapAlert != null) {
+            previousMapDuration.keySet().retainAll(alertMap.keySet());
+            previousMapAlert.keySet().retainAll(alertMap.keySet());
 
-	public static int getMoniterTimeForPackage(Context context,String pkgName) {
-		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME_MONTIERING_INFO,
-				Context.MODE_PRIVATE);
-		return prefs.getInt(pkgName, 0);
-	}
+            // Now add new entries to previous map and update old entries if duration is changed.
+            for (Map.Entry<String, Long> entry : alertMap.entrySet()) {
 
+                String pkg = entry.getKey();
+                Long duration = entry.getValue();
+                Boolean isNotified = true;
 
-	public static void setApplicationForTracking(Context context, String info,
-			boolean isAdded) {
-		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
-				Context.MODE_PRIVATE);
-		Editor editor = prefs.edit();
-		Set<String> mInfoList = new HashSet<>();
-		if (prefs.contains("applicationtracking")) {
-			mInfoList.addAll(prefs.getStringSet("applicationtracking", null));
-		}
-		if (!mInfoList.contains(info) && isAdded) {
-			mInfoList.add(info);
-		}
-		if (mInfoList.contains(info) && !isAdded) {
-			mInfoList.remove(info);
-		}
-		editor.putStringSet("applicationtracking", mInfoList);
-		editor.commit();
+                // In case previous map has an entry with different duration, update duration.
+                if (previousMapDuration.containsKey(pkg)) {
+                    if (previousMapDuration.get(pkg) != duration) {
+                        isNotified = false;
+                        previousMapDuration.put(pkg, duration);
+                        previousMapAlert.put(pkg, isNotified);
+                    }
+                } else {
+                    isNotified = false;
+                    previousMapDuration.put(pkg, duration);
+                    previousMapAlert.put(pkg, isNotified);
+                }
 
-	}
+                // Save the updated package alert to preferences.
+                insertTotalDurationAppInPref(context, pkg, duration, PREF_NAME_ALERT_DURATION_INFO);
+                setApplicationAlert(context, pkg, isNotified);
+            }
+            
+            if (previousMapDuration.isEmpty()) {
+                clearPreference(context, PREF_NAME_ALERT_DURATION_INFO);
+                clearPreference(context, PREF_NAME_ALERT_NOTIFIED_INFO);
+                return;
+            }
+        }
+
+    }
+    
+    public static void clearPreference (Context context, String prefName) {
+        SharedPreferences pref = context.getSharedPreferences(prefName, Context.MODE_PRIVATE);
+        Editor editor = pref.edit();
+        editor.clear();
+        editor.apply();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static HashMap<String, Long> getApplicationsDurationForTracking(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_ALERT_DURATION_INFO,
+                Context.MODE_PRIVATE);
+        return (HashMap<String, Long>) prefs.getAll();
+    }
+
+    public static void setApplicationAlert(Context context, String pkg, boolean isNotified) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_ALERT_NOTIFIED_INFO,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putBoolean(pkg, isNotified);
+        editor.apply();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static HashMap<String, Boolean> getApplicationsAlertForTracking(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_ALERT_NOTIFIED_INFO,
+                Context.MODE_PRIVATE);
+        return (HashMap<String, Boolean>) prefs.getAll();
+    }
 
 	public static Set<String> getSelectedApplicationForFiltering(Context context) {
 		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,

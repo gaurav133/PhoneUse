@@ -62,7 +62,9 @@
     <string name="string_select_start_and_end_date">Select Start and End Date</string>
     <string name="string_desc_low_memory_dialog">Your device is running low on memory. Kill some applications using task manager and then retry starting tracking.</string>
     <string name="string_share">Share</string>
-    <string name="string_notify">Notify after %d hours</string>
+    <string name="string_notify_hours">Notify after %d hours.</string>
+    <string name="string_notify_minutes">Notify after %d minutes.</string>
+    <string name="string_notify_hours_minutes">Notify after %1$d hours and %2$d minutes.</string>
     <string name="string_swipe_pref_title">Share by Swipe Function</string>
     <string name="string_swipe_pref_off">Enable Swipe Feature on list items will let you share to your friends. But ripple effect will ont work.</string>
     <string name="string_swipe_pref_on">For enabling ripple effect on list item. Please disable Share by Swipe.</string>

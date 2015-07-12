@@ -89,6 +89,11 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         }
     }
     
+    public void setClickedItem(int position) {
+        mCurrentSelectedItem = position;
+        notifyDataSetChanged();
+    }
+    
     public ArrayList<String> getPackageNameKeys() {
         return mKeys;
     }
@@ -132,7 +137,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 		holder.parent.setTag(holder);
 		
 		if (Utils.isTabletDevice(mContext)) {
-			if (mCurrentSelectedItem == position) {
+			if (mCurrentSelectedItem == position && position != 0) {
 				holder.parent
 						.setBackgroundColor(mContext.getResources().getColor(R.color.color_action_bar_background));
 			} else if (mCurrentSelectedItem != -1) {

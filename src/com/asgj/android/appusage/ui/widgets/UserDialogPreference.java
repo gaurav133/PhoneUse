@@ -10,6 +10,8 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentSender.SendIntentException;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -30,6 +32,8 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     private static final int NOTIFICATION_PREF = 1;
     private static final int PACKAGES_FILTER_PREF = 2;
     private int mCurrentPref = 0;
+    private HashMap<String, Long> mSelectedAlertMap;
+    private HashMap<String, Long> mAlertMap;
 
     @Override
     protected void showDialog(Bundle state) {
@@ -38,37 +42,50 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     	if(mAdapter==null || mResolveInfo == null || mResolveInfo.size() == 0)
     		return;
         Set<String> mAlreadySelectedSet = null;
+        mAlertMap = mAdapter.getMonitorMap();
         int selectedCount = 0;
         if (mAdapter.getCurrentPref() == PreferenceListAdapter.NOTIFICATION_PREF) {
-            mAlreadySelectedSet = UsageSharedPrefernceHelper
-                    .getSelectedApplicationForTracking(mContext);
+            mSelectedAlertMap = UsageSharedPrefernceHelper.getApplicationsDurationForTracking(mContext);
         } else {
             mAlreadySelectedSet = UsageSharedPrefernceHelper
                     .getSelectedApplicationForFiltering(mContext);
         }
         ArrayList<ResolveInfo> list = mAdapter.getSelectedPackages();
         mIsChecked = new boolean[list.size()];
-        HashMap<String,Integer> map = new HashMap<String, Integer>();
         // TODO : need to get time also from prefernce to show on seekbar.
+        if (mCurrentPref == PACKAGES_FILTER_PREF) {
         if (mAlreadySelectedSet != null && mAlreadySelectedSet.size() > 0) {
 
-            for (int i = 0; i < list.size(); i++) {
-                ResolveInfo info = list.get(i);
-                if (mAlreadySelectedSet.contains(info.getmPackageName())) {
-                    mIsChecked[i] = true;
-                    map.put(info.getmPackageName() , UsageSharedPrefernceHelper.getMoniterTimeForPackage(mContext, info.getmPackageName()));
-                    // info.setChecked(true);
-                    selectedCount++;
-                } else {
-                    // info.setChecked(false);
-                    mIsChecked[i] = false;
+                for (int i = 0; i < list.size(); i++) {
+                    ResolveInfo info = list.get(i);
+                    if (mAlreadySelectedSet.contains(info.getmPackageName())) {
+                        mIsChecked[i] = true;
+                        // info.setChecked(true);
+                        selectedCount++;
+                    } else {
+                        mIsChecked[i] = false;
+                    }
+                }
+            }
+        } else {
+            if (mSelectedAlertMap != null && !mSelectedAlertMap.isEmpty()) {
+                for (int i = 0; i < list.size(); i++) {
+                    ResolveInfo info = list.get(i);
+                    if (mSelectedAlertMap.containsKey(info.getmPackageName())) {
+                        mIsChecked[i] = true;
+                        // info.setChecked(true);
+                        selectedCount++;
+                    } else {
+                        // info.setChecked(false);
+                        mIsChecked[i] = false;
+                    }
                 }
             }
         }
 
         // mAdapter.setPackageList(list);
         mAdapter.setSelectedCount(selectedCount);
-        mAdapter.setCheckedArray(mIsChecked,map);
+        mAdapter.setCheckedArray(mIsChecked, mSelectedAlertMap);
 
         super.showDialog(state);
         Button positiveBtn = ((AlertDialog) getDialog()).getButton(DialogInterface.BUTTON_POSITIVE);
@@ -125,26 +142,33 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
         switch (v.getId()) {
         case android.R.id.button1:
 
+            mAlertMap = mAdapter.getMonitorMap();
             ArrayList<ResolveInfo> pkgList = mAdapter.getSelectedPackages();
             mIsChecked = mAdapter.getCheckedArray();
+            if (mCurrentPref == NOTIFICATION_PREF) {
+
+                // Send complete map to preference.
+                UsageSharedPrefernceHelper.setApplicationsForTracking(mContext, mAlertMap);
+                
+                // Send broadcast to service to track set packages.
+                Intent notifyBroadcast = new Intent();
+                
+                if (UsageSharedPrefernceHelper.isServiceRunning(getContext())) {
+                    notifyBroadcast.setAction("com.android.asgj.appusage.action.NOTIFICATION_ALERT");
+                } else {
+                    notifyBroadcast.setAction("com.android.asgj.appusage.action.NOTIFICATION_ALERT_ACTIVITY");
+                }
+                mContext.sendBroadcast(notifyBroadcast);
+            } else {
             for (int i = 0; i < pkgList.size(); i++) {
                 ResolveInfo info = pkgList.get(i);
 
-                if (mIsChecked[i]) {
-                    if (mCurrentPref == NOTIFICATION_PREF) {
-                    	UsageSharedPrefernceHelper.setMoniterTimeForPackage(mContext, info.getmPackageName(), mAdapter.getMoniterTimeFromMap(info.getmPackageName()));
-                        UsageSharedPrefernceHelper.setApplicationForTracking(mContext,
-                                info.getmPackageName(), true);
-                    } else {
-                        UsageSharedPrefernceHelper.setApplicationForFiltering(mContext,
-                                info.getmPackageName(), true);
-                    }
-                    // TODO :: please save time also.
-                } else {
-                    if (mCurrentPref == NOTIFICATION_PREF) {
-                    	UsageSharedPrefernceHelper.removeMoniterTimeForPackage(mContext, info.getmPackageName());
-                        UsageSharedPrefernceHelper.setApplicationForTracking(mContext,
-                                info.getmPackageName(), false);
+                    if (mIsChecked[i]) {
+                        
+                            UsageSharedPrefernceHelper.setApplicationForFiltering(mContext,
+                                    info.getmPackageName(), true);
+                        
+                        // TODO :: please save time also.
                     } else {
                         UsageSharedPrefernceHelper.setApplicationForFiltering(mContext,
                                 info.getmPackageName(), false);
@@ -166,13 +190,14 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
 
                 Iterator<ResolveInfo> iterator = mAdapter.getSelectedPackages().iterator();
 
-                while (iterator.hasNext()) {
-                    ResolveInfo info = iterator.next();
-                    String pkg = info.getmPackageName();
-                    if (mCurrentPref == NOTIFICATION_PREF) {
-                    	UsageSharedPrefernceHelper.removeMoniterTimeForPackage(mContext, pkg);
-                        UsageSharedPrefernceHelper.setApplicationForTracking(mContext, pkg, false);
-                    } else {
+                if (mCurrentPref == NOTIFICATION_PREF) {
+                    mAlertMap.clear();
+                    UsageSharedPrefernceHelper.setApplicationsForTracking(mContext, mAlertMap);
+                } else {
+                    while (iterator.hasNext()) {
+                        ResolveInfo info = iterator.next();
+                        String pkg = info.getmPackageName();
+
                         UsageSharedPrefernceHelper.setApplicationForFiltering(mContext, pkg, false);
                     }
                     // info.setChecked(false);

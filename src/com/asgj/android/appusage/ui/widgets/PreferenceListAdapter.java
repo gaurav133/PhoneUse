@@ -33,7 +33,8 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
     private int mCurrentPrefType = 0;
     protected static final int NOTIFICATION_PREF = 1;
     private static final int PACKAGES_FILTER_PREF = 2;
-    private HashMap<String,Integer> mMoniterMap = new HashMap<String, Integer>();
+    private HashMap<String, Long> mMoniterMap = new HashMap<String, Long>();
+    private static final int MINIMUM_ALERT_DURATION = 15;
 
     PreferenceListAdapter(ArrayList<ResolveInfo> packageList, Context context, int currentPref) {
         mPackageList = packageList;
@@ -83,7 +84,7 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 		return 0;
 	}
 
-    protected void setCheckedArray(boolean[] mIsChecked,HashMap<String,Integer> map) {
+    protected void setCheckedArray(boolean[] mIsChecked, HashMap<String, Long> map) {
         this.mIsChecked = mIsChecked;
         if(map == null) {
         	mMoniterMap.clear();
@@ -92,9 +93,10 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
         }
         
     }
-    
-    protected int getMoniterTimeFromMap(String pkg){
-    	return mMoniterMap.get(pkg);
+
+    @SuppressWarnings("unchecked")
+    protected HashMap<String, Long> getMonitorMap() {
+        return (HashMap<String, Long>) mMoniterMap.clone();
     }
 
     @Override
@@ -128,13 +130,29 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 			holder.seekbarValueText.setVisibility(View.VISIBLE);
 				if (mMoniterMap.get(mPackageList.get(position)
 						.getmPackageName()) != null) {
-					holder.timeBar.setProgress(mMoniterMap.get(mPackageList
-							.get(position).getmPackageName()));
+                    holder.timeBar.setProgress((int) (mMoniterMap.get(mPackageList
+                            .get(position).getmPackageName())/(60*15)));
 				} else {
 					holder.timeBar.setProgress(0);
 				}
-			holder.seekbarValueText.setText(mContext.getResources().getString(R.string.string_notify, holder.timeBar.getProgress()));
+                if (holder.timeBar.getProgress() < 4) {
+                    holder.seekbarValueText.setText(mContext.getResources().getString(
+                            R.string.string_notify_minutes,
+                            (MINIMUM_ALERT_DURATION * holder.timeBar.getProgress())));
+                } else if (holder.timeBar.getProgress() % 4 == 0) {
+                    holder.seekbarValueText.setText(mContext.getResources().getString(
+                            R.string.string_notify_hours,
+                            (MINIMUM_ALERT_DURATION * holder.timeBar.getProgress()) / 60));
+                } else {
+                    holder.seekbarValueText.setText(mContext.getResources().getString(
+                            R.string.string_notify_hours_minutes,
+                            MINIMUM_ALERT_DURATION * holder.timeBar.getProgress() / 60,
+                            (MINIMUM_ALERT_DURATION * holder.timeBar.getProgress()) % 60));
+                }
 			holder.timeBar.setVisibility(View.VISIBLE);
+            } else {
+                holder.timeBar.setVisibility(View.GONE);
+                holder.seekbarValueText.setVisibility(View.GONE);
 			}
 			holder.checkbox.setChecked(true);
 		}
@@ -200,9 +218,24 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 			boolean fromUser) {
 		ViewHolder holder = (ViewHolder) seekBar.getTag();
 		mPackageList.get(holder.position).setmInputtime(progress);
-		holder.seekbarValueText.setText(mContext.getResources().getString(R.string.string_notify, holder.timeBar.getProgress()));
-		mMoniterMap.put(mPackageList.get(holder.position).getmPackageName(), progress);
-	}
+        if (progress < 4) {
+            mMoniterMap.put(mPackageList.get(holder.position).getmPackageName(),
+                    (long) (MINIMUM_ALERT_DURATION * progress));
+            holder.seekbarValueText.setText(mContext.getResources().getString(
+                    R.string.string_notify_minutes,
+                    (MINIMUM_ALERT_DURATION * holder.timeBar.getProgress())));
+        } else if (progress % 4 == 0) {
+            holder.seekbarValueText.setText(mContext.getResources().getString(
+                    R.string.string_notify_hours,
+                    (MINIMUM_ALERT_DURATION * holder.timeBar.getProgress()) / 60));
+        } else {
+            holder.seekbarValueText.setText(mContext.getResources().getString(
+                    R.string.string_notify_hours_minutes,
+                    MINIMUM_ALERT_DURATION * holder.timeBar.getProgress() / 60,
+                    (MINIMUM_ALERT_DURATION * holder.timeBar.getProgress()) % 60));
+        }
+        mMoniterMap.put(mPackageList.get(holder.position).getmPackageName(), progress * 15L * 60L);
+    }
 
 	@Override
 	public void onStartTrackingTouch(SeekBar seekBar) {

@@ -19,8 +19,11 @@ import java.util.concurrent.TimeUnit;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
-import android.app.AlertDialog;
 import android.app.ActivityManager.MemoryInfo;
+import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
@@ -36,12 +39,15 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.BatteryManager;
 import android.os.Build;
+import android.provider.Settings;
+import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.activities.UsageListMainActivity;
 
 public class Utils {
 
@@ -70,6 +76,35 @@ public class Utils {
             linkedMap.put(entry.getKey(), entry.getValue());
         }
         return linkedMap;
+    }
+	
+    public static void sendNotification(Context context, String pkg, int notificationId) {
+        int requestID = (int) System.currentTimeMillis();
+        
+        Intent notificationIntent = new Intent(context.getApplicationContext(), UsageListMainActivity.class);
+        notificationIntent.putExtra("package", pkg);
+        notificationIntent.setAction("com.android.asgj.appusage.action.NOTIFIICATION");
+        
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP); 
+        
+        PendingIntent contentIntent = PendingIntent.getActivity(context.getApplicationContext(), requestID,notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Alert")
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+                .setContentText(
+                        "Time exceeded for "
+                                + Utils.getApplicationLabelName(context, pkg));
+
+        
+        // Gets an instance of the NotificationManager service
+        NotificationManager mNotifyMgr = (NotificationManager) context
+                .getSystemService(Service.NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(notificationId, builder.build());
     }
 
     /**
