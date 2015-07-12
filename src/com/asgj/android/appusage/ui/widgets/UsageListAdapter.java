@@ -49,6 +49,10 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 
 		public void onItemClicked(int position);
 	}
+	
+	public void setCurrentSelectedPos(int pos){
+		mCurrentSelectedItem = pos;
+	}
 
 	public void setOnItemTouchListener(OnItemTouchListener listener) {
 		mTouchListener = listener;

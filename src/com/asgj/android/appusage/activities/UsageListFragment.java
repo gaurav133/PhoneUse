@@ -690,6 +690,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			if(!Utils.isTabletDevice(getActivity()) && mItemClickListener != null){
 				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}else{
+				
 			    updateDetailFragmentForTablet(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}
 			
@@ -715,6 +716,8 @@ public class UsageListFragment<AppData, MusicData> extends
 			if(!Utils.isTabletDevice(getActivity()) && mItemClickListener != null){
 				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}else{
+				mAppDataListAdapter.setCurrentSelectedPos(position);
+				mAppDataListAdapter.notifyDataSetChanged();
 				updateDetailFragmentForTablet(mAppDataListAdapter.getPackageNameKeys().get(position), position);
 			}
 			
