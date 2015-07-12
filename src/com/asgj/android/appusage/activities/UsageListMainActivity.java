@@ -8,7 +8,9 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
@@ -19,6 +21,7 @@ import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -42,12 +45,15 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,10 +68,12 @@ import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
+import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity, Comparator<Map.Entry<Long, UsageInfo>>{
     private Context mContext;
     private MonthViewFragment startDateFragment;
+    private ActionBar mActionBar;
     private Calendar cal1, cal2;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
@@ -316,6 +324,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.usage_list_main_layout);
         getActionBar().setDisplayShowHomeEnabled(false);
+        initActionBar();
         mContext = this;
         mShowList = new String[]{getString(R.string.string_Today),
         		getString(R.string.string_Weekly),getString(R.string.string_Monthly)
@@ -355,13 +364,31 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
         mList = new ArrayList<ResolveInfo>();
         new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				initPackageList();
-				
-			}
-		}).start();
+            
+            @Override
+            public void run() {
+                initPackageList();
+                
+            }
+        }).start();
+    }
+    
+    private void initActionBar() {
+        mActionBar = getActionBar();
+        mActionBar.setDisplayShowTitleEnabled(false);
+        mActionBar.setDisplayHomeAsUpEnabled(false);
+        LayoutInflater mInflater = LayoutInflater.from(this);
+
+        View customView = mInflater.inflate(R.layout.custom_action_bar, null);
+        LinearLayout layout = (LinearLayout) customView.findViewById(R.id.action_title_view);
+        TextView mTitleTextView = (TextView) customView.findViewById(R.id.title_text);
+        mTitleTextView.setTextColor(getResources().getColor(android.R.color.white));
+        mTitleTextView.setText(getString(R.string.app_name));
+        mTitleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        layout.setBackground(null);
+
+        mActionBar.setCustomView(customView);
+        mActionBar.setDisplayShowCustomEnabled(true);
     }
     
     public float getListItemHeight() {
@@ -757,11 +784,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             AlertDialog dialog = builder.create();
             dialog.show();
             break;
-        case R.id.action_setting:
+        case R.id.action_settings:
             if (mList == null || mList.size() == 0) {
                 break;
             }
-            Intent intent = new Intent(this, SettingActivity.class);
+            Intent intent = new Intent(this, SettingsActivity.class);
             intent.putParcelableArrayListExtra("packageList", mList);
             startActivity(intent);
             break;

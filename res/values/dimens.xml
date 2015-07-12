@@ -19,4 +19,6 @@
 	<dimen name="graph_view_left_margin_vertical_label">20dp</dimen>
 	<dimen name="graph_view_bottom_margin_horizontal_label">30dp</dimen>
 	
+	<dimen name="action_view_padding_left">12dp</dimen>
+	
 </resources>
