@@ -1,4 +1,4 @@
-package com.asgj.android.appusage.ui.widgets;
+package com.asgj.android.appusage.activities;
 
 import android.os.Bundle;
 import android.preference.Preference;
