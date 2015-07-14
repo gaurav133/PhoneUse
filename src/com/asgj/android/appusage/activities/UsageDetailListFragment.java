@@ -26,7 +26,6 @@ public class UsageDetailListFragment extends Fragment {
 	private HashMap<Long,UsageInfo> mInfoList = null;
 	private String mCurrentPackageName = null;
 	private String mTotalDuration = null;
-	private String mActionBarTitle;
 	
 	public UsageDetailListFragment() {
 		// TODO Auto-generated constructor stub

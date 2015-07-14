@@ -225,16 +225,13 @@ public class PhoneUsageDatabase {
     public ArrayList<UsageInfo> getMusicIntervalsBetweenDates(Context context,
             Calendar startCalendar, Calendar endCalendar) {
 
-        Calendar calendarEnd = Calendar.getInstance();
-        calendarEnd.add(Calendar.DATE, -1);
-
         String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
         String endDate = Utils.getDateFromMiliSeconds(endCalendar.getTimeInMillis());
 
         String selection = Columns.COLUMN_APP_NAME + "= '" + MUSIC_PACKAGE_NAME + "' AND "
                 + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
 
-        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, Columns.COLUMN_APP_NAME, null, Columns.COLUMN_END_INTERVAL_TIME + " DESC");
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, Columns.COLUMN_END_INTERVAL_TIME + " DESC");
         ArrayList<UsageInfo> mInfoList = new ArrayList<UsageInfo>();
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
