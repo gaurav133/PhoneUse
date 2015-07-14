@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"> 
+
+    <PreferenceCategory android:title="@string/string_time_settings" >
+
+        <com.asgj.android.appusage.ui.widgets.TimePreference
+            android:defaultValue="00:00"
+            android:dependency="preferences_enabled"
+            android:key="start_time_pref_key"
+            android:showDefault="true"
+            android:summary="@string/string_when_to_start_tracking"
+            android:title="@string/string_start_time" />
+
+        <com.asgj.android.appusage.ui.widgets.TimePreference
+            android:defaultValue="00:00"
+            android:dependency="preferences_enabled"
+            android:key="stop_time_pref_key"
+            android:showDefault="true"
+            android:summary="@string/string_when_to_stop_tracking"
+            android:title="@string/string_stop_time" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/string_other_settings" >
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="preferences_enabled"
+            android:title="@string/string_enabled" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
