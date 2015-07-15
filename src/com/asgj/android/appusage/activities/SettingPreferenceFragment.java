@@ -41,6 +41,11 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 		mAutoTrackPref.setOnPreferenceClickListener(this);
 		mFilterPref = (UserDialogPreference)findPreference("filter_pkages");
 		mSwipeEnablePref = (CheckBoxPreference)findPreference("pref_swipe_share");
+		if(Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP){
+			getPreferenceScreen().removePreference(mSwipeEnablePref);
+			mSwipeEnablePref.setChecked(true);
+			UsageSharedPrefernceHelper.setSwipeFeatureEnable(getActivity(), true);
+		}
 		mSwipeEnablePref.setOnPreferenceClickListener(this);
 		mSwipeEnablePref.setChecked(UsageSharedPrefernceHelper.getSwipeFeatureEnable(getActivity()));
 		mMoniterPref.setPackageList(mPackageListLauncher);
