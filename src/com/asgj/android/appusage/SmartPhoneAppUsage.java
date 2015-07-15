@@ -6,7 +6,9 @@ import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
 
 import android.app.Application;
+import android.os.Build;
 
+import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.service.JsonSender;
 
 @ReportsCrashes(formKey = "", // will not be used
@@ -39,6 +41,10 @@ super.onCreate();
 mReportsCrashes = this.getClass().getAnnotation(ReportsCrashes.class);
 JsonSender jsonSender = new JsonSender(mReportsCrashes.formUri(), null);
 ACRA.getErrorReporter().setReportSender(jsonSender);
+
+if(Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP){
+	UsageSharedPrefernceHelper.setSwipeFeatureEnable(this, true);
+}
 
 }
 }

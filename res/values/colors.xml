@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="color_action_bar_background">#ff1ca8f4</color>
+    <color name="color_action_bar_background_transparent">#991ca8f4</color>
     <color name="color_selector">#ff1cb8f5</color>
     <color name="color_total_time_title">#0c1bed</color>
 </resources>

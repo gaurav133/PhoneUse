@@ -3,16 +3,16 @@ package com.asgj.android.appusage.ui.widgets;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -123,12 +123,14 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
             convertView = inflater.inflate(R.layout.usage_list_item, null);
 
             holder = new ViewHolder();
+            holder.rootView = (FrameLayout)convertView.findViewById(R.id.frameForAnimLayout);
             holder.image_view_app_icon = (ImageView) convertView.findViewById(R.id.app_icon);
             holder.text_dash = (TextView) convertView.findViewById(R.id.textView_dash);
             holder.text_left = (TextView) convertView.findViewById(R.id.text1);
             holder.text_right = (TextView) convertView.findViewById(R.id.text3);
             holder.text_middle = (TextView) convertView.findViewById(R.id.text2);
             holder.parent = (RelativeLayout) convertView.findViewById(R.id.parentLayout);
+            holder.swipeText = (TextView) convertView.findViewById(R.id.text);
 			holder.parent = (RelativeLayout) convertView
 					.findViewById(R.id.parentLayout);
 
@@ -181,29 +183,36 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         }
         return convertView;
     }
-	
+	Drawable rootDrawable = null;
 
 	@Override
 	public boolean onTouch(final View v, MotionEvent event) {
 		if(!UsageSharedPrefernceHelper.getSwipeFeatureEnable(mContext)){
 			return false;
 		}
+		final ViewHolder holder = (ViewHolder) v.getTag();
+		
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			x_touchDown = event.getX();
+			v.setBackgroundColor(mContext.getResources().getColor(R.color.color_action_bar_background_transparent));
+			rootDrawable = holder.rootView.getBackground();
 			break;
 		case MotionEvent.ACTION_MOVE:
 			float deltaX = event.getRawX() - x_touchDown;
 			break;
 		case MotionEvent.ACTION_CANCEL:
 		case MotionEvent.ACTION_UP:
+			v.setBackgroundColor(mContext.getResources().getColor(android.R.color.white));
 			if (x_touchDown != 0) {
 				float x_touchUp = event.getX();
-				final ViewHolder holder = (ViewHolder) v.getTag();
-
+				
 				if ((x_touchUp - x_touchDown) > MININUM_DISTANCE_FOR_SWIPE) {
+					
 					if (mTouchListener != null) {
 						if (event.getAction() == MotionEvent.ACTION_CANCEL) {
+							holder.swipeText.setVisibility(View.VISIBLE);
+							holder.rootView.setBackgroundColor(mContext.getResources().getColor(R.color.color_action_bar_background));
 							float x = event.getX() + v.getTranslationX();
 							deltaX = x - x_touchDown;
 							float deltaXAbs = Math.abs(deltaX);
@@ -221,6 +230,8 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 										public void run() {
 											 v.setAlpha(1);
 											v.setTranslationX(0);
+											holder.rootView.setBackground(rootDrawable);
+											holder.swipeText.setVisibility(View.INVISIBLE);
 											mTouchListener.onItemSwiped(holder.position);
 										}
 									});
@@ -244,9 +255,10 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 	}
 
 	private class ViewHolder {
-		TextView text_left, text_right, text_middle, text_dash;
+		TextView text_left, text_right, text_middle, text_dash,swipeText;
 		ImageView image_view_app_icon;
 		RelativeLayout parent;
+		FrameLayout rootView;
 		int position;
 	}
 }
