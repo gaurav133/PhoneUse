@@ -251,6 +251,14 @@ public class Utils {
     }
     
     
+    /**
+     * Check whether device API is Android L or less.
+     * @param context Context to access application resources.
+     * @return boolean value indicating if it's Android L device. True in case it is, false otherwise.
+     */
+    public static boolean isAndroidLDevice (Context context) {
+        return (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) ? true : false;
+    }
     public static int getHourFromTime(long timeStamp) {
 
         SimpleDateFormat format = new SimpleDateFormat("hh:mm:ss");

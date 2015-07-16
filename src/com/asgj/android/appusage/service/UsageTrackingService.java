@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.os.Binder;
-import android.os.Build;
 import android.util.Log;
 
 import com.asgj.android.appusage.Utility.UsageInfo;
@@ -571,7 +570,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
     @SuppressWarnings("deprecation")
     private boolean isTopApplicationchange() {
         
-        if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (!Utils.isAndroidLDevice(mContext)) {
           mActivityManager = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
           mPackageName = mActivityManager.getRunningTasks(1).get(0).topActivity.getPackageName();
 
@@ -687,7 +686,12 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
             public void run() {
                 // TODO Auto-generated method stub
 
-                // In case battery or RAM is low, stop timer.
+                if (Utils.isAndroidLDevice(mContext)) {
+                    if (!Utils.isPermissionGranted(mContext)) {
+                        return;
+                    }
+                }
+                // In case battery or RAM is low or permission is discontinued, stop timer.
                 if (!Utils.isSufficientBatteryAvailable(mContext, false)
                         || !Utils.isSufficientRAMAvailable(mContext, false)) {
                     Log.v(LOG_TAG, "Inside run battery ram low");
@@ -849,11 +853,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
         setUpReceivers(false);
 
-        mBgTrackingTask.foregroundMap = null;
-        mBgTrackingTask = null;
-        mDatabase = null;
-        mCallDetailsMap = null;
-        mListMusicPlayTimes = null;
         mIsContinueTracking = false;
         mIsRunningForegroundAppsThread = false;
         mIsMusicStarted = false;
@@ -877,7 +876,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
     	 mIsRunningForegroundAppsThread = true;
     	 if(isFirstTime)
          mIsFirstTimeStartForgroundAppService = true;
-    	 if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+    	 if (Utils.isAndroidLDevice(mContext)) {
              mUsageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
              mUsageList = new ArrayList<UsageStats>();
          }

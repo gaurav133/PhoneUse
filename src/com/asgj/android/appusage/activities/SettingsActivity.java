@@ -15,6 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.asgj.android.appusage.R;
+import com.asgj.android.appusage.Utility.Utils;
 
 public class SettingsActivity extends Activity implements View.OnClickListener {
     
@@ -45,7 +46,7 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
         ImageView imageView = (ImageView) actionView.findViewById(R.id.imageView1);
         imageView.setVisibility(View.VISIBLE);
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (Utils.isAndroidLDevice(this)) {
             actionView.setOnClickListener(this);
         } else {
             actionView.setBackground(null);
@@ -58,11 +59,10 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
         mTitleTextView.setText(getString(R.string.action_settings));
         mTitleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
 
-        LinearLayout layout = (LinearLayout) customView.findViewById(R.id.action_title_view);
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) layout.getLayoutParams();
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) actionView.getLayoutParams();
         params.setMargins(0, 0, 0, 0);
-        layout.setPadding(0, 0, 0, 0);
-        layout.setLayoutParams(params);
+        actionView.setPadding(0, 0, 0, 0);
+        actionView.setLayoutParams(params);
 
         mActionBar.setCustomView(customView);
         mActionBar.setDisplayShowCustomEnabled(true);
