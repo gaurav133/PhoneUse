@@ -119,6 +119,8 @@ public class MonthViewFragment extends DialogFragment implements CalendarView.On
 
         if (validateStartDate() && validateEndDate()) {
             mInterface.onDateSetComplete(mStartCalendar, mEndCalendar);
+            UsageSharedPrefernceHelper.setCalendar(mContext, mStartCalendar.getTimeInMillis(), "startCalendar");
+            UsageSharedPrefernceHelper.setCalendar(mContext, mEndCalendar.getTimeInMillis(), "endCalendar");
             mDialog.dismiss();
         }
     }

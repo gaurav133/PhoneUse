@@ -415,7 +415,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	mShowByOptionsMonthly.setOnClickListener(this);
     	mShowByOptionsYearly.setOnClickListener(this);
     	mShowByOptionsCustom.setOnClickListener(this);
-    	if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (!Utils.isAndroidLDevice(mContext)) {
     		mShowByOptionsToday.setVisibility(View.GONE);
     	}else{
     		mShowByOptionsToday.setText(UsageSharedPrefernceHelper.getShowByType(mContext));
@@ -567,18 +567,31 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_start);
             menuItem.setTitle(getString(R.string.string_stop));
         }
-        
-        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-        	 MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_showBy);
-        	 menuItem.setVisible(false);
+
+        if (Utils.isAndroidLDevice(mContext)) {
+            MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_showBy);
+            menuItem.setVisible(false);
         }
         return super.onCreateOptionsMenu(menu);
     }
     
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
-        	hideFabOption();
+        if (mShowByOptionsWeekly.getVisibility() == View.VISIBLE) {
+            hideFabOption();
+        }
+        if (Utils.isAndroidLDevice(mContext)) {
+            if (!Utils.isPermissionGranted(mContext)) {
+                MenuItem menuItem = menu.findItem(R.id.action_start);
+                menuItem.setTitle(getString(R.string.string_start));
+
+                Intent stopServiceIntent = new Intent();
+                stopServiceIntent
+                        .setClass(mContext, UsageTrackingService.class);
+                mContext.stopService(stopServiceIntent);
+                UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
+            }
+        }
     	return super.onPrepareOptionsMenu(menu);
     }
 
@@ -642,7 +655,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
        UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
 
-        if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (Utils.isAndroidLDevice(mContext)) {
             mUsageStatsManager = (UsageStatsManager) mContext.getSystemService("usagestats");
 
             SimpleDateFormat sdf1 = new SimpleDateFormat("MMM dd,yyyy HH:mm");
@@ -727,7 +740,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
                 if (Utils.isSufficientRAMAvailable(mContext, true)
                         && Utils.isSufficientBatteryAvailable(mContext, true)) {
-                    if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    if (Utils.isAndroidLDevice(mContext)) {
                         if (!Utils.isPermissionGranted(this)) {
                             AlertDialog.Builder builder = new AlertDialog.Builder(this)
                                     .setTitle(R.string.string_error_title)

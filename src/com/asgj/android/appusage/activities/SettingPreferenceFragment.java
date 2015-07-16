@@ -68,7 +68,7 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 		if(preference.getKey().equals(mSwipeEnablePref.getKey())){
 			UsageSharedPrefernceHelper.setSwipeFeatureEnable(getActivity(), mSwipeEnablePref.isChecked());
 		} else if (preference.getKey().equals("tracking_type_pref")) {
-		    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+		    if (Utils.isAndroidLDevice(getActivity())) {
 		        if (!Utils.isPermissionGranted(getActivity())) {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
