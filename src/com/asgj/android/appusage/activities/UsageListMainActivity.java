@@ -324,7 +324,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.usage_list_main_layout);
         getActionBar().setDisplayShowHomeEnabled(false);
-        initActionBar();
         mContext = this;
         mShowList = new String[]{getString(R.string.string_Today),
         		getString(R.string.string_Weekly),getString(R.string.string_Monthly)
