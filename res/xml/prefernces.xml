@@ -9,11 +9,6 @@
         android:summary="@string/string_turn_on_off_auto_track_mode"
         android:textColor="@android:color/white"
         android:title="@string/string_auto_track" />
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="pref_swipe_share"
-        android:title="@string/string_swipe_pref_title"
-        android:summaryOn="@string/string_swipe_pref_on" 
-        android:summaryOff="@string/string_swipe_pref_off"/>
+
 
 </PreferenceScreen>

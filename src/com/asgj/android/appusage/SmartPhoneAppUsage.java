@@ -42,9 +42,6 @@ mReportsCrashes = this.getClass().getAnnotation(ReportsCrashes.class);
 JsonSender jsonSender = new JsonSender(mReportsCrashes.formUri(), null);
 ACRA.getErrorReporter().setReportSender(jsonSender);
 
-if(Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP){
-	UsageSharedPrefernceHelper.setSwipeFeatureEnable(this, true);
-}
 
 }
 }

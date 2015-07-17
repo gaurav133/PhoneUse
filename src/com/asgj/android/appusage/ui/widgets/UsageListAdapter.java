@@ -6,9 +6,7 @@ import java.util.HashMap;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -20,11 +18,9 @@ import android.widget.TextView;
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.HttpImageLoader;
 import com.asgj.android.appusage.Utility.UsageInfo;
-import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 import com.asgj.android.appusage.Utility.Utils;
 
-public class UsageListAdapter<Data> extends BaseAdapter implements
-		View.OnTouchListener {
+public class UsageListAdapter<Data> extends BaseAdapter {
 
     private static final String LOG_TAG = UsageListAdapter.class.getSimpleName();
     public static final String mTotalTimeKey = "totalTime";
@@ -36,26 +32,11 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
     ArrayList<String> mKeys;
     HttpImageLoader mImageLoader = null;
     Typeface mNormalTypeface, mBoldTypeface;
-	private static final int MININUM_DISTANCE_FOR_SWIPE = 50;
-	private static final int MAX_DISTANCE_FOR_CLICK = 0;
-	OnItemTouchListener mTouchListener = null;
-	private static final int SWIPE_DURATION = 400;
-	float x_touchDown = 0;
 	private int mCurrentSelectedItem = -1;
 	
-	
-	public interface OnItemTouchListener {
-		public void onItemSwiped(int position);
 
-		public void onItemClicked(int position);
-	}
-	
 	public void setCurrentSelectedPos(int pos){
 		mCurrentSelectedItem = pos;
-	}
-
-	public void setOnItemTouchListener(OnItemTouchListener listener) {
-		mTouchListener = listener;
 	}
     @SuppressWarnings("unchecked")
     public UsageListAdapter(Context context, Data data) throws Exception {
@@ -113,6 +94,18 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         // TODO Auto-generated method stub
         return 0;
     }
+    
+    @Override
+    public boolean isEnabled(int position) {
+    	// TODO Auto-generated method stub
+    	return true;
+    }
+    
+    @Override
+    public int getItemViewType(int position) {
+    	// TODO Auto-generated method stub
+    	return 1;
+    }
 
 	@Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -134,7 +127,6 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
 			holder.parent = (RelativeLayout) convertView
 					.findViewById(R.id.parentLayout);
 
-			holder.parent.setOnTouchListener(this);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -183,76 +175,7 @@ public class UsageListAdapter<Data> extends BaseAdapter implements
         }
         return convertView;
     }
-	Drawable rootDrawable = null;
 
-	@Override
-	public boolean onTouch(final View v, MotionEvent event) {
-		if(!UsageSharedPrefernceHelper.getSwipeFeatureEnable(mContext)){
-			return false;
-		}
-		final ViewHolder holder = (ViewHolder) v.getTag();
-		
-		switch (event.getAction()) {
-		case MotionEvent.ACTION_DOWN:
-			x_touchDown = event.getX();
-			v.setBackgroundColor(mContext.getResources().getColor(R.color.color_action_bar_background_transparent));
-			rootDrawable = holder.rootView.getBackground();
-			break;
-		case MotionEvent.ACTION_MOVE:
-			float deltaX = event.getRawX() - x_touchDown;
-			break;
-		case MotionEvent.ACTION_CANCEL:
-		case MotionEvent.ACTION_UP:
-			v.setBackgroundColor(mContext.getResources().getColor(android.R.color.white));
-			if (x_touchDown != 0) {
-				float x_touchUp = event.getX();
-				
-				if ((x_touchUp - x_touchDown) > MININUM_DISTANCE_FOR_SWIPE) {
-					
-					if (mTouchListener != null) {
-						if (event.getAction() == MotionEvent.ACTION_CANCEL) {
-							holder.swipeText.setVisibility(View.VISIBLE);
-							holder.rootView.setBackgroundColor(mContext.getResources().getColor(R.color.color_action_bar_background));
-							float x = event.getX() + v.getTranslationX();
-							deltaX = x - x_touchDown;
-							float deltaXAbs = Math.abs(deltaX);
-							float fractionCovered = 0;
-							float endX = 0;
-							float endAlpha = 0;
-							fractionCovered = deltaXAbs / v.getWidth();
-							endX = deltaX < 0 ? -v.getWidth() : v.getWidth();
-							endAlpha = 0;
-							long duration = (int) ((1 - fractionCovered) * SWIPE_DURATION);
-							v.animate().setDuration(duration).alpha(endAlpha)
-									.translationX(endX)
-									.withEndAction(new Runnable() {
-										@Override
-										public void run() {
-											 v.setAlpha(1);
-											v.setTranslationX(0);
-											holder.rootView.setBackground(rootDrawable);
-											holder.swipeText.setVisibility(View.INVISIBLE);
-											mTouchListener.onItemSwiped(holder.position);
-										}
-									});
-						}else{
-							v.setAlpha(1);
-							v.setTranslationX(0);
-						}
-
-					}
-				} else if ((x_touchUp - x_touchDown) == MAX_DISTANCE_FOR_CLICK) {
-					v.setAlpha(1);
-					v.setTranslationX(0);
-					mCurrentSelectedItem = holder.position;
-					notifyDataSetChanged();
-					mTouchListener.onItemClicked(holder.position);
-				}
-			}
-			break;
-		}
-		return true;
-	}
 
 	private class ViewHolder {
 		TextView text_left, text_right, text_middle, text_dash,swipeText;
