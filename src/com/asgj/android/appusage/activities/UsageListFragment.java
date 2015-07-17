@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -47,9 +48,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -81,6 +82,8 @@ public class UsageListFragment<AppData, MusicData> extends
 	private boolean mIsFilteredMap = false;
 
     HashMap<String, Long> mFilteredMap;
+    
+    private ActionBar mActionBar;
 
     /**
      * A custom {@link ViewPager} title strip which looks much like Tabs present
@@ -199,6 +202,25 @@ public class UsageListFragment<AppData, MusicData> extends
         super.onCreate(savedInstanceState);
     }
     
+    private void initActionBar() {
+
+        mActionBar = getActivity().getActionBar();
+        mActionBar.setDisplayShowTitleEnabled(false);
+        mActionBar.setDisplayHomeAsUpEnabled(false);
+        LayoutInflater mInflater = LayoutInflater.from(getActivity());
+
+        View customView = mInflater.inflate(R.layout.custom_action_bar, null);
+        LinearLayout layout = (LinearLayout) customView.findViewById(R.id.action_title_view);
+        TextView mTitleTextView = (TextView) customView.findViewById(R.id.title_text);
+        mTitleTextView.setTextColor(getResources().getColor(android.R.color.white));
+        mTitleTextView.setText(getString(R.string.app_name));
+        layout.setBackground(null);
+
+        mActionBar.setCustomView(customView);
+        mActionBar.setDisplayShowCustomEnabled(true);
+    
+    }
+    
     public void setStartEndCalForCustomInterval(Calendar cal1,Calendar cal2){
     	this.cal1 = cal1;
     	this.cal2 = cal2;
@@ -208,9 +230,9 @@ public class UsageListFragment<AppData, MusicData> extends
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         mDatabase = new PhoneUsageDatabase(getActivity());
-        if (!Utils.isTabletDevice(getActivity())) {
             getActivity().getActionBar().setTitle(getActivity().getResources().getString(R.string.app_name));
-        }
+            initActionBar();
+
         return inflater.inflate(R.layout.usage_fragment_layout, container, false);
     }
 

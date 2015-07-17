@@ -372,25 +372,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             }
         }).start();
     }
-    
-    private void initActionBar() {
-        mActionBar = getActionBar();
-        mActionBar.setDisplayShowTitleEnabled(false);
-        mActionBar.setDisplayHomeAsUpEnabled(false);
-        LayoutInflater mInflater = LayoutInflater.from(this);
 
-        View customView = mInflater.inflate(R.layout.custom_action_bar, null);
-        LinearLayout layout = (LinearLayout) customView.findViewById(R.id.action_title_view);
-        TextView mTitleTextView = (TextView) customView.findViewById(R.id.title_text);
-        mTitleTextView.setTextColor(getResources().getColor(android.R.color.white));
-        mTitleTextView.setText(getString(R.string.app_name));
-        mTitleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        layout.setBackground(null);
-
-        mActionBar.setCustomView(customView);
-        mActionBar.setDisplayShowCustomEnabled(true);
-    }
-    
     public float getListItemHeight() {
         TypedValue value = new TypedValue();
         DisplayMetrics metrics = new DisplayMetrics();
@@ -1031,14 +1013,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		
 	}
 
-	@Override
-	public void onDetach() {
-		initActionBar();
-		if(!Utils.isTabletDevice(mContext)){
-			setFabButtonsVisibility(true);
-		}
-		
-	}
+    @Override
+    public void onDetach() {
+        if (!Utils.isTabletDevice(mContext)) {
+            setFabButtonsVisibility(true);
+        }
+
+    }
 
     @Override
     public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
