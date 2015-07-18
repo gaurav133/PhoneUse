@@ -71,4 +71,7 @@
     <string name="string_share_this_app">Share this app</string>
     <string name="string_share_this_app_with_a_friend">Share this app with a friend.</string>
     <string name="string_download_app">Download this awesome usage analytics app</string>
+    <string name="string_feedback_and_suggestions">Feedback and Suggestions</string>
+    <string name="string_feedback_and_suggestions_about_app">Provide feedback about this app.</string>
+    <string name="string_send_feedback">Send Feedback</string>
 </resources>

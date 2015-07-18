@@ -29,26 +29,33 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 	ArrayList<ResolveInfo> mPackageListLauncher = null;
 	UserDialogPreference mFilterPref = null;
 	UserDialogPreference mMoniterPref = null;
-	Preference mAutoTrackPref, mShareAppPref;
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		addPreferencesFromResource(R.xml.prefernces);
-		mPackageListLauncher = getActivity().getIntent().getParcelableArrayListExtra("packageList");
-		mMoniterPref = (UserDialogPreference)findPreference("user_packges_pref");
-		mShareAppPref = findPreference("share_app_pref");
-		mShareAppPref.setOnPreferenceClickListener(this);
-		mAutoTrackPref = findPreference("tracking_type_pref");
-		mAutoTrackPref.setOnPreferenceClickListener(this);
-		mFilterPref = (UserDialogPreference)findPreference("filter_pkages");
-		mMoniterPref.setPackageList(mPackageListLauncher);
-		mFilterPref.setPackageList(mPackageListLauncher);
-	}
-	@Override
-	public void onResume() {
-	    // TODO Auto-generated method stub
-	    super.onResume();
-	    if (getActivity() != null && getActivity().getActionBar() != null) {
+    Preference mAutoTrackPref, mShareAppPref, mFeedbackAppPref;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.prefernces);
+        mPackageListLauncher = getActivity().getIntent().getParcelableArrayListExtra("packageList");
+        mMoniterPref = (UserDialogPreference) findPreference("user_packges_pref");
+        mFilterPref = (UserDialogPreference) findPreference("filter_pkages");
+        mMoniterPref.setPackageList(mPackageListLauncher);
+        mFilterPref.setPackageList(mPackageListLauncher);
+
+        mShareAppPref = findPreference("share_app_pref");
+        mShareAppPref.setOnPreferenceClickListener(this);
+
+        mAutoTrackPref = findPreference("tracking_type_pref");
+        mAutoTrackPref.setOnPreferenceClickListener(this);
+
+        mFeedbackAppPref = findPreference("feedback_app_pref");
+        mFeedbackAppPref.setOnPreferenceClickListener(this);
+    }
+
+    @Override
+    public void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+        if (getActivity() != null && getActivity().getActionBar() != null) {
             View view = getActivity().getActionBar().getCustomView();
             if(view != null){
                 TextView mTitleTextView = (TextView) view.findViewById(R.id.title_text);
@@ -101,8 +108,16 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
             intent.putExtra(Intent.EXTRA_TEXT, getActivity().getResources().getString(R.string.string_download_app) + ":\n \n"
                     + "https://play.google.com/store/apps/details?id=com.macropinch.swan&hl=en");
             startActivity(Intent.createChooser(intent, "Share with"));
-		}
-		return false;
-	}
+        }
+        
+        if (preference.getKey().equals("feedback_app_pref")) {
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Feedback/Suggestions for PhoneUse App.");
+            intent.putExtra(Intent.EXTRA_EMAIL, new String[] {"androiddeveloperatwork@gmail.com"});
+            intent.setType("text/html");
+            startActivity(Intent.createChooser(intent, getActivity().getResources().getString(R.string.string_send_feedback)));
+        }
+        return false;
+    }
 
 }

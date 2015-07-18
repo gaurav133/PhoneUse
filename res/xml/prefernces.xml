@@ -14,5 +14,10 @@
         android:key="share_app_pref"
         android:summary="@string/string_share_this_app_with_a_friend"
         android:title="@string/string_share_this_app"/>
+    
+    <Preference
+        android:key="feedback_app_pref"
+        android:summary="@string/string_feedback_and_suggestions_about_app"
+        android:title="@string/string_feedback_and_suggestions"/>
 
 </PreferenceScreen>
