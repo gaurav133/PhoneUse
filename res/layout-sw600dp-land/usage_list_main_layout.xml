@@ -20,6 +20,7 @@
             android:layout_gravity="bottom|right"
             android:background="@drawable/holo_blue_ripple"
             android:gravity="center"
+            android:visibility="invisible"
             android:padding="5dp"
             android:textColor="@android:color/white"
             android:textSize="15dp" />
