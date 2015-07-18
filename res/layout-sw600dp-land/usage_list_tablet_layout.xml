@@ -11,7 +11,7 @@
         android:orientation="horizontal"
         android:visibility="visible" >
 
-        <ListView
+        <com.asgj.android.appusage.ui.widgets.listview.SwipeListView
             android:id="@+id/usage_list"
             android:layout_width="0dip"
             android:drawSelectorOnTop="true"

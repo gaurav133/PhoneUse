@@ -29,7 +29,6 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 	ArrayList<ResolveInfo> mPackageListLauncher = null;
 	UserDialogPreference mFilterPref = null;
 	UserDialogPreference mMoniterPref = null;
-	CheckBoxPreference mSwipeEnablePref = null;
 	Preference mAutoTrackPref;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -40,14 +39,6 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 		mAutoTrackPref = findPreference("tracking_type_pref");
 		mAutoTrackPref.setOnPreferenceClickListener(this);
 		mFilterPref = (UserDialogPreference)findPreference("filter_pkages");
-		mSwipeEnablePref = (CheckBoxPreference)findPreference("pref_swipe_share");
-		if(Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP){
-			getPreferenceScreen().removePreference(mSwipeEnablePref);
-			mSwipeEnablePref.setChecked(true);
-			UsageSharedPrefernceHelper.setSwipeFeatureEnable(getActivity(), true);
-		}
-		mSwipeEnablePref.setOnPreferenceClickListener(this);
-		mSwipeEnablePref.setChecked(UsageSharedPrefernceHelper.getSwipeFeatureEnable(getActivity()));
 		mMoniterPref.setPackageList(mPackageListLauncher);
 		mFilterPref.setPackageList(mPackageListLauncher);
 	}
@@ -65,9 +56,7 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 	}
 	@Override
 	public boolean onPreferenceClick(Preference preference) {
-		if(preference.getKey().equals(mSwipeEnablePref.getKey())){
-			UsageSharedPrefernceHelper.setSwipeFeatureEnable(getActivity(), mSwipeEnablePref.isChecked());
-		} else if (preference.getKey().equals("tracking_type_pref")) {
+		 if (preference.getKey().equals("tracking_type_pref")) {
 		    if (Utils.isAndroidLDevice(getActivity())) {
 		        if (!Utils.isPermissionGranted(getActivity())) {
 

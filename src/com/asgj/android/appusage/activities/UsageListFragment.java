@@ -66,7 +66,8 @@ import com.asgj.android.appusage.database.PhoneUsageDatabase;
 import com.asgj.android.appusage.ui.widgets.MusicListAdapter;
 import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 import com.asgj.android.appusage.ui.widgets.UsageListAdapter;
-import com.asgj.android.appusage.ui.widgets.UsageListAdapter.OnItemTouchListener;
+import com.asgj.android.appusage.ui.widgets.listview.SwipeListView;
+import com.asgj.android.appusage.ui.widgets.listview.SwipeListViewTouchListener.OnItemSwiped;
 
 /**
  * A basic sample which shows how to use
@@ -449,7 +450,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	 * {@link #getPageTitle(int)} method which controls what is displayed in the
 	 * {@link SlidingTabLayout}.
 	 */
-	class SamplePagerAdapter extends PagerAdapter implements OnItemTouchListener ,OnItemClickListener, OnChildClickListener,Comparator<Map.Entry<Long, UsageInfo>>{
+	class SamplePagerAdapter extends PagerAdapter implements OnItemSwiped,OnItemClickListener, OnChildClickListener,Comparator<Map.Entry<Long, UsageInfo>>{
 
 		String[] mList = new String[] { "Apps", "Media" };
 
@@ -577,7 +578,7 @@ public class UsageListFragment<AppData, MusicData> extends
 			// Add the newly created View to the ViewPager
 
 			// Retrieve a TextView from the inflated View, and update it's text
-			ListView title = (ListView) viewData.findViewById(R.id.usage_list);
+			SwipeListView title = (SwipeListView)viewData.findViewById(R.id.usage_list);
 			ExpandableListView musicListView = (ExpandableListView)viewData.findViewById(R.id.music_list);
 						
 			if (position == 0 && mAppDataListAdapter != null){
@@ -589,8 +590,9 @@ public class UsageListFragment<AppData, MusicData> extends
 				musicListView.setVisibility(View.GONE);
 			    textViewNoData.setVisibility(View.GONE);
                 textViewNoDataStartTracking.setVisibility(View.GONE);
-                mAppDataListAdapter.setOnItemTouchListener(this);
+//                mAppDataListAdapter.setOnItemTouchListener(this);
                 title.setOnItemClickListener(this);
+                title.setOnItemSwipeListener(this);
 				title.setAdapter(mAppDataListAdapter);
 				mAppDataListAdapter.notifyDataSetChanged();
 			    if (mAppDataListAdapter.isEmpty()) {
@@ -706,17 +708,7 @@ public class UsageListFragment<AppData, MusicData> extends
 		}
 	
 		
-		@Override
-		public void onItemClicked(int position) {
-			
-			if(!Utils.isTabletDevice(getActivity()) && mItemClickListener != null){
-				mItemClickListener.onUsageItemClick(mAppDataListAdapter.getPackageNameKeys().get(position), position);
-			}else{
-				
-			    updateDetailFragmentForTablet(mAppDataListAdapter.getPackageNameKeys().get(position), position);
-			}
-			
-		}
+		
 		@Override
 		public boolean onChildClick(ExpandableListView parent, View v,
 				int groupPosition, int childPosition, long id) {
