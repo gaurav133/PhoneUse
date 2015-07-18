@@ -29,13 +29,15 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 	ArrayList<ResolveInfo> mPackageListLauncher = null;
 	UserDialogPreference mFilterPref = null;
 	UserDialogPreference mMoniterPref = null;
-	Preference mAutoTrackPref;
+	Preference mAutoTrackPref, mShareAppPref;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.prefernces);
 		mPackageListLauncher = getActivity().getIntent().getParcelableArrayListExtra("packageList");
 		mMoniterPref = (UserDialogPreference)findPreference("user_packges_pref");
+		mShareAppPref = findPreference("share_app_pref");
+		mShareAppPref.setOnPreferenceClickListener(this);
 		mAutoTrackPref = findPreference("tracking_type_pref");
 		mAutoTrackPref.setOnPreferenceClickListener(this);
 		mFilterPref = (UserDialogPreference)findPreference("filter_pkages");
@@ -90,6 +92,15 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 		    transaction.replace(android.R.id.content, new AutoTrackingFragment(), "auto_track_frag");
 		    transaction.addToBackStack(null);
 		    transaction.commit();
+		}
+		 
+		if (preference.getKey().equals("share_app_pref")) {
+		    Intent intent = new Intent(Intent.ACTION_SEND);
+		    intent.putExtra(Intent.EXTRA_SUBJECT, "PhoneUse App");
+            intent.setType("text/plain");
+            intent.putExtra(Intent.EXTRA_TEXT, getActivity().getResources().getString(R.string.string_download_app) + ":\n \n"
+                    + "https://play.google.com/store/apps/details?id=com.macropinch.swan&hl=en");
+            startActivity(Intent.createChooser(intent, "Share with"));
 		}
 		return false;
 	}

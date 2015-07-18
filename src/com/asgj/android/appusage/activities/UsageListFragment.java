@@ -321,14 +321,7 @@ public class UsageListFragment<AppData, MusicData> extends
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // TODO Auto-generated method stub
 	    switch (item.getItemId()) {
-	    case R.id.menu_share_via:
-	    	Intent intent = new Intent(Intent.ACTION_SEND);
-	    	intent.setType("text/plain");
-	    	intent.putExtra(Intent.EXTRA_TEXT, "Shared from PhoneUse App "
-	    			+ "https://play.google.com/store/apps/details?id=com.macropinch.swan&hl=en");
-	    	startActivity(Intent.createChooser(intent, "Share with"));
-	    	break;
-		case R.id.filter_menu:
+	    case R.id.filter_menu:
 			if (UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
 				UsageSharedPrefernceHelper.setFilterMode(getActivity(), false);
 				item.setTitle(R.string.string_all);
