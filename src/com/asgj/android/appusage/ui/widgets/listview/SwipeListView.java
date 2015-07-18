@@ -19,7 +19,6 @@
 package com.asgj.android.appusage.ui.widgets.listview;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewConfigurationCompat;
 import android.util.AttributeSet;
@@ -38,7 +37,7 @@ public class SwipeListView extends ListView {
     /**
      * log tag
     */
-    public final static String TAG = "anurag";
+    public final static String TAG = "SwipeListView";
 	
     /**
     * whether debug
@@ -51,13 +50,6 @@ public class SwipeListView extends ListView {
 
     public final static int SWIPE_ACTION_REVEAL = 0;
 
-    public final static String SWIPE_DEFAULT_FRONT_VIEW = "swipelist_frontview";
-
-    /**
-     * Default id for back view
-     */
-    public final static String SWIPE_DEFAULT_BACK_VIEW = "swipelist_backview";
-
     /**
      * Indicates no movement
      */
@@ -68,10 +60,6 @@ public class SwipeListView extends ListView {
      */
     private final static int TOUCH_STATE_SCROLLING_X = 1;
 
-    /**
-     * State scrolling y position
-     */
-
     private int touchState = TOUCH_STATE_REST;
 
     private float lastMotionX;
@@ -79,12 +67,6 @@ public class SwipeListView extends ListView {
 
     int swipeFrontView = 0;
     int swipeBackView = 0;
-    
-    
-
-    /**
-     * Internal listener for common swipe events
-     */
 
     /**
      * Internal touch listener
@@ -133,54 +115,11 @@ public class SwipeListView extends ListView {
      */
     private void init(AttributeSet attrs) {
 
-        int swipeMode = SWIPE_MODE_RIGHT;
-        long swipeAnimationTime = 0;
-        float swipeOffsetLeft = 0;
-        float swipeOffsetRight = 0;
-        int swipeDrawableChecked = 0;
-        int swipeDrawableUnchecked = 0;
-
-        int swipeActionLeft = SWIPE_ACTION_REVEAL;
-        int swipeActionRight = SWIPE_ACTION_REVEAL;
-
-        if (attrs != null) {
-            TypedArray styled = getContext().obtainStyledAttributes(attrs, R.styleable.SwipeListView);
-            swipeMode = styled.getInt(R.styleable.SwipeListView_swipeMode, SWIPE_MODE_RIGHT);
-            swipeActionLeft = styled.getInt(R.styleable.SwipeListView_swipeActionLeft, SWIPE_ACTION_REVEAL);
-            swipeActionRight = styled.getInt(R.styleable.SwipeListView_swipeActionRight, SWIPE_ACTION_REVEAL);
-            swipeOffsetLeft = styled.getDimension(R.styleable.SwipeListView_swipeOffsetLeft, 0);
-            swipeOffsetRight = styled.getDimension(R.styleable.SwipeListView_swipeOffsetRight, 0);
-            swipeAnimationTime = styled.getInteger(R.styleable.SwipeListView_swipeAnimationTime, 0);
-            swipeDrawableChecked = styled.getResourceId(R.styleable.SwipeListView_swipeDrawableChecked, 0);
-            swipeDrawableUnchecked = styled.getResourceId(R.styleable.SwipeListView_swipeDrawableUnchecked, 0);
-            swipeFrontView = styled.getResourceId(R.styleable.SwipeListView_swipeFrontView, 0);
-            swipeBackView = styled.getResourceId(R.styleable.SwipeListView_swipeBackView, 0);
-            styled.recycle();
-        }
-
-        if (swipeFrontView == 0 || swipeBackView == 0) {
-            swipeFrontView = getContext().getResources().getIdentifier(SWIPE_DEFAULT_FRONT_VIEW, "id", getContext().getPackageName());
-            swipeBackView = getContext().getResources().getIdentifier(SWIPE_DEFAULT_BACK_VIEW, "id", getContext().getPackageName());
-
-            if (swipeFrontView == 0 || swipeBackView == 0) {
-            	swipeFrontView  = R.id.parentLayout;
-            	swipeBackView = R.id.frameForAnimLayout;
-            }
-        }
-
+        swipeFrontView  = R.id.parentLayout;
+        swipeBackView = R.id.frameForAnimLayout;
         final ViewConfiguration configuration = ViewConfiguration.get(getContext());
         touchSlop = ViewConfigurationCompat.getScaledPagingTouchSlop(configuration);
         touchListener = new SwipeListViewTouchListener(this, swipeFrontView, swipeBackView);
-        if (swipeAnimationTime > 0) {
-            touchListener.setAnimationTime(swipeAnimationTime);
-        }
-        touchListener.setRightOffset(swipeOffsetRight);
-        touchListener.setLeftOffset(swipeOffsetLeft);
-        touchListener.setSwipeActionLeft(swipeActionLeft);
-        touchListener.setSwipeActionRight(swipeActionRight);
-        touchListener.setSwipeMode(swipeMode);
-        touchListener.setSwipeDrawableChecked(swipeDrawableChecked);
-        touchListener.setSwipeDrawableUnchecked(swipeDrawableUnchecked);
         setOnTouchListener(touchListener);
     }
 
