@@ -32,10 +32,6 @@ public class DeviceRebootReceiver extends BroadcastReceiver {
 		else {
 			if (UsageSharedPrefernceHelper.isNeedToServiceOnReboot(context)) {
 			    
-			    // Clear preference if necessary.
-			    Calendar datePref = Calendar.getInstance();
-			    datePref.setTimeInMillis(UsageSharedPrefernceHelper.getDateStoredInPref(context));
-			    
 				Intent startServiceIntent = new Intent();
 				startServiceIntent
 						.setClass(context, UsageTrackingService.class);

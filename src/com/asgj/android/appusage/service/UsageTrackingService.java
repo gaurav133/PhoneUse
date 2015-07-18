@@ -222,7 +222,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                         mPreviousAppStartTimeStamp = System.currentTimeMillis();
                     }
                     
-                    // Day change scenario, no applications have been notified.
+                    /*// Day change scenario, no applications have been notified.
                     HashMap<String, Long> map = UsageSharedPrefernceHelper.getApplicationsDurationForTracking(mContext);
                     
                     if (map != null && !map.isEmpty()) {
@@ -250,7 +250,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                             }
                         }
                     } 
-                    
+                    */
 
                     initializeMap(mBgTrackingTask.foregroundMap);
 
@@ -701,6 +701,33 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                     mIsContinueTracking = true;
                     return;
                 }
+                
+                // Check if date changed, update notification prefs.
+                Calendar currentCalendar = Calendar.getInstance();
+                Calendar storedCalendar = Calendar.getInstance();
+                storedCalendar.setTimeInMillis(UsageSharedPrefernceHelper.getDateStoredInPref(getApplicationContext()));
+                
+                if (Utils.compareDates(currentCalendar, storedCalendar) == 1) {
+                    mPresentDurationMap.clear();
+                    // Update notified preferences.
+                    if (mAlertNotifiedMap != null && !mAlertNotifiedMap.isEmpty()) {
+                        for (Map.Entry<String, Boolean> notifyEntry : mAlertNotifiedMap.entrySet()) {
+                            String pkg = notifyEntry.getKey();
+                            UsageSharedPrefernceHelper.setApplicationAlert(mContext, pkg, false);
+                            
+                            mPresentDurationMap.put(
+                                    pkg,
+                                    mDatabase.getTotalDurationOfApplicationOfAppByDate(pkg,
+                                            System.currentTimeMillis()));
+                        
+                        }
+                    }
+                    
+                    mAlertNotifiedMap = UsageSharedPrefernceHelper.getApplicationsAlertForTracking(mContext);
+                    
+                    UsageSharedPrefernceHelper.setCurrentDate(mContext);
+                }
+                
                 if (mIsFirstTimeStartForgroundAppService) {
                     androidDefaultUEH = Thread.getDefaultUncaughtExceptionHandler();
                     Thread.setDefaultUncaughtExceptionHandler(handler);
@@ -833,9 +860,6 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                 mDatabase.insertMusicEntry(iterator.next());
             }
         }
-        
-        // Store current date to preferences.
-        UsageSharedPrefernceHelper.setCurrentDate(mContext);
 
         mPreviousAppStartTimeStamp = System.currentTimeMillis();
         mPreviousAppExitTimeStamp = mPreviousAppStartTimeStamp;
