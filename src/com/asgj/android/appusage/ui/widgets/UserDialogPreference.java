@@ -108,21 +108,21 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
 		mContext = context;
 		if (this.getKey().equals("user_packges_pref")) {
             mCurrentPref = NOTIFICATION_PREF;
-            this.setTitle(R.string.string_select_packages_pref_title);
-            this.setSummary(R.string.string_select_packages_dialog_title);
+            this.setTitle(R.string.string_notification_alert_pref_title);
+            this.setSummary(R.string.string_notification_alert_pref_summary);
         } else if (this.getKey().equals("filter_pkages")) {
             mCurrentPref = PACKAGES_FILTER_PREF;
-            this.setTitle(R.string.string_filter_packages_pref_title);
-            this.setSummary(R.string.string_filter_packages_dialog_title);
+            this.setTitle(R.string.string_filter_apps_pref_title);
+            this.setSummary(R.string.string_filter_apps_pref_summary);
         }
 	}
 
     @Override
     protected void onPrepareDialogBuilder(Builder builder) {
         if (mCurrentPref == NOTIFICATION_PREF) {
-            builder.setTitle(R.string.string_select_packages_dialog_title);
+            builder.setTitle(R.string.string_select_apps_dialog_title);
         } else {
-            builder.setTitle(R.string.string_filter_packages_dialog_title);
+            builder.setTitle(R.string.string_select_apps_dialog_title);
         }
         builder.setAdapter(mAdapter, this);
         builder.setPositiveButton(android.R.string.ok, null);
