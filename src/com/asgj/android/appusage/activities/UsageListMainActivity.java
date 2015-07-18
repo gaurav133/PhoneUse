@@ -416,6 +416,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     		mShowByOptionsMonthly.setElevation(20f);
     		mShowByOptionsYearly.setElevation(20f);
     		mShowByOptionsCustom.setElevation(20f);
+    		mShowByOptionsToday.setVisibility(View.VISIBLE);
         }
     }
 
@@ -862,7 +863,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		
 		@Override
 		public void onAnimationEnd(Animator animation) {
-			
+			mShowByOptionsToday.setText(UsageSharedPrefernceHelper.getShowByType(mContext));
 			mShowByOptionsWeekly.setVisibility(View.INVISIBLE);
 			mShowByOptionsMonthly.setVisibility(View.INVISIBLE);
 			mShowByOptionsYearly.setVisibility(View.INVISIBLE);
@@ -936,8 +937,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 		}
 		
 	}
-
-    @Override
+	
+	@Override
     public void onDateSetComplete(Calendar startCalendar, Calendar endCalendar) {
         // TODO Auto-generated method stub
 

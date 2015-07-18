@@ -15,6 +15,7 @@
               android:minWidth="@dimen/activity_show_by_textview_width"
               android:textSize="15dp"
               android:padding="5dp"
+              android:visibility="invisible"
               android:gravity="center"
               android:layout_height="wrap_content"
               android:textColor="@android:color/white"
