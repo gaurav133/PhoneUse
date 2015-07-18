@@ -573,7 +573,9 @@ public class UsageListFragment<AppData, MusicData> extends
 			// Retrieve a TextView from the inflated View, and update it's text
 			SwipeListView title = (SwipeListView)viewData.findViewById(R.id.usage_list);
 			ExpandableListView musicListView = (ExpandableListView)viewData.findViewById(R.id.music_list);
-						
+			if(!Utils.isAndroidLDevice(getActivity())){
+				title.setSelector(getActivity().getResources().getDrawable(R.drawable.list_item_selector));
+			}	
 			if (position == 0 && mAppDataListAdapter != null){
 				if(Utils.isTabletDevice(getActivity())){
 					mMusicListLayout.setVisibility(View.GONE);
