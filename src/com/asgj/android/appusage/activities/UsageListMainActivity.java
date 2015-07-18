@@ -593,7 +593,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         UsageSharedPrefernceHelper.setCalendar(mContext, cal1.getTimeInMillis(), "startCalendar");
         UsageSharedPrefernceHelper.setCalendar(mContext, cal2.getTimeInMillis(), "endCalendar");
         
-        UsageSharedPrefernceHelper.setCurrentDate(mContext);
         mDataMap = null;
         mMusicList = null;
         mContext = null;
