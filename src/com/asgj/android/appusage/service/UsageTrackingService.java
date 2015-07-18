@@ -250,7 +250,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                             }
                         }
                     } 
-                    
+                    */
 
                     initializeMap(mBgTrackingTask.foregroundMap);
 
