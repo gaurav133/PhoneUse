@@ -7,10 +7,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.TypedArray;
 import android.preference.DialogPreference;
 import android.preference.Preference;
-import android.preference.PreferenceManager;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -20,6 +18,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 
 import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.asgj.android.appusage.Utility.Utils;
 import com.asgj.android.appusage.receivers.AutoTrackReceiver;
 
 public class TimePreference extends DialogPreference implements Preference.OnPreferenceClickListener{
@@ -83,13 +82,17 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
 
                 // Send broadcast for change in start/stop time.
                 if (this.getKey().equals("start_time_pref_key")) {
-                    setStartingAlarm(lastHour, lastMinute);
+                    Log.v("gaurav", "Last hour start: " + lastHour);
+                    Log.v("gaurav", "Last min start: " + lastMinute);
+                    setTrackingAlarms(lastHour * 3600 + lastMinute * 60, UsageSharedPrefernceHelper.getTrackingEndTime(getContext()));
                 }
 
                 if (this.getKey().equals("stop_time_pref_key")) {
-                    setStoppingAlarm(lastHour, lastMinute);
+                    Log.v("gaurav", "end hour start: " + lastHour);
+                    Log.v("gaurav", "end min start: " + lastMinute);
+                    setTrackingAlarms(UsageSharedPrefernceHelper.getTrackingStartTime(getContext()), lastHour * 3600 + lastMinute * 60);
                 }
-                persistString(time);
+                // persistString(time);
                 timeDisplay.setText(toString());
                 
                 
@@ -97,47 +100,74 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
         }
     }
 
-    
-    private void setStartingAlarm(int hour, int min) {
-        mStartTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
-        mStartTimeIntent.putExtra("startService", true);
-        mStartPendingIntent = PendingIntent.getBroadcast(getContext(), 0, mStartTimeIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+        
+    private void setTrackingAlarms (long startSeconds, long endSeconds) {
+        Calendar startTrackCalendar = Calendar.getInstance();
+        Calendar endTrackCalendar = Calendar.getInstance();
+
 
         mStartAlarmManager = (AlarmManager) getContext().getSystemService(Service.ALARM_SERVICE);
-        Calendar startTrackCalendar = Calendar.getInstance();
-        startTrackCalendar.set(Calendar.HOUR_OF_DAY, lastHour);
-        startTrackCalendar.set(Calendar.MINUTE, lastMinute);
-        startTrackCalendar.set(Calendar.SECOND, 0);
+        mStopAlarmManager = (AlarmManager) getContext().getSystemService(Service.ALARM_SERVICE);
+        
+        int result = Utils.getStartAndEndTrackDays(startSeconds,  endSeconds);
+        
+        UsageSharedPrefernceHelper.setTrackingEndTime(getContext(), endSeconds);
+        UsageSharedPrefernceHelper.setTrackingStartTime(getContext(), startSeconds);
 
+        switch (result) {
+        case 1 : // Both on present day. Do nothing.
+                break;
+        case 2 : // Start alarm today, end alarm tomorrow.
+            endTrackCalendar.add(Calendar.DATE, 1);
+            break;
+        case 3 : // Both on next day.
+                startTrackCalendar.add(Calendar.DATE, 1);
+                endTrackCalendar.add(Calendar.DATE, 1);
+                break;
+        }
+        
+        int startHr, endHr, startMin, endMin;
+        
+        startHr = (int) (startSeconds/3600);
+        startSeconds %= 3600;
+        
+        endHr = (int) (endSeconds/3600);
+        endSeconds %= 3600;
+        
+        startMin = (int) (startSeconds/60);
+        startSeconds %= 60;
+        
+        endMin = (int) (endSeconds/60);
+        endSeconds %= 60;
+        
+        startTrackCalendar.set(Calendar.HOUR_OF_DAY, startHr);
+        startTrackCalendar.set(Calendar.MINUTE, startMin);
+        startTrackCalendar.set(Calendar.SECOND, 0);
+        
+        endTrackCalendar.set(Calendar.HOUR_OF_DAY, endHr);
+        endTrackCalendar.set(Calendar.MINUTE, endMin);
+        endTrackCalendar.set(Calendar.SECOND, 0);
+
+        mStartTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
+        mStartTimeIntent.putExtra("startService", true);
+        mStartPendingIntent = PendingIntent.getBroadcast(getContext(), 1, mStartTimeIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
         mStartAlarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
                 startTrackCalendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY,
                 mStartPendingIntent);
 
-        // Store this in shared preference.
-        int seconds = hour * 3600 + min * 60;
-        UsageSharedPrefernceHelper.setTrackingStartTime(getContext(), seconds);
-    }
 
-    private void setStoppingAlarm(int hour, int min) {
         mStopTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
         mStopTimeIntent.putExtra("stopService", true);
-        mStopPendingIntent = PendingIntent.getBroadcast(getContext(), 1, mStopTimeIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        mStopAlarmManager = (AlarmManager) getContext().getSystemService(Service.ALARM_SERVICE);
-        Calendar startTrackCalendar = Calendar.getInstance();
-        startTrackCalendar.set(Calendar.HOUR_OF_DAY, lastHour);
-        startTrackCalendar.set(Calendar.MINUTE, lastMinute);
-        startTrackCalendar.set(Calendar.SECOND, 0);
-
+        mStopPendingIntent = PendingIntent.getBroadcast(getContext(), 2, mStopTimeIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
         mStopAlarmManager
-                .setRepeating(AlarmManager.RTC_WAKEUP, startTrackCalendar.getTimeInMillis(),
+                .setRepeating(AlarmManager.RTC_WAKEUP, endTrackCalendar.getTimeInMillis(),
                         AlarmManager.INTERVAL_DAY, mStopPendingIntent);
 
         // Store this in shared preference.
-        int seconds = hour * 3600 + min * 60;
-        UsageSharedPrefernceHelper.setTrackingEndTime(getContext(), seconds);
+        UsageSharedPrefernceHelper.setTrackingMode(getContext(), true);
+        
     }
 
     @Override
@@ -152,6 +182,22 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
         } while (widgetLayout.getId() != android.R.id.widget_frame);
         ((ViewGroup) widgetLayout).removeAllViews();
         timeDisplay = new TextView(widgetLayout.getContext());
+
+        if (this.getKey().equals("start_time_pref_key")) {
+            long seconds = UsageSharedPrefernceHelper.getTrackingStartTime(getContext());
+            lastHour = (int) (seconds / 3600);
+            seconds %= 3600;
+            lastMinute = (int) (seconds / 60);
+            seconds %= 60;
+        }
+
+        if (this.getKey().equals("stop_time_pref_key")) {
+            long seconds = UsageSharedPrefernceHelper.getTrackingEndTime(getContext());
+            lastHour = (int) (seconds / 3600);
+            seconds %= 3600;
+            lastMinute = (int) (seconds / 60);
+            seconds %= 60;
+        }
         timeDisplay.setText(toString());
         ((ViewGroup) view).addView(timeDisplay);
         Preference pref = findPreferenceInHierarchy("preferences_enabled");
@@ -160,30 +206,30 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
             timeDisplay.setEnabled(false);
             if (mIsClicked) {
                 Log.v("gaurav", "Flag not null, stop alarm");
-                
-                    mStartTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
-                    mStartTimeIntent.putExtra("startService", true);
-                    mStartPendingIntent = PendingIntent.getBroadcast(getContext(), 0, mStartTimeIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-                    mStartPendingIntent.cancel();
-                    if (mStartAlarmManager == null) {
-                        mStartAlarmManager = (AlarmManager) getContext().getSystemService(Service.ALARM_SERVICE);
-                    }
-                    mStartAlarmManager.cancel(mStartPendingIntent);
-             
 
+                mStartTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
+                mStartTimeIntent.putExtra("startService", true);
+                mStartPendingIntent = PendingIntent.getBroadcast(getContext(), 1, mStartTimeIntent,
+                        PendingIntent.FLAG_CANCEL_CURRENT);
+                mStartPendingIntent.cancel();
+                if (mStartAlarmManager == null) {
+                    mStartAlarmManager = (AlarmManager) getContext().getSystemService(
+                            Service.ALARM_SERVICE);
+                }
+                mStartAlarmManager.cancel(mStartPendingIntent);
 
-                    mStopTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
-                    mStopTimeIntent.putExtra("stopService", true);
-                    mStopPendingIntent = PendingIntent.getBroadcast(getContext(), 1, mStopTimeIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-                    mStopPendingIntent.cancel();
-                    if (mStopAlarmManager == null) {
-                        mStopAlarmManager = (AlarmManager) getContext().getSystemService(Service.ALARM_SERVICE);
-                    }
-                    mStopAlarmManager.cancel(mStopPendingIntent);
+                mStopTimeIntent = new Intent(getContext(), AutoTrackReceiver.class);
+                mStopTimeIntent.putExtra("stopService", true);
+                mStopPendingIntent = PendingIntent.getBroadcast(getContext(), 2, mStopTimeIntent,
+                        PendingIntent.FLAG_CANCEL_CURRENT);
+                mStopPendingIntent.cancel();
+                if (mStopAlarmManager == null) {
+                    mStopAlarmManager = (AlarmManager) getContext().getSystemService(
+                            Service.ALARM_SERVICE);
+                }
+                mStopAlarmManager.cancel(mStopPendingIntent);
 
-                 UsageSharedPrefernceHelper.setTrackingMode(getContext(), false);
+                UsageSharedPrefernceHelper.setTrackingMode(getContext(), false);
             }
         } else {
             timeDisplay.setEnabled(true);
@@ -191,30 +237,14 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
             if (mIsClicked) {
                 Log.v("gaurav", "Flag not null, start alarm");
                 // Get time from preferences, and set alarms.
-                int startSeconds = UsageSharedPrefernceHelper.getTrackingStartTime(getContext());
-                int startHour = startSeconds / 3600;
-                startSeconds %= 3600;
-                int startMinutes = startSeconds / 60;
+                long startSeconds = UsageSharedPrefernceHelper.getTrackingStartTime(getContext());
+                long stopSeconds = UsageSharedPrefernceHelper.getTrackingEndTime(getContext());
 
-                setStartingAlarm(startHour, startMinutes);
-
-                int stopSeconds = UsageSharedPrefernceHelper.getTrackingEndTime(getContext());
-                int stopHour = stopSeconds / 3600;
-                stopSeconds %= 3600;
-                int stopMinutes = stopSeconds / 60;
-
-                setStoppingAlarm(stopHour, stopMinutes);
-                UsageSharedPrefernceHelper.setTrackingMode(getContext(), true);
-                
+                setTrackingAlarms(startSeconds, stopSeconds);
             }
         }
         mIsClicked = false;
-        
-    }
 
-    @Override
-    protected Object onGetDefaultValue(TypedArray a, int index) {
-        return (a.getString(index));
     }
 
     @Override
@@ -235,20 +265,42 @@ public class TimePreference extends DialogPreference implements Preference.OnPre
         String time = null;
 
         if (restoreValue) {
-            if (defaultValue == null) {
-                time = getPersistedString("00:00");
-            } else {
-                time = getPersistedString(defaultValue.toString());
+
+            if (this.getKey().equals("start_time_pref_key")) {
+                if (defaultValue == null) {
+                    time = "00:00";
+                } else {
+                    long seconds = UsageSharedPrefernceHelper.getTrackingStartTime(getContext());
+                    lastHour = (int) (seconds / 3600);
+                    seconds %= 3600;
+                    lastMinute = (int) (seconds / 60);
+                    seconds %= 60;
+                    time = String.valueOf(lastHour) + ":" + String.valueOf(lastMinute);
+                }
             }
+
+            if (this.getKey().equals("stop_time_pref_key")) {
+                if (defaultValue == null) {
+                    time = "00:00";
+                } else {
+                    long seconds = UsageSharedPrefernceHelper.getTrackingEndTime(getContext());
+                    lastHour = (int) (seconds / 3600);
+                    seconds %= 3600;
+                    lastMinute = (int) (seconds / 60);
+                    seconds %= 60;
+                    time = String.valueOf(lastHour) + ":" + String.valueOf(lastMinute);
+                }
+            }
+
         } else {
             if (defaultValue == null) {
                 time = "00:00";
             } else {
                 time = defaultValue.toString();
             }
-            if (shouldPersist()) {
-                persistString(time);
-            }
+            // if (shouldPersist()) {
+            // persistString(time);
+            // }
         }
 
         String[] timeParts = time.split(":");
