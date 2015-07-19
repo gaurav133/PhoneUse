@@ -64,9 +64,7 @@ public class UsageDetailListFragment extends Fragment implements View.OnClickLis
 	    
 	    if (!Utils.isTabletDevice(getActivity())) {
 	        if (menu != null) {
-	            menu.findItem(R.id.action_start).setVisible(false);
-	            menu.findItem(R.id.action_settings).setVisible(false);
-	            menu.findItem(R.id.action_showBy).setVisible(false);
+	            menu.findItem(R.id.action_overflow).setVisible(false);
 	        }
 	    }
 	}
