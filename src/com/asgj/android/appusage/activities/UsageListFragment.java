@@ -18,25 +18,17 @@ package com.asgj.android.appusage.activities;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import android.app.ActionBar;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -49,12 +41,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -93,7 +83,7 @@ public class UsageListFragment<AppData, MusicData> extends
      */
     private SlidingTabLayout mSlidingTabLayout;
 
-    private HashMap<String, String> mLabelMap;
+    public HashMap<String, String> mLabelMap;
 
     private PhoneUsageDatabase mDatabase;
 
@@ -202,7 +192,10 @@ public class UsageListFragment<AppData, MusicData> extends
         }
         super.onCreate(savedInstanceState);
     }
-    
+
+    public int getViewPagerPage() {
+        return mViewPager.getCurrentItem();
+    }
     private void initActionBar() {
 
         mActionBar = getActivity().getActionBar();
@@ -284,31 +277,25 @@ public class UsageListFragment<AppData, MusicData> extends
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
         // TODO Auto-generated method stub
-		MenuItem filterMenu = (MenuItem) menu.findItem(R.id.filter_menu);
-		if(UsageSharedPrefernceHelper.isFilterMode(getActivity())){
-			filterMenu.setTitle(R.string.string_filter);
-		}else{
-			filterMenu.setTitle(R.string.string_all);
-		}
-		
-		MenuItem menuItemFilter = (MenuItem) menu.findItem(R.id.filter_menu);
-        MenuItem menuItemSortBy = (MenuItem) menu.findItem(R.id.action_sort_by);
+        MenuItem filterMenu = (MenuItem) menu.findItem(R.id.filter_menu);
+        if (UsageSharedPrefernceHelper.isFilterMode(getActivity())) {
+            filterMenu.setTitle(R.string.string_filter);
+        } else {
+            filterMenu.setTitle(R.string.string_all);
+        }
+
+        MenuItem menuItemFilter = (MenuItem) menu.findItem(R.id.filter_menu);
 
         if (mViewPager != null) {
             switch (mViewPager.getCurrentItem()) {
             case 0:
-                if (mAppDataListAdapter != null) {
-                	menuItemFilter.setVisible(true);
-                    if (mAppDataListAdapter.isEmpty()) {
-                        menuItemSortBy.setVisible(false);
-                    } else {
-                        menuItemSortBy.setVisible(true);
-                    }
+                if (mAppDataListAdapter != null && !mAppDataListAdapter.isEmpty()) {
+                    menuItemFilter.setVisible(true);
                 }
                 break;
-            case 1: menuItemSortBy.setVisible(false);
-                    menuItemFilter.setVisible(false);
-                    break;
+            case 1: // menuItemSortBy.setVisible(false);
+                menuItemFilter.setVisible(false);
+                break;
             default:
                 break;
             }
@@ -341,100 +328,11 @@ public class UsageListFragment<AppData, MusicData> extends
                 }
             }
             break;
-        case R.id.action_sort_by:
-            // Open alert dialog.
-            AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(getActivity()).setTitle(
-                    getString(R.string.string_sort_by)).setAdapter(new ArrayAdapter<>(getActivity().getBaseContext(), android.R.layout.simple_list_item_1, new String[] {getString(R.string.string_duration), getString(R.string.string_application), getString(R.string.string_last_time_used)}), new OnClickListener() {
-                        
-                        @SuppressWarnings("unchecked")
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // TODO Auto-generated method stub
-                            switch(which) {
-                            case 0 : // Time case.
-                                List<Map.Entry<String, Long>> timeList = new LinkedList<Map.Entry<String, Long>>(((HashMap<String, Long>) mUsageAppData).entrySet());
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
-                                if (!timeList.isEmpty()) {
-                                    Collections.sort(timeList, new Comparator<Map.Entry<String, Long>>() {
-
-                                    @Override
-                                    public int compare(Entry<String, Long> lhs,
-                                            Entry<String, Long> rhs) {
-                                        // TODO Auto-generated method stub
-                                        return (int) (lhs.getValue() - rhs.getValue());
-                                    }
-                                });
-                                LinkedHashMap<String, Long> sortedTimeMap = new LinkedHashMap<String, Long>();
-                                ListIterator<Map.Entry<String, Long>> timeIterator = timeList.listIterator();
-                                while (timeIterator.hasNext()) {
-                                    Map.Entry<String, Long> entry = timeIterator.next();
-                                    sortedTimeMap.put(entry.getKey(), entry.getValue());
-                                }
-                                setmUsageAppData((AppData) sortedTimeMap);
-                                }
-                                break;
-                                
-                            case 1 : 
-                            List<Map.Entry<String, Long>> appList = new LinkedList<Map.Entry<String, Long>>(((HashMap<String, Long>) mUsageAppData).entrySet());
-
-                            Collections.sort(appList, new Comparator<Map.Entry<String, Long>>() {
-
-                                @Override
-                                public int compare(Entry<String, Long> lhs,
-                                        Entry<String, Long> rhs) {
-                                    // TODO Auto-generated method stub
-                                    return (int) (mLabelMap.get(lhs.getKey()).compareToIgnoreCase(mLabelMap.get(rhs.getKey())));
-                                }
-                            });
-                            LinkedHashMap<String, Long> sortedApplicationMap = new LinkedHashMap<String, Long>();
-                            ListIterator<Map.Entry<String, Long>> appIterator = appList.listIterator();
-                            while (appIterator.hasNext()) {
-                                Map.Entry<String, Long> entry = appIterator.next();
-                                sortedApplicationMap.put(entry.getKey(), entry.getValue());
-                            }
-                            setmUsageAppData((AppData) sortedApplicationMap);
-                            break;
-
-                    case 2 : 
-                                HashMap<String, Long> map = mDatabase
-                                        .getApplicationEndTimeStampsForMentionedTimeBeforeToday(
-                                                getActivity(), UsageSharedPrefernceHelper
-                                                        .getCalendarByShowType(getActivity()),
-                                                Calendar.getInstance());
-                                List<Map.Entry<String, Long>> lastTimeList = new LinkedList<Map.Entry<String, Long>>(
-                                        ((HashMap<String, Long>) map).entrySet());
-
-                                Collections.sort(lastTimeList,
-                                        new Comparator<Map.Entry<String, Long>>() {
-
-                            @Override
-                            public int compare(Entry<String, Long> lhs,
-                                    Entry<String, Long> rhs) {
-                                // TODO Auto-generated method stub
-                                return (int) (rhs.getValue() - lhs.getValue());
-                            }
-                        });
-                        LinkedHashMap<String, Long> sortedLastTimeUsedMap = new LinkedHashMap<String, Long>();
-                        ListIterator<Map.Entry<String, Long>> lastTimeUsedIterator = lastTimeList.listIterator();
-                        while (lastTimeUsedIterator.hasNext()) {
-                            Map.Entry<String, Long> entry = lastTimeUsedIterator.next();
-                            sortedLastTimeUsedMap.put(entry.getKey(), ((HashMap<String, Long>) mUsageAppData).get(entry.getKey()));
-                        }
-                        setmUsageAppData((AppData) sortedLastTimeUsedMap);
-                        break;
-
-                        }
-                    }
-
-                    });
-            AlertDialog sortByDialog = sortByBuilder.create();
-            sortByDialog.show();
-            break;
-
-	    }
-	    return super.onOptionsItemSelected(item);
-	}
-	// END_INCLUDE (fragment_onviewcreated)
+    // END_INCLUDE (fragment_onviewcreated)
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} used to display pages in

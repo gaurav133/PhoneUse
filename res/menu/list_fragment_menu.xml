@@ -7,8 +7,4 @@
            android:title="@string/string_all"
            android:showAsAction="always"/>
 
-     <item 
-         android:id="@+id/action_sort_by"
-         android:title="@string/string_sort_by"/>
-
 </menu>

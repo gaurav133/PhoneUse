@@ -21,7 +21,6 @@ import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -32,6 +31,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -45,15 +45,15 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.LayoutInflater;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.PopupMenu;
+import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -68,12 +68,12 @@ import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.asgj.android.appusage.service.UsageTrackingService;
 import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.asgj.android.appusage.service.UsageTrackingService.provideData;
-import com.asgj.android.appusage.ui.widgets.SlidingTabLayout;
 
-public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface, UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity, Comparator<Map.Entry<Long, UsageInfo>>{
+public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface,
+        UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity,
+        Comparator<Map.Entry<Long, UsageInfo>>, OnMenuItemClickListener {
     private Context mContext;
     private MonthViewFragment startDateFragment;
-    private ActionBar mActionBar;
     private Calendar cal1, cal2;
     private UsageTrackingService mMainService;
     private UsageStatsManager mUsageStatsManager;
@@ -111,6 +111,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private HashMap<String, Long> mAlertDurationMap;
     private HashMap<String, Boolean> mAlertNotifiedMap;
     private int mNotificationId = 0;
+    private PopupMenu mPopupMenu;
 
     private BroadcastReceiver notificationAlertReceiver = new BroadcastReceiver() {
 
@@ -545,15 +546,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.list_activity_menu, menu);
 
-        if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
-            MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_start);
-            menuItem.setTitle(getString(R.string.string_stop));
-        }
-
-        if (Utils.isAndroidLDevice(mContext)) {
-            MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_showBy);
-            menuItem.setVisible(false);
-        }
         return super.onCreateOptionsMenu(menu);
     }
     
@@ -561,18 +553,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     public boolean onPrepareOptionsMenu(Menu menu) {
         if (mShowByOptionsWeekly.getVisibility() == View.VISIBLE) {
             hideFabOption();
-        }
-        if (Utils.isAndroidLDevice(mContext)) {
-            if (!Utils.isPermissionGranted(mContext)) {
-                MenuItem menuItem = menu.findItem(R.id.action_start);
-                menuItem.setTitle(getString(R.string.string_start));
-
-                Intent stopServiceIntent = new Intent();
-                stopServiceIntent
-                        .setClass(mContext, UsageTrackingService.class);
-                mContext.stopService(stopServiceIntent);
-                UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
-            }
         }
     	return super.onPrepareOptionsMenu(menu);
     }
@@ -712,10 +692,328 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         super.onTrimMemory(level);
     }
 
+    private void showPopup() {
+        View view = findViewById(R.id.action_overflow);
+
+        // Prepare a popup menu.
+        mPopupMenu = new PopupMenu(mContext, view);
+        mPopupMenu.inflate(R.menu.menu_overflow);
+        mPopupMenu.setOnMenuItemClickListener(this);
+
+        Menu menu = mPopupMenu.getMenu();
+
+        if (UsageSharedPrefernceHelper.isServiceRunning(mContext)) {
+
+            MenuItem startStopItem = (MenuItem) menu.findItem(R.id.action_start);
+            startStopItem.setTitle(getString(R.string.string_stop));
+        }
+
+        if (Utils.isAndroidLDevice(mContext)) {
+            MenuItem showByItem = (MenuItem) menu.findItem(R.id.action_showBy);
+            showByItem.setVisible(false);
+
+            if (!Utils.isPermissionGranted(mContext)) {
+                MenuItem startStopItem = menu.findItem(R.id.action_start);
+                startStopItem.setTitle(getString(R.string.string_start));
+
+                Intent stopServiceIntent = new Intent();
+                stopServiceIntent.setClass(mContext, UsageTrackingService.class);
+                mContext.stopService(stopServiceIntent);
+                UsageSharedPrefernceHelper.setServiceRunning(mContext, false);
+            }
+        }
+        setSortMenu(menu);
+        mPopupMenu.show();
+    }
+
+    public void setSortMenu(Menu menu) {
+        if ((mDataMap != null && mDataMap.isEmpty()) || mUsageListFragment.getViewPagerPage() == 1) {
+            MenuItem sortByItem = (MenuItem) menu.findItem(R.id.action_sort_by);
+            sortByItem.setVisible(false);
+        }
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
-        	hideFabOption();
+        if (mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
+            hideFabOption();
+        switch (item.getItemId()) {
+        case R.id.action_overflow:
+            showPopup();
+            break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // TODO Auto-generated method stub
+        switch (event.getKeyCode()) {
+        case KeyEvent.KEYCODE_MENU:
+            Log.v("gaurav", "onKeyDown");
+            showPopup();
+            break;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private void showFabOptions() {
+        mShowByOptionsWeekly.animate().y(mSecondFabPos).setDuration(400)
+                .setListener(new ShowAnimationListner()).start();
+        mShowByOptionsMonthly.animate().y(mThirdFabPos).setDuration(400)
+                .setListener(new ShowAnimationListner()).start();
+        ;
+        mShowByOptionsYearly.animate().y(mForthFabPos).setDuration(400)
+                .setListener(new ShowAnimationListner()).start();
+        mShowByOptionsCustom.animate().y(mFifthFabPos).setDuration(400)
+                .setListener(new ShowAnimationListner()).start();
+    }
+
+    private void hideFabOption() {
+        mShowByOptionsWeekly.animate().y(mNormalYPosition).setDuration(400)
+                .setListener(new HideAnimationListner()).start();
+        mShowByOptionsMonthly.animate().y(mNormalYPosition).setDuration(400)
+                .setListener(new HideAnimationListner()).start();
+        mShowByOptionsYearly.animate().y(mNormalYPosition).setDuration(400)
+                .setListener(new HideAnimationListner()).start();
+        mShowByOptionsCustom.animate().y(mNormalYPosition).setDuration(400)
+                .setListener(new HideAnimationListner()).start();
+
+    }
+
+    class ShowAnimationListner implements AnimatorListener {
+
+        @Override
+        public void onAnimationStart(Animator animation) {
+            mShowByOptionsToday.setClickable(false);
+            mShowByOptionsWeekly.setClickable(false);
+            mShowByOptionsMonthly.setClickable(false);
+            mShowByOptionsYearly.setClickable(false);
+            mShowByOptionsCustom.setClickable(false);
+            mShowByOptionsWeekly.setVisibility(View.VISIBLE);
+            mShowByOptionsMonthly.setVisibility(View.VISIBLE);
+            mShowByOptionsYearly.setVisibility(View.VISIBLE);
+            mShowByOptionsCustom.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animation) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            mShowByOptionsToday.setClickable(true);
+            mShowByOptionsWeekly.setClickable(true);
+            mShowByOptionsMonthly.setClickable(true);
+            mShowByOptionsYearly.setClickable(true);
+            mShowByOptionsCustom.setClickable(true);
+
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animation) {
+            // TODO Auto-generated method stub
+
+        }
+    }
+
+    class HideAnimationListner implements AnimatorListener {
+
+        @Override
+        public void onAnimationStart(Animator animation) {
+            mShowByOptionsToday.setClickable(false);
+            mShowByOptionsWeekly.setClickable(false);
+            mShowByOptionsMonthly.setClickable(false);
+            mShowByOptionsYearly.setClickable(false);
+            mShowByOptionsCustom.setClickable(false);
+
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animation) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation) {
+
+            mShowByOptionsWeekly.setVisibility(View.INVISIBLE);
+            mShowByOptionsMonthly.setVisibility(View.INVISIBLE);
+            mShowByOptionsYearly.setVisibility(View.INVISIBLE);
+            mShowByOptionsCustom.setVisibility(View.INVISIBLE);
+            mShowByOptionsToday.setClickable(true);
+            mShowByOptionsWeekly.setClickable(true);
+            mShowByOptionsMonthly.setClickable(true);
+            mShowByOptionsYearly.setClickable(true);
+            mShowByOptionsCustom.setClickable(true);
+
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animation) {
+            // TODO Auto-generated method stub
+
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+        case R.id.showByOptionsToday:
+            setFabPositions();
+            if (mShowByOptionsWeekly.getVisibility() == View.INVISIBLE) {
+                showFabOptions();
+                mShowByOptionsToday.setText(mShowList[0]);
+            } else {
+                UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[0]);
+                hideFabOption();
+                mShowByOptionsToday.setText(mShowList[0]);
+                loadDataTask dataTaskToday = new loadDataTask(mContext);
+                dataTaskToday.execute();
+                if (Utils.isTabletDevice(mContext))
+                    updateDetailFragment(null, 0);
+            }
+
+            break;
+        case R.id.showByOptionsWeekly:
+            UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[1]);
+            hideFabOption();
+            mShowByOptionsToday.setText(mShowList[1]);
+            loadDataTask dataTaskWeekly = new loadDataTask(mContext);
+            dataTaskWeekly.execute();
+            if (Utils.isTabletDevice(mContext))
+                updateDetailFragment(null, 0);
+            break;
+        case R.id.showByOptionsMonthly:
+            UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[2]);
+            hideFabOption();
+            mShowByOptionsToday.setText(mShowList[2]);
+            loadDataTask dataTaskMonthly = new loadDataTask(mContext);
+            dataTaskMonthly.execute();
+            if (Utils.isTabletDevice(mContext))
+                updateDetailFragment(null, 0);
+            break;
+        case R.id.showByOptionsYearly:
+            UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[3]);
+            hideFabOption();
+            mShowByOptionsToday.setText(mShowList[3]);
+            loadDataTask dataTaskYearly = new loadDataTask(mContext);
+            dataTaskYearly.execute();
+            if (Utils.isTabletDevice(mContext))
+                updateDetailFragment(null, 0);
+            break;
+        case R.id.showByOptionsCustom:
+            startDateFragment = new MonthViewFragment();
+            startDateFragment.show(getFragmentManager(), "startMonthViewPicker");
+            hideFabOption();
+            break;
+        }
+
+    }
+
+    @Override
+    public void onDateSetComplete(Calendar startCalendar, Calendar endCalendar) {
+        // TODO Auto-generated method stub
+
+        this.cal1 = startCalendar;
+        this.cal2 = endCalendar;
+        mUsageListFragment.setStartEndCalForCustomInterval(startCalendar, endCalendar);
+        // Set in preference only after date from both pickers have been
+        // validated.
+        UsageSharedPrefernceHelper.setShowByUsage(mContext,
+                mContext.getString(R.string.string_Custom));
+        mShowByOptionsToday.setText(mShowList[4]);
+        loadDataTask dataTask = new loadDataTask(mContext);
+        dataTask.execute();
+        if (Utils.isTabletDevice(mContext))
+            updateDetailFragment(null, 0);
+    }
+
+    @Override
+    public void onMusicItemClick(String pkg, int groupPosition, int childPosition) {
+        if (mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
+            hideFabOption();
+    }
+
+    private void updateDetailFragment(String pkg, int position) {
+        // Check current preference first.
+        HashMap<Long, UsageInfo> infoMap = null;
+        // Check whether custom and end day not today.
+        if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
+                mContext.getString(R.string.string_Custom))
+                && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+
+            infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
+        } else {
+
+            switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
+            case "Today":
+                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
+                        Calendar.getInstance());
+                break;
+            case "Weekly":
+            case "Monthly":
+            case "Yearly":
+                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
+                        UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
+                        Calendar.getInstance());
+
+                break;
+            case "Custom":
+                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, Calendar.getInstance());
+                break;
+            default:
+                break;
+            }
+        }
+
+        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap, this);
+        initDetailFragment(linkedMap, pkg);
+    }
+
+    @Override
+    public void onUsageItemClick(String pkg, int position) {
+        if (mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
+            hideFabOption();
+        if (pkg == null || pkg.equals("totalTime")) {
+            return;
+        }
+
+        updateDetailFragment(pkg, position - 1);
+
+    }
+
+    @Override
+    public void onDetach() {
+        if (!Utils.isTabletDevice(mContext)) {
+            setFabButtonsVisibility(true);
+        }
+
+    }
+
+    @Override
+    public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
+        // TODO Auto-generated method stub
+        return (int) (rhs.getKey() - lhs.getKey());
+    }
+
+    @Override
+    public void onUsageItemSwiped(String pkg, int position) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TEXT, "I used " + Utils.getApplicationLabelName(mContext, pkg)
+                + "for duration :" + Utils.getTimeFromSeconds(mDataMap.get(pkg).longValue()) + "\n"
+                + "Sent from PhoneUse App");
+        startActivity(Intent.createChooser(intent, "Share with"));
+
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        // TODO Auto-generated method stub
         switch (item.getItemId()) {
         case R.id.action_start:
             if (!UsageSharedPrefernceHelper.isServiceRunning(this)) {
@@ -787,251 +1085,116 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             intent.putParcelableArrayListExtra("packageList", mList);
             startActivity(intent);
             break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    private void showFabOptions(){
-		mShowByOptionsWeekly.animate().y(mSecondFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
-		mShowByOptionsMonthly.animate().y(mThirdFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();;
-		mShowByOptionsYearly.animate().y(mForthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
-		mShowByOptionsCustom.animate().y(mFifthFabPos).setDuration(400).setListener(new ShowAnimationListner()).start();
-    }
-    
-    private void hideFabOption(){
-		mShowByOptionsWeekly.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
-		mShowByOptionsMonthly.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
-		mShowByOptionsYearly.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
-		mShowByOptionsCustom.animate().y(mNormalYPosition).setDuration(400).setListener(new HideAnimationListner()).start();
-    	
-    }
-    
- class ShowAnimationListner implements AnimatorListener {
-		
-		@Override
-		public void onAnimationStart(Animator animation) {
-			mShowByOptionsToday.setClickable(false);
-			mShowByOptionsWeekly.setClickable(false);
-			mShowByOptionsMonthly.setClickable(false);
-			mShowByOptionsYearly.setClickable(false);
-			mShowByOptionsCustom.setClickable(false);
-			mShowByOptionsWeekly.setVisibility(View.VISIBLE);
-			mShowByOptionsMonthly.setVisibility(View.VISIBLE);
-			mShowByOptionsYearly.setVisibility(View.VISIBLE);
-			mShowByOptionsCustom.setVisibility(View.VISIBLE);
-		}
-		
-		@Override
-		public void onAnimationRepeat(Animator animation) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-		@Override
-		public void onAnimationEnd(Animator animation) {
-			mShowByOptionsToday.setClickable(true);
-			mShowByOptionsWeekly.setClickable(true);
-			mShowByOptionsMonthly.setClickable(true);
-			mShowByOptionsYearly.setClickable(true);
-			mShowByOptionsCustom.setClickable(true);
-			
-		}
-		
-		@Override
-		public void onAnimationCancel(Animator animation) {
-			// TODO Auto-generated method stub
-			
-		}
-	}
-    
-    class HideAnimationListner implements AnimatorListener {
-		
-		@Override
-		public void onAnimationStart(Animator animation) {
-			mShowByOptionsToday.setClickable(false);
-			mShowByOptionsWeekly.setClickable(false);
-			mShowByOptionsMonthly.setClickable(false);
-			mShowByOptionsYearly.setClickable(false);
-			mShowByOptionsCustom.setClickable(false);
-			
-		}
-		
-		@Override
-		public void onAnimationRepeat(Animator animation) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-		@Override
-		public void onAnimationEnd(Animator animation) {
-			mShowByOptionsToday.setText(UsageSharedPrefernceHelper.getShowByType(mContext));
-			mShowByOptionsWeekly.setVisibility(View.INVISIBLE);
-			mShowByOptionsMonthly.setVisibility(View.INVISIBLE);
-			mShowByOptionsYearly.setVisibility(View.INVISIBLE);
-			mShowByOptionsCustom.setVisibility(View.INVISIBLE);
-			mShowByOptionsToday.setClickable(true);
-			mShowByOptionsWeekly.setClickable(true);
-			mShowByOptionsMonthly.setClickable(true);
-			mShowByOptionsYearly.setClickable(true);
-			mShowByOptionsCustom.setClickable(true);
-			
-		}
-		
-		@Override
-		public void onAnimationCancel(Animator animation) {
-			// TODO Auto-generated method stub
-			
-		}
-	}
+        case R.id.action_sort_by:
+            // Open alert dialog.
+            AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(this).setTitle(
+                    getString(R.string.string_sort_by)).setAdapter(
+                    new ArrayAdapter<>(getBaseContext(), android.R.layout.simple_list_item_1,
+                            new String[] { getString(R.string.string_duration),
+                                    getString(R.string.string_application),
+                                    getString(R.string.string_last_time_used) }),
+                    new OnClickListener() {
 
-	@Override
-	public void onClick(View v) {
-		switch(v.getId()){
-		case R.id.showByOptionsToday:
-			setFabPositions();
-			if (mShowByOptionsWeekly.getVisibility() == View.INVISIBLE) {
-				showFabOptions();
-				mShowByOptionsToday.setText(mShowList[0]);
-			} else {
-				UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[0]);
-				hideFabOption();
-				mShowByOptionsToday.setText(mShowList[0]);
-		        loadDataTask dataTaskToday = new loadDataTask(mContext);
-		        dataTaskToday.execute();
-				if(Utils.isTabletDevice(mContext))
-				updateDetailFragment(null,0);
-			}
-           
-			break;
-		case R.id.showByOptionsWeekly:
-			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[1]);
-			hideFabOption();
-			mShowByOptionsToday.setText(mShowList[1]);
-            loadDataTask dataTaskWeekly = new loadDataTask(mContext);
-            dataTaskWeekly.execute();
-            if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null,0);
-			break;
-		case R.id.showByOptionsMonthly:
-			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[2]);
-			hideFabOption();
-			mShowByOptionsToday.setText(mShowList[2]);
-            loadDataTask dataTaskMonthly = new loadDataTask(mContext);
-            dataTaskMonthly.execute();
-            if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null,0);
-			break;
-		case R.id.showByOptionsYearly:
-			UsageSharedPrefernceHelper.setShowByUsage(this, mShowList[3]);
-			hideFabOption();
-			mShowByOptionsToday.setText(mShowList[3]);
-            loadDataTask dataTaskYearly = new loadDataTask(mContext);
-            dataTaskYearly.execute();
-            if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null,0);
-			break;
-		case R.id.showByOptionsCustom:
-			startDateFragment = new MonthViewFragment();
-            startDateFragment.show(getFragmentManager(), "startMonthViewPicker");
-			hideFabOption();
-			break;
-		}
-		
-	}
-	
-	@Override
-    public void onDateSetComplete(Calendar startCalendar, Calendar endCalendar) {
-        // TODO Auto-generated method stub
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+                            switch (which) {
+                            case 0: // Time case.
+                                List<Map.Entry<String, Long>> timeList = new LinkedList<Map.Entry<String, Long>>(
+                                        mDataMap.entrySet());
 
-        this.cal1 = startCalendar;
-        this.cal2 = endCalendar;
-        mUsageListFragment.setStartEndCalForCustomInterval(startCalendar, endCalendar);
-        // Set in preference only after date from both pickers have been validated.
-        UsageSharedPrefernceHelper.setShowByUsage(mContext,
-                mContext.getString(R.string.string_Custom));
-        mShowByOptionsToday.setText(mShowList[4]);
-        loadDataTask dataTask = new loadDataTask(mContext);
-        dataTask.execute();
-            if(Utils.isTabletDevice(mContext))
-            updateDetailFragment(null,0);
-    }
-    
-    @Override
-    public void onMusicItemClick(String pkg, int groupPosition,
-    		int childPosition) {
-    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
-        	hideFabOption();    	
-    }
-    
-    private void updateDetailFragment(String pkg,int position) {
-        // Check current preference first.
-    	HashMap<Long,UsageInfo> infoMap = null;
-        // Check whether custom and end day not today.
-        if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
-                mContext.getString(R.string.string_Custom))
-                && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+                                if (!timeList.isEmpty()) {
+                                    Collections.sort(timeList,
+                                            new Comparator<Map.Entry<String, Long>>() {
 
-            infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
-        } else {
+                                                @Override
+                                                public int compare(Entry<String, Long> lhs,
+                                                        Entry<String, Long> rhs) {
+                                                    // TODO Auto-generated
+                                                    // method stub
+                                                    return (int) (lhs.getValue() - rhs.getValue());
+                                                }
+                                            });
+                                    LinkedHashMap<String, Long> sortedTimeMap = new LinkedHashMap<String, Long>();
+                                    ListIterator<Map.Entry<String, Long>> timeIterator = timeList
+                                            .listIterator();
+                                    while (timeIterator.hasNext()) {
+                                        Map.Entry<String, Long> entry = timeIterator.next();
+                                        sortedTimeMap.put(entry.getKey(), entry.getValue());
+                                    }
+                                    mUsageListFragment.setmUsageAppData(sortedTimeMap);
+                                }
+                                break;
 
-            switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
-            case "Today":
-                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
-                        Calendar.getInstance());
-                break;
-            case "Weekly":
-            case "Monthly":
-            case "Yearly":
-                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
-                        UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
-                        Calendar.getInstance());
-        	
-                break;
-            case "Custom":
-                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
-                        cal1, Calendar.getInstance());
-                break;
-            default:
-                break;
-            }
+                            case 1:
+                                List<Map.Entry<String, Long>> appList = new LinkedList<Map.Entry<String, Long>>(
+                                        mDataMap.entrySet());
+
+                                Collections.sort(appList,
+                                        new Comparator<Map.Entry<String, Long>>() {
+
+                                            @Override
+                                            public int compare(Entry<String, Long> lhs,
+                                                    Entry<String, Long> rhs) {
+                                                // TODO Auto-generated method
+                                                // stub
+                                                return (int) (mUsageListFragment.mLabelMap.get(lhs
+                                                        .getKey())
+                                                        .compareToIgnoreCase(mUsageListFragment.mLabelMap
+                                                                .get(rhs.getKey())));
+                                            }
+                                        });
+                                LinkedHashMap<String, Long> sortedApplicationMap = new LinkedHashMap<String, Long>();
+                                ListIterator<Map.Entry<String, Long>> appIterator = appList
+                                        .listIterator();
+                                while (appIterator.hasNext()) {
+                                    Map.Entry<String, Long> entry = appIterator.next();
+                                    sortedApplicationMap.put(entry.getKey(), entry.getValue());
+                                }
+                                mUsageListFragment.setmUsageAppData(sortedApplicationMap);
+                                break;
+
+                            case 2:
+                                HashMap<String, Long> map = mDatabase
+                                        .getApplicationEndTimeStampsForMentionedTimeBeforeToday(
+                                                mContext, UsageSharedPrefernceHelper
+                                                        .getCalendarByShowType(mContext), Calendar
+                                                        .getInstance());
+                                List<Map.Entry<String, Long>> lastTimeList = new LinkedList<Map.Entry<String, Long>>(
+                                        ((HashMap<String, Long>) map).entrySet());
+
+                                Collections.sort(lastTimeList,
+                                        new Comparator<Map.Entry<String, Long>>() {
+
+                                            @Override
+                                            public int compare(Entry<String, Long> lhs,
+                                                    Entry<String, Long> rhs) {
+                                                // TODO Auto-generated method
+                                                // stub
+                                                return (int) (rhs.getValue() - lhs.getValue());
+                                            }
+                                        });
+                                LinkedHashMap<String, Long> sortedLastTimeUsedMap = new LinkedHashMap<String, Long>();
+                                ListIterator<Map.Entry<String, Long>> lastTimeUsedIterator = lastTimeList
+                                        .listIterator();
+                                while (lastTimeUsedIterator.hasNext()) {
+                                    Map.Entry<String, Long> entry = lastTimeUsedIterator.next();
+                                    sortedLastTimeUsedMap.put(entry.getKey(),
+                                            mDataMap.get(entry.getKey()));
+                                }
+                                mUsageListFragment.setmUsageAppData(sortedLastTimeUsedMap);
+                                break;
+
+                            }
+                        }
+
+                    });
+            AlertDialog sortByDialog = sortByBuilder.create();
+            sortByDialog.show();
+            break;
+
         }
 
-        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap, this);
-        initDetailFragment(linkedMap, pkg);
+        return false;
     }
-
-    @Override
-    public void onUsageItemClick(String pkg, int position) {
-    	if(mShowByOptionsWeekly.getVisibility() == View.VISIBLE)
-    	hideFabOption();
-    	if(pkg== null || pkg.equals("totalTime")){
-    		return;
-    	}
-       
-        updateDetailFragment(pkg,position-1);
-        
-		
-	}
-
-    @Override
-    public void onDetach() {
-        if (!Utils.isTabletDevice(mContext)) {
-            setFabButtonsVisibility(true);
-        }
-
-    }
-
-    @Override
-    public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
-        // TODO Auto-generated method stub
-        return (int) (rhs.getKey() - lhs.getKey());
-    }
-	@Override
-	public void onUsageItemSwiped(String pkg, int position) {
-		Intent intent = new Intent(Intent.ACTION_SEND);
-    	intent.setType("text/plain");
-    	intent.putExtra(Intent.EXTRA_TEXT, "I used "+ Utils.getApplicationLabelName(mContext, pkg) + "for duration :"+
-    	Utils.getTimeFromSeconds(mDataMap.get(pkg).longValue())+ "\n" + "Sent from PhoneUse App");
-    	startActivity(Intent.createChooser(intent, "Share with"));
-		
-	}
 }
