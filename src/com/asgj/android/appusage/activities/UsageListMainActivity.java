@@ -224,7 +224,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
             // Service running part. Broadcast and get data. 
             // In case it's custom and end date is not today, we don't need dynamic data.
-            if (!(UsageSharedPrefernceHelper.getShowByType(mContext).equals(getString(R.string.string_Custom)) && Utils.compareDates(cal2, Calendar.getInstance()) != 0)) {
+            if (!(UsageSharedPrefernceHelper.getShowByType(getApplicationContext()).equals(getString(R.string.string_Custom)) && Utils.compareDates(cal2, Calendar.getInstance()) != 0)) {
                 if (mBinder != null) {
                     // Need data from service, fire off a broadcast.
                     Intent getDataIntent = new Intent();

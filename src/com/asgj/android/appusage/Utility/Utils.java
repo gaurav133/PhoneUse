@@ -249,8 +249,75 @@ public class Utils {
             return time;
         }
     }
-    
-    
+
+    /**
+     * Method that returns the days for setting Starting and ending alarm in Auto-track mode.
+     * 
+     * @param startSeconds Starting time set by user for auto track.
+     * @param endSeconds End time set by user for auto track.
+     * @return 1 if both should be fired on present day, 2 if start alarm should fire on present
+     * day, and end alarm on next day, 3 if both should fire on next day.
+     */
+
+    public static int getStartAndEndTrackDays(long startSeconds, long endSeconds) {
+        int result = 1;
+        long startHour, startMin;
+        long endHour, endMin;
+
+        startHour = startSeconds / 3600;
+        endHour = endSeconds / 3600;
+
+        startSeconds %= 3600;
+        endSeconds %= 3600;
+
+        startMin = startSeconds / 60;
+        endMin = endSeconds / 60;
+
+        startSeconds %= 60;
+        endSeconds %= 60;
+
+        /**
+         * 3 cases : (startSeconds > endSeconds, startSeconds < endSeconds, startSeconds =
+         * endSeconds)
+         * Result for case 3 is same as case 1.
+         */
+        // Case 1.
+        if ((startHour > endHour) || (startHour == endHour && startMin >= endMin)) {
+            /**
+             * Example scenarios : 1. S: 10 AM, E: 5 AM 
+             *                     2. S: 10 PM, E: 5 AM 
+             *                     3. S: 10 PM, E: 3 PM
+             */
+
+            result = 2;
+        }
+
+        // Case 2.
+        if (startHour < endHour || (startHour == endHour && startMin < endMin)) {
+            /**
+             * Example scenarios : 1. S: 5 AM, E: 10 AM 
+             *                     2. S: 1 PM, E: 10 PM 
+             *                     3. S: 11 AM, E: 9 PM
+             */
+
+            Calendar presentCalendar = Calendar.getInstance();
+            int presentHr = presentCalendar.get(Calendar.HOUR_OF_DAY);
+            int presentMin = presentCalendar.get(Calendar.MINUTE);
+
+            if ((presentHr > startHour && presentHr > endHour)
+                    || (presentHr == endHour && presentMin >= endMin)) {
+                // Fire both on next day.
+                result = 3;
+            } else if ((presentHr > startHour && presentHr < endHour)
+                    || ((presentHr == startHour && presentMin >= startMin) && (presentHr < endHour || (presentHr == endHour && presentMin < endMin))) 
+                    || ((presentHr < startHour) || (presentHr == startHour && presentMin <= startMin))){
+                result = 1;
+            }
+        }
+       Log.v ("gaurav", "Result code: " + result);
+        return result;
+    }
+
     /**
      * Check whether device API is Android L or less.
      * @param context Context to access application resources.

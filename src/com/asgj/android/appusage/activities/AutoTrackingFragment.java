@@ -1,15 +1,13 @@
 package com.asgj.android.appusage.activities;
 
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceFragment;
 import android.view.View;
 import android.widget.TextView;
 
 import com.asgj.android.appusage.R;
 
-public class AutoTrackingFragment extends PreferenceFragment implements OnPreferenceClickListener{
+public class AutoTrackingFragment extends PreferenceFragment {
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -24,10 +22,4 @@ public class AutoTrackingFragment extends PreferenceFragment implements OnPrefer
             }
         }
     }
-    @Override
-    public boolean onPreferenceClick(Preference preference) {
-        
-        return false;
-    }
-
 }

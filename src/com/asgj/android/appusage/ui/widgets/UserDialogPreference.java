@@ -150,9 +150,6 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
                 // Send complete map to preference.
                 UsageSharedPrefernceHelper.setApplicationsForTracking(mContext, mAlertMap);
                 
-                // Set date in preferences for apps.
-                UsageSharedPrefernceHelper.setCurrentDate(getContext());
-                
                 // Send broadcast to service to track set packages.
                 Intent notifyBroadcast = new Intent();
                 

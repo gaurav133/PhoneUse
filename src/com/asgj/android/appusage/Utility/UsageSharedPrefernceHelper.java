@@ -247,33 +247,33 @@ public class UsageSharedPrefernceHelper {
 		return prefs.getBoolean("trackingMode", false);
 	}
 
-	public static void setTrackingStartTime(Context context, Integer startTime) {
-		SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
-				Context.MODE_PRIVATE);
-		Editor editor = prefs.edit();
-		editor.putInt("startTrackingTime", startTime);
-		editor.apply();
-	}
+    public static void setTrackingStartTime(Context context, Long startTime) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putLong("startTrackingTime", startTime);
+        editor.apply();
+    }
 
-	public static Integer getTrackingStartTime(Context context) {
-		SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
-				Context.MODE_PRIVATE);
-		return prefs.getInt("startTrackingTime", 0);
-	}
+    public static Long getTrackingStartTime(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
+                Context.MODE_PRIVATE);
+        return prefs.getLong("startTrackingTime", 0);
+    }
 
-	public static void setTrackingEndTime(Context context, Integer endTime) {
-		SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
-				Context.MODE_PRIVATE);
-		Editor editor = prefs.edit();
-		editor.putInt("endTrackingTime", endTime);
-		editor.apply();
-	}
+    public static void setTrackingEndTime(Context context, Long endTime) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
+                Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putLong("endTrackingTime", endTime);
+        editor.apply();
+    }
 
-	public static Integer getTrackingEndTime(Context context) {
-		SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
-				Context.MODE_PRIVATE);
-		return prefs.getInt("endTrackingTime", 24);
-	}
+    public static Long getTrackingEndTime(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
+                Context.MODE_PRIVATE);
+        return prefs.getLong("endTrackingTime", 0);
+    }
 
     /**
      * Return a calendar object based on the showType stored in preferences.
