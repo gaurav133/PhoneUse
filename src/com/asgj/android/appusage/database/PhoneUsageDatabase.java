@@ -270,7 +270,7 @@ public class PhoneUsageDatabase {
 
     
 
-    }
+    
 
     public long getTotalDurationOfAllAppsByDate(String date) {
         long time_start = Utils.getMiliSecFromDate(date);
