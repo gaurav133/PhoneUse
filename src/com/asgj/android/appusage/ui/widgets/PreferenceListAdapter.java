@@ -18,7 +18,6 @@ import android.widget.Toast;
 
 import com.asgj.android.appusage.R;
 import com.asgj.android.appusage.Utility.ResolveInfo;
-import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
 
 public class PreferenceListAdapter extends BaseAdapter implements View.OnClickListener,
         OnSeekBarChangeListener {
@@ -201,6 +200,9 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
                         seekbar.setVisibility(View.VISIBLE);
                         holder.seekbarValueText.setVisibility(View.VISIBLE);
                     }
+                    if (mMoniterMap != null && !mMoniterMap.containsKey(mPackageList.get(holder.position).getmPackageName())) {
+                        mMoniterMap.put(mPackageList.get(holder.position).getmPackageName(), (long) 0);
+                    }
                     mSelectedCount++;
                 }
             } else {
@@ -219,8 +221,7 @@ public class PreferenceListAdapter extends BaseAdapter implements View.OnClickLi
 		ViewHolder holder = (ViewHolder) seekBar.getTag();
 		mPackageList.get(holder.position).setmInputtime(progress);
         if (progress < 4) {
-            mMoniterMap.put(mPackageList.get(holder.position).getmPackageName(),
-                    (long) (MINIMUM_ALERT_DURATION * progress));
+
             holder.seekbarValueText.setText(mContext.getResources().getString(
                     R.string.string_notify_minutes,
                     (MINIMUM_ALERT_DURATION * holder.timeBar.getProgress())));

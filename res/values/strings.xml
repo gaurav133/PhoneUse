@@ -37,9 +37,9 @@
     <string name="string_no_data_available_filtered_apps">No Usage Data for filtered apps for selected interval.</string>
     <string name="string_Ok">OK</string>
     <string name="string_Cancel">Cancel</string>
-    <string name="string_notification_alert_pref_title">Notification Alerts.</string>
+    <string name="string_notification_alert_pref_title">Notification Alerts</string>
     <string name="string_notification_alert_pref_summary">Notification alerts for applications when usage exceeds user defined duration.</string>
-    <string name="string_filter_apps_pref_title">Application Filter.</string>
+    <string name="string_filter_apps_pref_title">Application Filter</string>
     <string name="string_filter_apps_pref_summary">Create app filter to view selected applications on list.</string>
     <string name="string_select_packages_maximum_app_toast">You can not select more than %d applications.</string>
     <string name="string_total_time_apps">Total Time</string>
@@ -75,4 +75,7 @@
     <string name="string_feedback_and_suggestions">Feedback and Suggestions</string>
     <string name="string_feedback_and_suggestions_about_app">Provide feedback about this app.</string>
     <string name="string_send_feedback">Send Feedback</string>
+    <string name="string_more_options">More Options</string>
+    <string name="string_usage_alert">Usage Alert</string>
+    <string name="string_time_duration_exceeded">Time duration exceeded for</string>
 </resources>
