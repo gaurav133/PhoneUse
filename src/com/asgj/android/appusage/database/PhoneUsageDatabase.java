@@ -71,34 +71,26 @@ public class PhoneUsageDatabase {
 		insertApplicationEntry(MUSIC_PACKAGE_NAME, mValues);
 	}
 
-	public ArrayList<UsageInfo> getMusicEntryInInterval(
-			String date, long start_time,
-			long end_time, boolean isShowExtendDurationIntervals) {
-		return getApplicationEntryInInterval(MUSIC_PACKAGE_NAME,
-				date, start_time, end_time, isShowExtendDurationIntervals);
-	}
+    public ArrayList<UsageInfo> getMusicEntryInInterval(String date, long start_time,
+            long end_time, boolean isShowExtendDurationIntervals) {
+        return getApplicationEntryInInterval(MUSIC_PACKAGE_NAME, date, start_time, end_time,
+                isShowExtendDurationIntervals);
+    }
 
-	public ArrayList<UsageInfo> getApplicationEntryInInterval(
-            String packageName, String date,
-            long start_time, long end_time,
-            boolean isShowExtendDurationIntervals) {
-        String selection = Columns.COLUMN_APP_NAME + "= '" + packageName
-                + "'  AND " + Columns.COLUMN_DATE + "= '" + date + "' AND "
+    public ArrayList<UsageInfo> getApplicationEntryInInterval(String packageName, String date,
+            long start_time, long end_time, boolean isShowExtendDurationIntervals) {
+        String selection = Columns.COLUMN_APP_NAME + "= '" + packageName + "'  AND "
+                + Columns.COLUMN_DATE + "= '" + date + "' AND "
                 + Columns.COLUMN_START_INTERVAL_TIME + ">" + start_time;
         if (!isShowExtendDurationIntervals)
-            selection = selection + " AND " + Columns.COLUMN_END_INTERVAL_TIME
-            + "<" + end_time;
-        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
-                null, null, null);
+            selection = selection + " AND " + Columns.COLUMN_END_INTERVAL_TIME + "<" + end_time;
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, null);
         ArrayList<UsageInfo> mInfoList = new ArrayList<UsageInfo>();
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
-            int startIntervalIndex = cursor
-                    .getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME);
-            int endIntervalIndex = cursor
-                    .getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME);
-            int durationIndex = cursor
-                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
+            int startIntervalIndex = cursor.getColumnIndex(Columns.COLUMN_START_INTERVAL_TIME);
+            int endIntervalIndex = cursor.getColumnIndex(Columns.COLUMN_END_INTERVAL_TIME);
+            int durationIndex = cursor.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
             do {
                 UsageInfo info = new UsageInfo();
                 info.setmIntervalStartTime(cursor.getLong(startIntervalIndex));
@@ -107,25 +99,26 @@ public class PhoneUsageDatabase {
                 mInfoList.add(info);
             } while (cursor.moveToNext());
         }
+        cursor.close();
         return mInfoList;
 
     }
-	
-	public HashMap<Long, UsageInfo> getAppIntervalsBetweenDates(
-            String packageName, Calendar startCalendar, Calendar endCalendar) {
-	    
+
+    public HashMap<Long, UsageInfo> getAppIntervalsBetweenDates(String packageName,
+            Calendar startCalendar, Calendar endCalendar) {
+
         String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
         String endDate = Utils.getDateFromMiliSeconds(endCalendar.getTimeInMillis());
 
-        String indexCreate = "CREATE INDEX IF NOT EXISTS " + "date " + "ON " + Table.TABLE_NAME + "(" + Columns.COLUMN_DATE + "," + Columns.COLUMN_APP_NAME + ")";
+        String indexCreate = "CREATE INDEX IF NOT EXISTS " + "date " + "ON " + Table.TABLE_NAME
+                + "(" + Columns.COLUMN_DATE + "," + Columns.COLUMN_APP_NAME + ")";
         mDatabase.execSQL(indexCreate);
         String selection = Columns.COLUMN_APP_NAME + "= '" + packageName + "' AND "
                 + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
 
         HashMap<Long, UsageInfo> map = new HashMap<>();
-        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
-                null, null, null);
-        Log.v (LOG_TAG, "Cursor count is: " + cursor.getCount());
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, null);
+        Log.v(LOG_TAG, "Cursor count is: " + cursor.getCount());
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             int startIntervalIndex = cursor
@@ -188,6 +181,7 @@ public class PhoneUsageDatabase {
                 map.put(pkgName, duration);
             } while (cursor.moveToNext());
         }
+        cursor.close();
         return map;
     }
     
@@ -219,6 +213,7 @@ public class PhoneUsageDatabase {
                 }
             } while (cursor.moveToNext());
         }
+        cursor.close();
         return map;
     }
 
@@ -249,79 +244,77 @@ public class PhoneUsageDatabase {
                 mInfoList.add(info);
             } while (cursor.moveToNext());
         }
+        cursor.close();
         return mInfoList;
 
 	}
 
-	public long getTotalDurationOfAppInInternal(String packageName, Calendar calendar) {
-		String date = Utils.getDateFromMiliSeconds(calendar.getTimeInMillis());
-	    String selection = Columns.COLUMN_APP_NAME + "= '" + packageName
-				+ "'  AND " + Columns.COLUMN_DATE + "= '" + date + "'";
-		
-		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null,
-				null, null, null);
-		long total_time = 0;
-		if (cursor != null && cursor.getCount() > 0) {
-			cursor.moveToFirst();
-            int columnDuration = cursor
-                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
-			do {
-				total_time = total_time
-						+ cursor.getLong(columnDuration);
-			} while (cursor.moveToNext());
-		}
-		return total_time;
+    public long getTotalDurationOfAppInInternal(String packageName, Calendar calendar) {
+        String date = Utils.getDateFromMiliSeconds(calendar.getTimeInMillis());
+        String selection = Columns.COLUMN_APP_NAME + "= '" + packageName + "'  AND "
+                + Columns.COLUMN_DATE + "= '" + date + "'";
+
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, null);
+        long total_time = 0;
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            int columnDuration = cursor.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
+            do {
+                total_time = total_time + cursor.getLong(columnDuration);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return total_time;
+
+    }
+
+    
+
+    }
+
+    public long getTotalDurationOfAllAppsByDate(String date) {
+        long time_start = Utils.getMiliSecFromDate(date);
+        long time_end = time_start + (24 * 3600 * 1000);
+        String selection = Columns.COLUMN_DATE + "=" + date + " AND "
+                + Columns.COLUMN_START_INTERVAL_TIME + ">" + time_start + " AND "
+                + Columns.COLUMN_START_INTERVAL_TIME + "<" + time_end;
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, null);
+        long total_time = 0;
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            int columnDuration = cursor.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
+            do {
+                total_time = total_time + cursor.getLong(columnDuration);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return total_time;
 
 	}
-	public long getTotalDurationOfAllAppsByDate(String date){
-		long time_start = Utils.getMiliSecFromDate(date);
-		long time_end = time_start + (24 * 3600 * 1000);
-		String selection = Columns.COLUMN_DATE + "=" + date + " AND "
-				+ Columns.COLUMN_START_INTERVAL_TIME + ">" + time_start +
-				 " AND " + Columns.COLUMN_START_INTERVAL_TIME
-					+ "<" + time_end;
-		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection,
-				null, null, null, null);
-		long total_time = 0;
-		if (cursor != null && cursor.getCount() > 0) {
-			cursor.moveToFirst();
-            int columnDuration = cursor
-                    .getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
-			do {
-				total_time = total_time
-						+ cursor.getLong(columnDuration);
-			} while (cursor.moveToNext());
-		}
-		return total_time;
 
-	}
+    public long getTotalDurationOfApplicationOfAppByDate(String packageName, long miliSec) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(miliSec);
 
-	public long getTotalDurationOfApplicationOfAppByDate(String packageName,
-			long miliSec) {
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTimeInMillis(miliSec);
-	    
-		return getTotalDurationOfAppInInternal(packageName, calendar);
-	}
-	
-	public ArrayList<String> getAllPackagesUsedByDate(String date){
-		long time_start = Utils.getMiliSecFromDate(date);
-		long time_end = time_start + (24 * 3600 * 1000);
-		String selection = Columns.COLUMN_DATE + "=" + date + " AND "
-				+ Columns.COLUMN_START_INTERVAL_TIME + ">" + time_start +
-				 " AND " + Columns.COLUMN_START_INTERVAL_TIME
-					+ "<" + time_end;
-		Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection,
-				null, null, null, null);
-		ArrayList<String> mPackList = new ArrayList<>();
-		if (cursor != null && cursor.getCount() > 0) {
-			cursor.moveToFirst();
-            int columnAppName = cursor
-                    .getColumnIndex(Columns.COLUMN_APP_NAME);
-			do {
-				mPackList.add(cursor.getString(columnAppName));
-			} while (cursor.moveToNext());
-		}
-		return mPackList;
-	}
+        return getTotalDurationOfAppInInternal(packageName, calendar);
+    }
+
+    public ArrayList<String> getAllPackagesUsedByDate(String date) {
+        long time_start = Utils.getMiliSecFromDate(date);
+        long time_end = time_start + (24 * 3600 * 1000);
+        String selection = Columns.COLUMN_DATE + "=" + date + " AND "
+                + Columns.COLUMN_START_INTERVAL_TIME + ">" + time_start + " AND "
+                + Columns.COLUMN_START_INTERVAL_TIME + "<" + time_end;
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, null, selection, null, null, null, null);
+        ArrayList<String> mPackList = new ArrayList<>();
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            int columnAppName = cursor.getColumnIndex(Columns.COLUMN_APP_NAME);
+            do {
+                mPackList.add(cursor.getString(columnAppName));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return mPackList;
+    }
 }
