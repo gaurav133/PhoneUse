@@ -53,6 +53,7 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.PopupMenu;
+import android.widget.PopupMenu.OnDismissListener;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -112,6 +113,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private HashMap<String, Boolean> mAlertNotifiedMap;
     private int mNotificationId = 0;
     private PopupMenu mPopupMenu;
+    private boolean isPopupMenuShowing = false;
 
     private BroadcastReceiver notificationAlertReceiver = new BroadcastReceiver() {
 
@@ -693,11 +695,22 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     }
 
     private void showPopup() {
+    	
         View view = findViewById(R.id.action_overflow);
-
+        if(isPopupMenuShowing){
+        	return;
+        }
         // Prepare a popup menu.
         mPopupMenu = new PopupMenu(mContext, view);
         mPopupMenu.inflate(R.menu.menu_overflow);
+        mPopupMenu.setOnDismissListener(new OnDismissListener() {
+			
+			@Override
+			public void onDismiss(PopupMenu menu) {
+				isPopupMenuShowing = false;
+				
+			}
+		});
         mPopupMenu.setOnMenuItemClickListener(this);
 
         Menu menu = mPopupMenu.getMenu();
@@ -724,6 +737,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         setSortMenu(menu);
         mPopupMenu.show();
+        isPopupMenuShowing = true;
     }
 
     public void setSortMenu(Menu menu) {
