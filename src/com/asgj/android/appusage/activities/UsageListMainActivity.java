@@ -693,6 +693,15 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         }
         super.onTrimMemory(level);
     }
+    
+    @Override
+    protected void onStop() {
+    	if(mPopupMenu != null && isPopupMenuShowing){
+    		mPopupMenu.dismiss();
+    		isPopupMenuShowing = false;
+    	}
+    	super.onStop();
+    }
 
     private void showPopup() {
     	
