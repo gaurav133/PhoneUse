@@ -234,7 +234,7 @@ public class UsageSharedPrefernceHelper {
 	}
 
 	public static void setTrackingMode(Context context, boolean isCustomMode) {
-		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
+		SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,
 				Context.MODE_PRIVATE);
 		Editor editor = prefs.edit();
 		editor.putBoolean("trackingMode", isCustomMode);
