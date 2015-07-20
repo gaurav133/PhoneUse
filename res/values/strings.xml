@@ -76,4 +76,6 @@
     <string name="string_feedback_and_suggestions_about_app">Provide feedback about this app.</string>
     <string name="string_send_feedback">Send Feedback</string>
     <string name="string_more_options">More Options</string>
+    <string name="string_usage_alert">Usage Alert</string>
+    <string name="string_time_duration_exceeded">Time duration exceeded for</string>
 </resources>

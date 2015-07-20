@@ -90,14 +90,14 @@ public class Utils {
         PendingIntent contentIntent = PendingIntent.getActivity(context.getApplicationContext(), requestID,notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("Alert")
+                .setSmallIcon(R.drawable.usage_launcher_icon)
+                .setContentTitle(context.getResources().getString(R.string.string_usage_alert))
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
                 .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
                 .setContentText(
-                        "Time exceeded for "
-                                + Utils.getApplicationLabelName(context, pkg));
+                        context.getResources().getString(R.string.string_time_duration_exceeded) 
+                                + " " + Utils.getApplicationLabelName(context, pkg) + ".");
 
         
         // Gets an instance of the NotificationManager service
