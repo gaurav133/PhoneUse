@@ -37,11 +37,30 @@ public class PhoneUsageDatabase {
 		mDatabase = mDbHelper.getWritableDatabase();
 	}
 
-	
-	public void exportDatabse(String databaseName) {
-		try {
-			File sd = Environment.getExternalStorageDirectory();
-			File data = Environment.getDataDirectory();
+    public long getDurationByMonth(String pkgName, int month, int year) {
+        long time;
+        Calendar startCalendar, endCalendar;
+        startCalendar = Calendar.getInstance();
+        endCalendar = Calendar.getInstance();
+        startCalendar.set(Calendar.MONTH, month);
+        endCalendar.set(Calendar.MONTH, month);
+
+        startCalendar.set(Calendar.YEAR, year);
+        endCalendar.set(Calendar.YEAR, year);
+
+        startCalendar.set(Calendar.DAY_OF_MONTH, 1);
+        endCalendar.set(Calendar.DAY_OF_MONTH, endCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+
+        startCalendar.set(Calendar.DATE, 1);
+        endCalendar.set(Calendar.DATE, endCalendar.getActualMaximum(Calendar.DATE));
+
+        return getTotalDurationOfAppInMonth(pkgName, startCalendar, endCalendar);
+    }
+
+    public void exportDatabse(String databaseName) {
+        try {
+            File sd = Environment.getExternalStorageDirectory();
+            File data = Environment.getDataDirectory();
 
 			if (sd.canWrite()) {
 				String currentDBPath = "//data//" + "com.asgj.android.appusage"
@@ -268,9 +287,28 @@ public class PhoneUsageDatabase {
 
     }
 
-    
+    public long getTotalDurationOfAppInMonth(String packageName, Calendar startCalendar,
+            Calendar endCalendar) {
+        String startDate = Utils.getDateFromMiliSeconds(startCalendar.getTimeInMillis());
+        String endDate = Utils.getDateFromMiliSeconds(endCalendar.getTimeInMillis());
+        String selection = Columns.COLUMN_APP_NAME + "= '" + packageName + "'  AND "
+                + Columns.COLUMN_DATE + " BETWEEN '" + startDate + "'  AND '" + endDate + "'";
+        String[] projection = new String[] { Columns.COLUMN_INTERVAL_DURATION };
 
-    
+        Cursor cursor = mDatabase.query(Table.TABLE_NAME, projection, selection, null, null, null,
+                null);
+        long total_time = 0;
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            int columnDuration = cursor.getColumnIndex(Columns.COLUMN_INTERVAL_DURATION);
+            do {
+                total_time = total_time + cursor.getLong(columnDuration);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return total_time;
+
+    }
 
     public long getTotalDurationOfAllAppsByDate(String date) {
         long time_start = Utils.getMiliSecFromDate(date);

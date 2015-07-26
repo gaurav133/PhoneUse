@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
@@ -189,6 +190,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
      class loadDataTask extends AsyncTask<Void, Void, Void> {
 
         private Context mContext; 
+        private boolean mIsYearMode = false;
         long totalMusicDuration = 0;
         loadDataTask(Context context) {
             mContext = context;
@@ -201,10 +203,11 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
 
             if (mDatabase != null) {
                 switch (UsageSharedPrefernceHelper.getShowByType(getApplicationContext())) {
+                case "Yearly":
+                    mIsYearMode = true;
                 case "Today":
                 case "Weekly":
                 case "Monthly":
-                case "Yearly":
                     mDataMap = mDatabase.getAppDurationForGivenTimes(getApplicationContext(),
                             UsageSharedPrefernceHelper.getCalendarByShowType(getApplicationContext()),
                             Calendar.getInstance());
@@ -315,7 +318,8 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             // TODO Auto-generated method stub
             super.onPostExecute(result);
             mUsageListFragment.setmUsageAppData(mDataMap);
-            mUsageListFragment.setmMusicData(mMusicList,totalMusicDuration);
+            
+            mUsageListFragment.setmMusicData(mMusicList,totalMusicDuration, mIsYearMode);
         }
         
     }
@@ -455,19 +459,26 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	super.onAttachFragment(fragment);
     }
     
-    private void initDetailFragment(HashMap<Long, UsageInfo> intervalMap, String packageName) {
+    private void setIntervalMapDetail(HashMap<Long, UsageInfo> intervalMap, String packageName) {
+        mDetailFragment = new UsageDetailListFragment();
+        mDetailFragment.setSortedIntervalMap(intervalMap);
+        initDetailFragment(mDetailFragment, packageName);
+    }
+    
+    private void setYearlyMapDetail(HashMap<String, Long> yearlyMap, String packageName) {
+        mDetailFragment = new UsageDetailListFragment();
+        mDetailFragment.setSortedYearMap(yearlyMap);
+        initDetailFragment(mDetailFragment, packageName);
+    }
+    
+    private void initDetailFragment (UsageDetailListFragment fragment, String pkg) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        
-        LinkedHashMap<Long, UsageInfo> linkedMap = null;
-        // First sort map by key (start duration).
-        if (intervalMap != null && !intervalMap.isEmpty()) {
-             linkedMap = Utils.sortMapByKey(intervalMap,this);
+
+        if(pkg != null) {
+            mDetailFragment.setPackageNameAndDuration(Utils.getApplicationLabelName(mContext,pkg),
+                    Utils.getTimeFromSeconds(mDataMap.get(pkg)));
         }
-        
-        mDetailFragment = new UsageDetailListFragment(linkedMap);
-        if(packageName != null)
-        mDetailFragment.setPackageNameAndDuration(Utils.getApplicationLabelName(mContext,packageName),
-        		Utils.getTimeFromSeconds(mDataMap.get(packageName)));
+
         mDetailFragment.setOnDetachListener(this);
         if (!Utils.isTabletDevice(mContext)) {
         	transaction.setCustomAnimations(R.anim.enter_from_right,
@@ -476,6 +487,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             transaction.addToBackStack(null);
         }
         transaction.commit();
+
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -964,26 +976,68 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private void updateDetailFragment(String pkg, int position) {
         // Check current preference first.
         HashMap<Long, UsageInfo> infoMap = null;
+        LinkedHashMap<String, Long> yearMap = null;
+
+        String which;
+        
         // Check whether custom and end day not today.
         if (UsageSharedPrefernceHelper.getShowByType(mContext).equals(
                 mContext.getString(R.string.string_Custom))
                 && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
 
+            which = mContext.getResources().getString(R.string.string_Custom);
             infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
         } else {
+            which = UsageSharedPrefernceHelper.getShowByType(mContext);
 
-            switch (UsageSharedPrefernceHelper.getShowByType(mContext)) {
+            switch (which) {
             case "Today":
-                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
-                        Calendar.getInstance());
-                break;
             case "Weekly":
-            case "Monthly":
+            case "Monthly": infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
+                    UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
+                    Calendar.getInstance());
+            break;
             case "Yearly":
-                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
-                        UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
-                        Calendar.getInstance());
-
+             // Get duration upto present month for present date.
+                yearMap = new LinkedHashMap<>();
+                int startMonth, startYear;
+                Calendar currentCalendar = Calendar.getInstance();
+                int div = (currentCalendar.get(Calendar.MONTH) % 11);
+                startMonth = ((div == 0) ? div : div + 1);
+                Calendar monthCalendar = Calendar.getInstance();
+                
+                // Present year.
+                if (startMonth == 0) {
+                    startYear = currentCalendar.get(Calendar.YEAR);
+                    
+                    // Get total time for each month.
+                     for (int i = startMonth; i <= 11; i++) {
+                        monthCalendar.set(Calendar.MONTH, i);
+                     long time = mDatabase.getDurationByMonth(pkg, i, startYear);
+                     if (time > 0)
+                     yearMap.put(monthCalendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + startYear, time);
+                } 
+                }else {
+                    monthCalendar.set(Calendar.YEAR, currentCalendar.get(Calendar.YEAR) - 1);
+                    startYear = monthCalendar.get(Calendar.YEAR);
+                    for (int i = startMonth; i <= 11; i++) {
+                        monthCalendar.set(Calendar.MONTH, i);
+                        long time = mDatabase.getDurationByMonth(pkg, i, startYear);
+                        if (time > 0)
+                        yearMap.put(monthCalendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + startYear, time);
+                    }
+                    monthCalendar.set(Calendar.YEAR, startYear + 1);
+                    
+                    startYear = currentCalendar.get(Calendar.YEAR);
+                    for (int i = 0; i <= currentCalendar.get(Calendar.MONTH); i++) {
+                        monthCalendar.set(Calendar.MONTH, i);
+                        long time = mDatabase.getDurationByMonth(pkg, i, startYear);
+                        if (time > 0)
+                        yearMap.put(monthCalendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + startYear, time);
+                    }
+                }
+                
+                Log.v ("gaurav", "YearMap: " + yearMap);
                 break;
             case "Custom":
                 infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, Calendar.getInstance());
@@ -993,8 +1047,13 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             }
         }
 
-        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap, this);
-        initDetailFragment(linkedMap, pkg);
+        if (!which.equals(mContext.getResources().getString(R.string.string_Yearly))) {
+            LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortIntervalMap(infoMap, this);
+            setIntervalMapDetail(linkedMap, pkg);
+        } else {
+            LinkedHashMap<String, Long> linkedMap = Utils.sortYearMap(yearMap);
+            setYearlyMapDetail(linkedMap, pkg);
+        }
     }
 
     @Override

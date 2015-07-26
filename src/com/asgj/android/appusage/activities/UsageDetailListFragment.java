@@ -27,10 +27,12 @@ public class UsageDetailListFragment extends Fragment implements View.OnClickLis
 
 	MusicListAdapter mAdapter = null;
 	private OnDetachFromActivity mOnDetachListener = null;
-	private HashMap<Long,UsageInfo> mInfoList = null;
+	private HashMap<Long,UsageInfo> mInfoMap = null;
+	private HashMap<String, Long> mYearMap = null;
 	private String mCurrentPackageName = null;
 	private String mTotalDuration = null;
 	private ActionBar mActionBar;
+	private boolean mIsYearMode = false;
 	
 	public UsageDetailListFragment() {
 		// TODO Auto-generated constructor stub
@@ -69,8 +71,14 @@ public class UsageDetailListFragment extends Fragment implements View.OnClickLis
 	    }
 	}
 
-	public UsageDetailListFragment(HashMap<Long,UsageInfo> infoList) {
-		mInfoList = infoList;		
+	public void setSortedIntervalMap(HashMap<Long,UsageInfo> infoMap) {
+		mInfoMap = infoMap;
+		mIsYearMode = false;
+	}
+	
+	public void setSortedYearMap(HashMap<String, Long> infoMap) {
+	    mYearMap = infoMap;
+	    mIsYearMode = true;
 	}
 	
 	@Override
@@ -97,8 +105,13 @@ public class UsageDetailListFragment extends Fragment implements View.OnClickLis
 		LinearLayout.LayoutParams params = new LayoutParams(
 				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		list.setLayoutParams(params);
-		mAdapter = new MusicListAdapter(mInfoList, getActivity());
-		mAdapter.setPackageNameAndDuration(mCurrentPackageName, mTotalDuration);
+		
+		if (!mIsYearMode) {
+		    mAdapter = new MusicListAdapter(mInfoMap, getActivity());
+		} else {
+		    mAdapter = new MusicListAdapter(mYearMap, getActivity(), true);
+		}
+		mAdapter.setPackageNameAndDuration(mCurrentPackageName, mTotalDuration, mIsYearMode);
 		getActivity().getActionBar().setTitle(mCurrentPackageName);
 		list.setAdapter(mAdapter);
 		list.setChildDivider(null);

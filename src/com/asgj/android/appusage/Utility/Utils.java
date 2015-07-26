@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +60,7 @@ public class Utils {
 		return context.getResources().getBoolean(R.bool.isTablet);
 	}
 	
-	public static LinkedHashMap<Long, UsageInfo> sortMapByKey(HashMap<Long,UsageInfo> infoMap,Comparator<Map.Entry<Long, UsageInfo>> compare) {
+	public static LinkedHashMap<Long, UsageInfo> sortIntervalMap(HashMap<Long,UsageInfo> infoMap,Comparator<Map.Entry<Long, UsageInfo>> compare) {
 
         // Sort intervals before sending to detail fragment.
         LinkedList<Map.Entry<Long, UsageInfo>> list = new LinkedList<>();
@@ -78,6 +79,25 @@ public class Utils {
         return linkedMap;
     }
 	
+	public static LinkedHashMap<String, Long> sortYearMap(HashMap<String, Long> infoMap) {
+
+        // Sort intervals before sending to detail fragment.
+        LinkedList<Map.Entry<String, Long>> list = new LinkedList<>();
+        for (Map.Entry<String, Long> entry : infoMap.entrySet()) {
+            list.add(entry);
+        }
+        Collections.reverse(list);
+        
+        LinkedHashMap<String, Long> linkedMap = new LinkedHashMap<>();
+        ListIterator<Map.Entry<String, Long>> iterator = list.listIterator();
+        
+        while (iterator.hasNext()) {
+            Map.Entry<String, Long> entry = iterator.next();
+            linkedMap.put(entry.getKey(), entry.getValue());
+        }
+        return linkedMap;
+    }
+
     public static void sendNotification(Context context, String pkg, int notificationId) {
         int requestID = (int) System.currentTimeMillis();
         
@@ -442,11 +462,23 @@ public class Utils {
 		return false;
 	}
 	
+	public static boolean isCurrentMonth(String arg0){
+	    Log.v ("gaurav", " " + Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()));
+	    return (Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + Calendar.getInstance().get(Calendar.YEAR)).equals(arg0);
+	}
+	
 	public static String getDateFromMiliSeconds(long miliSec) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		Date resultdate = new Date(miliSec);
 		return sdf.format(resultdate);
 	}
+	
+	
+    public static String getMonth(long miliSec) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM DD,yyyy");
+        Date resultdate = new Date(miliSec);
+        return sdf.format(resultdate);
+    }
 
 	/**
 	 * Returns application icon corresponding to given package.
