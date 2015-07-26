@@ -709,6 +709,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                 
                 if (Utils.compareDates(currentCalendar, storedCalendar) == 1) {
                     mPresentDurationMap.clear();
+                    mAlertDurationMap.clear();
                     // Update notified preferences.
                     if (mAlertNotifiedMap != null && !mAlertNotifiedMap.isEmpty()) {
                         for (Map.Entry<String, Boolean> notifyEntry : mAlertNotifiedMap.entrySet()) {
@@ -723,6 +724,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                         }
                     }
                     
+                    mAlertDurationMap = UsageSharedPrefernceHelper.getApplicationsDurationForTracking(mContext);
                     mAlertNotifiedMap = UsageSharedPrefernceHelper.getApplicationsAlertForTracking(mContext);
                     
                     UsageSharedPrefernceHelper.setCurrentDate(mContext);
