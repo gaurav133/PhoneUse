@@ -78,4 +78,5 @@
     <string name="string_more_options">More Options</string>
     <string name="string_usage_alert">Usage Alert</string>
     <string name="string_time_duration_exceeded">Time duration exceeded for</string>
+        <string name="string_this_month">This Month</string>
 </resources>

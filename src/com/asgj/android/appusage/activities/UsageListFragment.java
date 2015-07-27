@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -169,11 +170,11 @@ public class UsageListFragment<AppData, MusicData> extends
 	}
 
 	@SuppressWarnings("unchecked")
-    public void setmMusicData(MusicData mMusicData,long totalDuration) {
+    public void setmMusicData(MusicData mMusicData,long totalDuration, boolean isYearMode) {
 		this.mMusicData = mMusicData;
 		try {
 			mMusicDataListAdapter = new MusicListAdapter((ArrayList<UsageInfo>)this.mMusicData,getActivity());
-			mMusicDataListAdapter.setPackageNameAndDuration(null, Utils.getTimeFromSeconds(totalDuration));
+			mMusicDataListAdapter.setPackageNameAndDuration(null, Utils.getTimeFromSeconds(totalDuration), isYearMode);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -369,26 +370,69 @@ public class UsageListFragment<AppData, MusicData> extends
 		private void updateDetailFragmentForTablet(String pkg, int position) {
 	        // Check current preference first.
 	    	HashMap<Long,UsageInfo> infoMap = null;
+	    	HashMap<String, Long> yearMap = null;
+	    	String which;
+	    	
 	        // Check whether custom and end day not today.
 	        if (UsageSharedPrefernceHelper.getShowByType(getActivity()).equals(
 	                getActivity().getString(R.string.string_Custom))
 	                && Utils.compareDates(cal2, Calendar.getInstance()) != 0) {
+	            which = getString(R.string.string_Custom);
 
 	            infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, cal1, cal2);
 	        } else {
+	            which = UsageSharedPrefernceHelper.getShowByType(getActivity());
 
-	            switch (UsageSharedPrefernceHelper.getShowByType(getActivity())) {
+	            switch (which) {
 	            case "Today":
-	                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg, Calendar.getInstance(),
-	                        Calendar.getInstance());
-	                break;
 	            case "Weekly":
 	            case "Monthly":
-	            case "Yearly":
 	                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
-	                        UsageSharedPrefernceHelper.getCalendarByShowType(getActivity()),
-	                        Calendar.getInstance());
-	        	
+                            UsageSharedPrefernceHelper.getCalendarByShowType(getActivity()),
+                            Calendar.getInstance());
+	                break;
+                
+	            case "Yearly":
+	             // Get duration upto present month for present date.
+	                yearMap = new HashMap<>();
+	                int startMonth, startYear;
+	                Calendar currentCalendar = Calendar.getInstance();
+	                int div = (currentCalendar.get(Calendar.MONTH) % 11);
+	                startMonth = ((div == 0) ? div : div + 1);
+	                Calendar monthCalendar = Calendar.getInstance();
+	                
+	                // Present year.
+	                if (startMonth == 0) {
+	                    startYear = currentCalendar.get(Calendar.YEAR);
+	                    
+	                    // Get total time for each month.
+	                     for (int i = startMonth; i <= 11; i++) {
+	                        monthCalendar.set(Calendar.MONTH, i);
+	                     long time = mDatabase.getDurationByMonth(pkg, i, startYear);
+	                     if (time > 0)
+	                     yearMap.put(monthCalendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + startYear, time);
+	                } 
+	                }else {
+	                    monthCalendar.set(Calendar.YEAR, currentCalendar.get(Calendar.YEAR) - 1);
+	                    startYear = monthCalendar.get(Calendar.YEAR);
+	                    for (int i = startMonth; i <= 11; i++) {
+	                        monthCalendar.set(Calendar.MONTH, i);
+	                        long time = mDatabase.getDurationByMonth(pkg, i, startYear);
+	                        if (time > 0)
+	                        yearMap.put(monthCalendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + startYear, time);
+	                    }
+	                    monthCalendar.set(Calendar.YEAR, startYear + 1);
+	                    
+	                    startYear = currentCalendar.get(Calendar.YEAR);
+	                    for (int i = 0; i <= currentCalendar.get(Calendar.MONTH); i++) {
+	                        monthCalendar.set(Calendar.MONTH, i);
+	                        long time = mDatabase.getDurationByMonth(pkg, i, startYear);
+	                        if (time > 0)
+	                        yearMap.put(monthCalendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + startYear, time);
+	                    }
+	                }
+	                
+	                
 	                break;
 	            case "Custom":
 	                infoMap = mDatabase.getAppIntervalsBetweenDates(pkg,
@@ -399,8 +443,13 @@ public class UsageListFragment<AppData, MusicData> extends
 	            }
 	        }
 	        
-	        LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortMapByKey(infoMap,this);
-	        initDetailFragment(linkedMap, Utils.getApplicationLabelName(getActivity(), pkg));
+	        if (!which.equals(getActivity().getResources().getString(R.string.string_Yearly))) {
+	            LinkedHashMap<Long, UsageInfo> linkedMap = Utils.sortIntervalMap(infoMap, this);
+	            setIntervalMapDetail(linkedMap, pkg);
+	        } else {
+	            LinkedHashMap<String, Long> linkedMap = Utils.sortYearMap(yearMap);
+	            setYearlyMapDetail(linkedMap, pkg);
+	        }
 	    }
 
 
@@ -417,7 +466,27 @@ public class UsageListFragment<AppData, MusicData> extends
 		public CharSequence getPageTitle(int position) {
 			return mList[position];
 		}
-		private void initDetailFragment(HashMap<Long,UsageInfo> intervalMap, String applicationName) {
+		
+	    private void setIntervalMapDetail(HashMap<Long, UsageInfo> intervalMap, String packageName) {
+	        mDetailFragment = new UsageDetailListFragment();
+	        mDetailFragment.setSortedIntervalMap(intervalMap);
+	        initDetailFragment(mDetailFragment, packageName);
+	    }
+	    
+	    private void setYearlyMapDetail(HashMap<String, Long> yearlyMap, String packageName) {
+	        mDetailFragment = new UsageDetailListFragment();
+	        mDetailFragment.setSortedYearMap(yearlyMap);
+	        initDetailFragment(mDetailFragment, packageName);
+	    }
+	    
+	    private void initDetailFragment (UsageDetailListFragment fragment, String pkg) {
+	        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+	        transaction.replace(R.id.usage_detail_fragment_layout, mDetailFragment);
+	        transaction.commit();
+	    }
+
+/*		private void initDetailFragment(HashMap<Long,UsageInfo> intervalMap, String applicationName) {
 	        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
 	        
 	        LinkedHashMap<Long, UsageInfo> linkedMap = null;
@@ -427,10 +496,9 @@ public class UsageListFragment<AppData, MusicData> extends
 	        }
 	        
 	        mDetailFragment = new UsageDetailListFragment(linkedMap);
-	        transaction.replace(R.id.usage_detail_fragment_layout, mDetailFragment);
-	        transaction.commit();
+	        
 	    }
-		
+*/		
 		@Override
 	    public int compare(Entry<Long, UsageInfo> lhs, Entry<Long, UsageInfo> rhs) {
 	        // TODO Auto-generated method stub
