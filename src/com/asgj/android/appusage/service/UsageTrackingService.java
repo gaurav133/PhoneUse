@@ -400,7 +400,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         // Have to check time when screen off but music playing / call being taken.
         AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mIsMusicPlaying = audioManager.isMusicActive();
-        return mIsMusicPlaying;
+        return mIsMusicPlaying && mIsScreenOff;
     }
     /**
      * Local binder class to return an instance of this service for interaction with activity.
