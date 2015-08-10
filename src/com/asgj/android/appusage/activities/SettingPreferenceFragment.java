@@ -113,7 +113,7 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
         if (preference.getKey().equals("feedback_app_pref")) {
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.putExtra(Intent.EXTRA_SUBJECT, "Feedback/Suggestions for PhoneUse App.");
-            intent.putExtra(Intent.EXTRA_EMAIL, new String[] {"androiddeveloperatwork@gmail.com"});
+            intent.putExtra(Intent.EXTRA_EMAIL, new String[] {"bluecubeapplications@gmail.com"});
             intent.setType("text/html");
             startActivity(Intent.createChooser(intent, getActivity().getResources().getString(R.string.string_send_feedback)));
         }
