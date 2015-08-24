@@ -1,4 +1,4 @@
-package com.asgj.android.appusage.ui.widgets;
+package com.sj.android.appusage.ui.widgets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,16 +9,18 @@ import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.asgj.android.appusage.R;
-import com.asgj.android.appusage.Utility.HttpImageLoader;
-import com.asgj.android.appusage.Utility.UsageInfo;
-import com.asgj.android.appusage.Utility.Utils;
+import com.sj.android.appusage.R;
+import com.sj.android.appusage.Utility.HttpImageLoader;
+import com.sj.android.appusage.Utility.UsageInfo;
+import com.sj.android.appusage.Utility.Utils;
 
 public class UsageListAdapter<Data> extends BaseAdapter {
 
@@ -107,6 +109,7 @@ public class UsageListAdapter<Data> extends BaseAdapter {
     	return 1;
     }
 
+    private int lastPosition = -1;
 	@Override
     public View getView(int position, View convertView, ViewGroup parent) {
         
@@ -173,6 +176,9 @@ public class UsageListAdapter<Data> extends BaseAdapter {
                 holder.parent.setClickable(false);
             }
         }
+        Animation animation = AnimationUtils.loadAnimation(mContext, (position > lastPosition) ? R.anim.up_from_bottom : R.anim.down_from_top);
+        convertView.startAnimation(animation);
+        lastPosition = position;
         return convertView;
     }
 
