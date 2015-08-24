@@ -1,4 +1,4 @@
-package com.asgj.android.appusage.activities;
+package com.sj.android.appusage.activities;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -59,17 +59,17 @@ import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.asgj.android.appusage.R;
-import com.asgj.android.appusage.Utility.ResolveInfo;
-import com.asgj.android.appusage.Utility.UsageInfo;
-import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
-import com.asgj.android.appusage.Utility.Utils;
-import com.asgj.android.appusage.database.PhoneUsageDatabase;
-import com.asgj.android.appusage.dialogs.MonthViewFragment;
-import com.asgj.android.appusage.dialogs.MonthViewFragment.DateInterface;
-import com.asgj.android.appusage.service.UsageTrackingService;
-import com.asgj.android.appusage.service.UsageTrackingService.LocalBinder;
-import com.asgj.android.appusage.service.UsageTrackingService.provideData;
+import com.sj.android.appusage.R;
+import com.sj.android.appusage.Utility.ResolveInfo;
+import com.sj.android.appusage.Utility.UsageInfo;
+import com.sj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.sj.android.appusage.Utility.Utils;
+import com.sj.android.appusage.database.PhoneUsageDatabase;
+import com.sj.android.appusage.dialogs.MonthViewFragment;
+import com.sj.android.appusage.dialogs.MonthViewFragment.DateInterface;
+import com.sj.android.appusage.service.UsageTrackingService;
+import com.sj.android.appusage.service.UsageTrackingService.LocalBinder;
+import com.sj.android.appusage.service.UsageTrackingService.provideData;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface,
         UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity,
@@ -341,7 +341,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         registerReceiver(notificationAlertReceiver, notificationFilter);
         mNotificationIntent = getIntent();
         
-        if (mNotificationIntent.getAction().equals("com.android.asgj.appusage.action.NOTIFIICATION") && ((mNotificationIntent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0)) {
+        if (mNotificationIntent != null && mNotificationIntent.getAction().equals("com.android.asgj.appusage.action.NOTIFIICATION") && ((mNotificationIntent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0)) {
             initListFragment(true);
         } else {
             initListFragment(false);
@@ -1063,7 +1063,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         if (pkg == null || pkg.equals("totalTime")) {
             return;
         }
-
         updateDetailFragment(pkg, position - 1);
 
     }

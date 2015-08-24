@@ -1,4 +1,4 @@
-package com.asgj.android.appusage.service;
+package com.sj.android.appusage.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,10 +27,10 @@ import android.media.AudioManager;
 import android.os.Binder;
 import android.util.Log;
 
-import com.asgj.android.appusage.Utility.UsageInfo;
-import com.asgj.android.appusage.Utility.UsageSharedPrefernceHelper;
-import com.asgj.android.appusage.Utility.Utils;
-import com.asgj.android.appusage.database.PhoneUsageDatabase;
+import com.sj.android.appusage.Utility.UsageInfo;
+import com.sj.android.appusage.Utility.UsageSharedPrefernceHelper;
+import com.sj.android.appusage.Utility.Utils;
+import com.sj.android.appusage.database.PhoneUsageDatabase;
 
 /**
  * Service to track application usage time for different apps being used by the user.
@@ -100,18 +100,21 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                     long duration = Utils.getTimeInSecFromNano(System.nanoTime()
                             - mPreviousStartTime);
                     if (duration > 0L) {
-                        if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
-                            mBgTrackingTask.foregroundMap
-                                    .put(mPreviousAppName,
-                                            mBgTrackingTask.foregroundMap.get(mPreviousAppName)
-                                                    + duration);
-                        } else {
-                            mBgTrackingTask.foregroundMap.put(mPreviousAppName,
-                                    duration);
+                        if (mPreviousAppName != null) {
+                            if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
+                                mBgTrackingTask.foregroundMap
+                                        .put(mPreviousAppName,
+                                                mBgTrackingTask.foregroundMap.get(mPreviousAppName)
+                                                        + duration);
+                            } else {
+                                mBgTrackingTask.foregroundMap.put(mPreviousAppName,
+                                        duration);
+                            }
                         }
                     }
                     if (mBinder.interfaceMap != null) {
                         mBinder.interfaceMap.provideMap(mBgTrackingTask.foregroundMap);
+                    Log.v ("gaurav", "Call doHandlingonappclose dataProvide");
                     doHandlingOnApplicationClose();
                     
                     doHandlingForApplicationStarted();
@@ -211,46 +214,20 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
 
                     if (mIsScreenOff == false) {
                         long currentTime = System.nanoTime();
-
+                        long duration = Utils.getTimeInSecFromNano(currentTime - mPreviousStartTime);
                         UsageInfo usageInfo = new UsageInfo();
                         usageInfo.setmIntervalStartTime(mPreviousAppStartTimeStamp);
                         usageInfo.setmIntervalEndTime(mPreviousAppExitTimeStamp);
-                        usageInfo.setmIntervalDuration(Utils.getTimeInSecFromNano(currentTime - mPreviousStartTime));
-                        mDatabase.insertApplicationEntry(mPreviousAppName, usageInfo);
+                        usageInfo.setmIntervalDuration(duration);
+                        if (mPreviousAppName != null) {
+                            Log.v ("gaurav", "Add app entry : timeTickReceiver");
+                            Log.v ("gaurav", "Duration is: " + duration);
+                            mDatabase.insertApplicationEntry(mPreviousAppName, usageInfo);
+                        }
 
                         mPreviousStartTime = currentTime;
                         mPreviousAppStartTimeStamp = System.currentTimeMillis();
                     }
-                    
-                    /*// Day change scenario, no applications have been notified.
-                    HashMap<String, Long> map = UsageSharedPrefernceHelper.getApplicationsDurationForTracking(mContext);
-                    
-                    if (map != null && !map.isEmpty()) {
-                        for (Map.Entry<String, Long> entry : map.entrySet()) {
-                            String pkg = entry.getKey();
-                            UsageSharedPrefernceHelper.setApplicationAlert(mContext, pkg, false);
-                        }
-                    }
-                    
-                    mAlertDurationMap.clear();
-                    mAlertNotifiedMap.clear();
-                    mPresentDurationMap.clear();
-                    
-                    mAlertDurationMap = map;
-                    mAlertNotifiedMap = UsageSharedPrefernceHelper.getApplicationsAlertForTracking(mContext);
-                    if (!mAlertDurationMap.isEmpty()) {
-                        for (Map.Entry<String, Long> entry : mAlertDurationMap.entrySet()) {
-                            String pkg = entry.getKey();
-
-                            if (mAlertNotifiedMap.containsKey(pkg) && !mAlertNotifiedMap.get(pkg)) {
-                                mPresentDurationMap.put(
-                                        pkg,
-                                        mDatabase.getTotalDurationOfApplicationOfAppByDate(pkg,
-                                                System.currentTimeMillis()));
-                            }
-                        }
-                    } 
-                    */
 
                     initializeMap(mBgTrackingTask.foregroundMap);
 
@@ -313,13 +290,17 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                     long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
 
                     if (duration > 0L) {
-                        if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
-                            mBgTrackingTask.foregroundMap.put(mPreviousAppName, mBgTrackingTask.foregroundMap.get(mPreviousAppName) + duration);
-                        } else {
-                            mBgTrackingTask.foregroundMap.put(mPreviousAppName, duration);
+                        if (mPreviousAppName != null) {
+                            if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
+                                mBgTrackingTask.foregroundMap.put(mPreviousAppName,
+                                        mBgTrackingTask.foregroundMap.get(mPreviousAppName)
+                                                + duration);
+                            } else {
+                                mBgTrackingTask.foregroundMap.put(mPreviousAppName, duration);
+                            }
                         }
                     }
-                    
+                    Log.v ("gaurav", "Call doHandlingonappclose screenDim");
                     doHandlingOnApplicationClose();
                 }
                 
@@ -400,7 +381,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         // Have to check time when screen off but music playing / call being taken.
         AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mIsMusicPlaying = audioManager.isMusicActive();
-        return mIsMusicPlaying && mIsScreenOff;
+        return mIsMusicPlaying && (mIsScreenOff || mKeyguardManager.isKeyguardLocked());
     }
     /**
      * Local binder class to return an instance of this service for interaction with activity.
@@ -554,7 +535,12 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
          usageInfoApp.setmIntervalDuration(duration);
 
          // Insert data to database for previous application.
-         mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
+         if (mPreviousAppName != null) {
+             Log.v ("gaurav", "Add app entry : doHandlingonAppClose");
+             Log.v ("gaurav", "Duration is: " + duration);
+             mDatabase.insertApplicationEntry(mPreviousAppName, usageInfoApp);
+         }
+         
          
          // Insert data to preference too.
          initializeMap(mBgTrackingTask.foregroundMap);
@@ -596,7 +582,11 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                
             }
         }
-          return !mCurrentAppName.equals(mPreviousAppName);
+          if (mPreviousAppName != null && mCurrentAppName != null) {
+              return !mCurrentAppName.equals(mPreviousAppName);
+          } else {
+              return false;
+          }
 
     }
     
@@ -743,12 +733,20 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                     long duration = Utils.getTimeInSecFromNano(time - mPreviousStartTime);
 
                     if (duration > 0) {
-                        if (foregroundMap.containsKey(mPreviousAppName)) {
-                            foregroundMap.put(mPreviousAppName, foregroundMap.get(mPreviousAppName) + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
-                        } else {
-                            foregroundMap.put(mPreviousAppName, Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+                        if (mPreviousAppName != null) {
+                            if (foregroundMap.containsKey(mPreviousAppName)) {
+                                foregroundMap.put(
+                                        mPreviousAppName,
+                                        foregroundMap.get(mPreviousAppName)
+                                                + Utils.getTimeInSecFromNano(time
+                                                        - mPreviousStartTime));
+                            } else {
+                                foregroundMap.put(mPreviousAppName,
+                                        Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+                            }
                         }
                     }
+                    Log.v ("gaurav", "Call doHandlingonappclose run");
                     doHandlingOnApplicationClose();
                     // Update mPreviousAppStartTimeStamp.
                     doHandlingForApplicationStarted();
@@ -798,7 +796,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
             }
         }
     }
-       /**
+
     /**
      * Starts a new thread to track foreground and background application time.
      */
@@ -835,13 +833,18 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         
 
         if (duration > 0) {
-        if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
-            mBgTrackingTask.foregroundMap.put(mPreviousAppName, mBgTrackingTask.foregroundMap.get(mPreviousAppName) + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
-        } else {
-            mBgTrackingTask.foregroundMap.put(mPreviousAppName, Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+        if (mPreviousAppName != null) {
+                if (mBgTrackingTask.foregroundMap.containsKey(mPreviousAppName)) {
+                    mBgTrackingTask.foregroundMap.put(
+                            mPreviousAppName,
+                            mBgTrackingTask.foregroundMap.get(mPreviousAppName)
+                                    + Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+                } else {
+                    mBgTrackingTask.foregroundMap.put(mPreviousAppName,
+                            Utils.getTimeInSecFromNano(time - mPreviousStartTime));
+                }
             }
         }
-
         // Check whether music playing in background while we are stopping
         // tracking.
         if (isMusicPlaying()) {
@@ -850,6 +853,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         }
 
         // As application has changed, we need to dump data to DB.
+        Log.v ("gaurav", "Call doHandlingonappclose saveDataOnKill");
         doHandlingOnApplicationClose();
 
         // Dump data to xml shared preference.
