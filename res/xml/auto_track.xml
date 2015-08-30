@@ -3,7 +3,7 @@
 
     <PreferenceCategory android:title="@string/string_time_settings" >
 
-        <com.asgj.android.appusage.ui.widgets.TimePreference
+        <com.sj.android.appusage.ui.widgets.TimePreference
             android:defaultValue="00:00"
             android:dependency="preferences_enabled"
             android:key="start_time_pref_key"
@@ -11,7 +11,7 @@
             android:summary="@string/string_when_to_start_tracking"
             android:title="@string/string_start_time" />
 
-        <com.asgj.android.appusage.ui.widgets.TimePreference
+        <com.sj.android.appusage.ui.widgets.TimePreference
             android:defaultValue="00:00"
             android:dependency="preferences_enabled"
             android:key="stop_time_pref_key"

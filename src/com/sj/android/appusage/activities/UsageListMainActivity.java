@@ -234,7 +234,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 if (mBinder != null) {
                     // Need data from service, fire off a broadcast.
                     Intent getDataIntent = new Intent();
-                    getDataIntent.setAction("com.android.asgj.appusage.action.DATA_PROVIDE");
+                    getDataIntent.setAction("com.android.sj.appusage.action.DATA_PROVIDE");
                     sendBroadcast(getDataIntent);
 
                     mBinder.setInterface(new provideData() {

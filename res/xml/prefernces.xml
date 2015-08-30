@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <com.asgj.android.appusage.ui.widgets.UserDialogPreference android:key="user_packges_pref" />
-    <com.asgj.android.appusage.ui.widgets.UserDialogPreference android:key="filter_pkages" />
+    <com.sj.android.appusage.ui.widgets.UserDialogPreference android:key="user_packges_pref" />
+    <com.sj.android.appusage.ui.widgets.UserDialogPreference android:key="filter_pkages" />
 
     <Preference
         android:key="tracking_type_pref"

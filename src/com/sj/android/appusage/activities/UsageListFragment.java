@@ -228,7 +228,6 @@ public class UsageListFragment<AppData, MusicData> extends
     }
 
     @Override
-    @Override
     public void onAttach(Activity activity) {
         // TODO Auto-generated method stub
         super.onAttach(activity);
