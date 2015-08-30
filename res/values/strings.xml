@@ -84,7 +84,6 @@
     <string name="string_this_month">This Month</string>
     <string name="string_tracking_started">Tracking Started.</string>
     <string name="string_tracking_stopped">Tracking Stopped.</string>
-    <string name="string_share_item_content"><html><body>I used <b>%1$s</b> for <b>%2$s</b></body></html></string>
+    <string name="string_share_item_content">I used %1$s for %2$s</string>
     <string name="string_sent_from">Sent from UsageTracker app.</string>
-    <string name="abc"><html><body><b>bold</b><u>underline</u></body></html></string>
 </resources>
