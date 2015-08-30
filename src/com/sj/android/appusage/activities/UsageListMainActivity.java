@@ -1256,9 +1256,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     public void onUsageItemSwiped(String pkg, int position) {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TEXT, "I used " + Utils.getApplicationLabelName(mContext, pkg)
-                + "for duration :" + Utils.getTimeFromSeconds(mDataMap.get(pkg).longValue()) + "\n"
-                + "Sent from PhoneUse App");
+        intent.putExtra(
+                Intent.EXTRA_TEXT,
+                        mContext.getString(R.string.string_share_item_content,
+                                Utils.getApplicationLabelName(mContext, pkg),
+                                Utils.getTimeFromSeconds(mDataMap.get(pkg).longValue()) + " today."
+                                        + "\n" + mContext.getString(R.string.string_sent_from)) + "\n" + "https://play.google.com/store/apps/details?id=com.sj.android.appusage");
         startActivity(Intent.createChooser(intent, "Share with"));
 
     }
