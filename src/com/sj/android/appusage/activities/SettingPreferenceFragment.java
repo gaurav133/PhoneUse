@@ -103,16 +103,16 @@ public class SettingPreferenceFragment extends PreferenceFragment implements OnP
 		 
 		if (preference.getKey().equals("share_app_pref")) {
 		    Intent intent = new Intent(Intent.ACTION_SEND);
-		    intent.putExtra(Intent.EXTRA_SUBJECT, "PhoneUse App");
+		    intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
             intent.setType("text/plain");
             intent.putExtra(Intent.EXTRA_TEXT, getActivity().getResources().getString(R.string.string_download_app) + ":\n \n"
-                    + "https://play.google.com/store/apps/details?id=com.macropinch.swan&hl=en");
+                    + "https://play.google.com/store/apps/details?id=com.sj.android.appusage");
             startActivity(Intent.createChooser(intent, "Share with"));
         }
         
         if (preference.getKey().equals("feedback_app_pref")) {
             Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Feedback/Suggestions for PhoneUse App.");
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Feedback/Suggestions for UsageTracker App.");
             intent.putExtra(Intent.EXTRA_EMAIL, new String[] {"bluecubeapplications@gmail.com"});
             intent.setType("text/html");
             startActivity(Intent.createChooser(intent, getActivity().getResources().getString(R.string.string_send_feedback)));

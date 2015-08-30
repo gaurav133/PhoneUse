@@ -103,7 +103,7 @@ public class Utils {
         
         Intent notificationIntent = new Intent(context.getApplicationContext(), UsageListMainActivity.class);
         notificationIntent.putExtra("package", pkg);
-        notificationIntent.setAction("com.android.asgj.appusage.action.NOTIFIICATION");
+        notificationIntent.setAction("com.android.sj.appusage.action.NOTIFIICATION");
         
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP); 
         

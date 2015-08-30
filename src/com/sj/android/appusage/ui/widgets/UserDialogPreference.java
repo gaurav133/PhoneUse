@@ -2,6 +2,8 @@ package com.sj.android.appusage.ui.widgets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -99,7 +101,16 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
     }
     public void setPackageList(ArrayList<ResolveInfo> pkgList){
     	mResolveInfo = pkgList;
-    	mAdapter = new PreferenceListAdapter(mResolveInfo, mContext,mCurrentPref);
+    	
+    	// Sort array list before making adapter.
+    	Collections.sort(mResolveInfo, new Comparator<ResolveInfo>() {
+    	    @Override
+    	    public int compare(ResolveInfo lhs, ResolveInfo rhs) {
+    	        // TODO Auto-generated method stub
+    	        return lhs.getmApplicationName().compareTo(rhs.getmApplicationName());
+    	    }
+        });
+    	mAdapter = new PreferenceListAdapter(mResolveInfo, mContext, mCurrentPref);
     }
 
 	public UserDialogPreference(Context context, AttributeSet attrs)
@@ -154,9 +165,9 @@ public class UserDialogPreference extends DialogPreference implements View.OnCli
                 Intent notifyBroadcast = new Intent();
                 
                 if (UsageSharedPrefernceHelper.isServiceRunning(getContext())) {
-                    notifyBroadcast.setAction("com.android.asgj.appusage.action.NOTIFICATION_ALERT");
+                    notifyBroadcast.setAction("com.android.sj.appusage.action.NOTIFICATION_ALERT");
                 } else {
-                    notifyBroadcast.setAction("com.android.asgj.appusage.action.NOTIFICATION_ALERT_ACTIVITY");
+                    notifyBroadcast.setAction("com.android.sj.appusage.action.NOTIFICATION_ALERT_ACTIVITY");
                 }
                 mContext.sendBroadcast(notifyBroadcast);
             } else {

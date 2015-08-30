@@ -92,7 +92,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
         @Override
         public void onReceive(Context context, Intent intent) {
             // TODO Auto-generated method stub
-            if (intent.getAction().equals("com.android.asgj.appusage.action.DATA_PROVIDE")) {
+            if (intent.getAction().equals("com.android.sj.appusage.action.DATA_PROVIDE")) {
                 Log.v(LOG_TAG, "Provide data to activity.");
 
                 if (mBgTrackingTask != null && mBgTrackingTask.foregroundMap != null
@@ -451,9 +451,9 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
             IntentFilter userPresentFilter = new IntentFilter("android.intent.action.USER_PRESENT");
             IntentFilter timeTickFilter = new IntentFilter("android.intent.action.TIME_TICK");
             
-            IntentFilter dataProvideFilter = new IntentFilter("com.android.asgj.appusage.action.DATA_PROVIDE");
+            IntentFilter dataProvideFilter = new IntentFilter("com.android.sj.appusage.action.DATA_PROVIDE");
             IntentFilter notificationAlertFilter = new IntentFilter(
-                    "com.android.asgj.appusage.action.NOTIFICATION_ALERT");
+                    "com.android.sj.appusage.action.NOTIFICATION_ALERT");
             // Register receivers.
             registerReceiver(screenWakeUpReceiver, wakeUpFilter);
             registerReceiver(screenDimReceiver, dimFilter);

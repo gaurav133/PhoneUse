@@ -7,8 +7,15 @@
         android:id="@+id/action_overflow"
         android:title="@string/string_more_options"
         android:showAsAction="always"
-        android:orderInCategory="1"
+        android:orderInCategory="2"
         android:icon="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha">
+    </item>
+    <item
+        android:id="@+id/action_sort_by"
+        android:title="@string/string_sort_by"
+        android:showAsAction="always"
+        android:orderInCategory="1"
+        android:icon="@drawable/ic_action_sort_by">
     </item>
 
 </menu>

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    tools:context="com.asgj.android.appusage.activities.UsageListMainActivity" >
+    tools:context="com.sj.android.appusage.activities.UsageListMainActivity" >
 
     <FrameLayout
         android:id="@+id/usage_list_main_fragment"
