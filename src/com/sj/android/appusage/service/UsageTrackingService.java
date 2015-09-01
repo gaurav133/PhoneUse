@@ -442,6 +442,7 @@ public class UsageTrackingService extends Service implements Comparator<UsageSta
                 }
             }
         }
+        UsageSharedPrefernceHelper.setCurrentDate(mContext);
     }
 
     private void setUpReceivers(boolean register) {

@@ -307,6 +307,7 @@ public class UsageListFragment<AppData, MusicData> extends
             filterMenu.setTitle(R.string.string_filter);
         }
 
+        MenuItem menuItemSortBy = menu.findItem(R.id.action_sort_by);
         MenuItem menuItemFilter = (MenuItem) menu.findItem(R.id.filter_menu);
 
         if (mViewPager != null) {
@@ -316,7 +317,8 @@ public class UsageListFragment<AppData, MusicData> extends
                     menuItemFilter.setVisible(true);
                 }
                 break;
-            case 1: // menuItemSortBy.setVisible(false);
+            case 1:  
+                menuItemSortBy.setVisible(false);
                 menuItemFilter.setVisible(false);
                 break;
             default:
