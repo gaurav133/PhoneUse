@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">PhoneUse</string>
+    <string name="app_name">UsageTracker</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="screen_wake_up">Wake Up</string>
@@ -53,9 +53,12 @@
     <string name="string_sort_by">Sort By</string>
     <string name="string_all">All</string>
     <string name="string_filter">Filter</string>
-    <string name="string_duration">Duration</string>
-    <string name="string_application">Application</string>
-    <string name="string_last_time_used">Last Time Used</string>
+    <string name="string_duration_ascending">Duration (Ascending)</string>
+    <string name="string_duration_descending">Duration (Descending)</string>
+    <string name="string_application_name_ascending">App Name (Ascending)</string>
+    <string name="string_application_name_descending">App Name (Descending)</string>
+    <string name="string_most_recently_used">Most Recently Used</string>
+    <string name="string_sort_order_none">None</string>
     <string name="string_uncheck_all">Uncheck All</string>
     <string name="string_title_low_battery_dialog">Low Battery</string>
     <string name="string_desc_low_battery_dialog">Device battery is critically low. Connect your device to a charger to start tracking.</string>
@@ -78,5 +81,9 @@
     <string name="string_more_options">More Options</string>
     <string name="string_usage_alert">Usage Alert</string>
     <string name="string_time_duration_exceeded">Time duration exceeded for</string>
-        <string name="string_this_month">This Month</string>
+    <string name="string_this_month">This Month</string>
+    <string name="string_tracking_started">Tracking Started.</string>
+    <string name="string_tracking_stopped">Tracking Stopped.</string>
+    <string name="string_share_item_content">I used %1$s for %2$s</string>
+    <string name="string_sent_from">Sent from UsageTracker app.</string>
 </resources>

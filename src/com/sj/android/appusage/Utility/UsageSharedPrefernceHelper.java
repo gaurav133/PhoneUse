@@ -17,6 +17,7 @@ public class UsageSharedPrefernceHelper {
     private static final String LOG_TAG = UsageSharedPrefernceHelper.class
             .getSimpleName();
     private static String PREF_NAME_AUTO_TRACKING_INFO = "phone.usage.app.auto.tracking.info";
+    private static String PREF_NAME_SORT_TYPE_INFO = "phone.usage.app.auto.tracking.info";
     private static String PREF_NAME_ALERT_DURATION_INFO = "phone.usage.app.alert.duration.info";
     private static String PREF_NAME_ALERT_NOTIFIED_INFO = "phone.usage.app.alert.notified.info";
 
@@ -227,11 +228,26 @@ public class UsageSharedPrefernceHelper {
 		editor.commit();
 	}
 
-	public static boolean isFilterMode(Context context) {
-		SharedPreferences prefs = context.getSharedPreferences(PREFERNCE_NAME,
-				Context.MODE_PRIVATE);
-		return prefs.getBoolean("filterMode", false);
-	}
+    public static void setSortType(Context context, String sortType) {
+        SharedPreferences prefs = context
+                .getSharedPreferences(PREF_NAME_SORT_TYPE_INFO, Context.MODE_PRIVATE);
+        Editor editor = prefs.edit();
+        editor.putString("sortType", sortType);
+        editor.commit();
+    }
+    
+    public static String getSortType(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_SORT_TYPE_INFO,
+                Context.MODE_PRIVATE);
+        return prefs.getString("sortType", context.getString(R.string.string_sort_order_none));
+    }
+
+    public static boolean isFilterMode(Context context) {
+        SharedPreferences prefs = context
+                .getSharedPreferences(PREFERNCE_NAME, Context.MODE_PRIVATE);
+        return prefs.getBoolean("filterMode", false);
+    }
+    
 
 	public static void setTrackingMode(Context context, boolean isCustomMode) {
 		SharedPreferences prefs = context.getSharedPreferences(PREF_NAME_AUTO_TRACKING_INFO,

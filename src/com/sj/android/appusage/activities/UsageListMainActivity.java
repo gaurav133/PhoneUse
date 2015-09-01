@@ -59,6 +59,7 @@ import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sj.android.appusage.R;
 import com.sj.android.appusage.Utility.ResolveInfo;
 import com.sj.android.appusage.Utility.UsageInfo;
 import com.sj.android.appusage.Utility.UsageSharedPrefernceHelper;
@@ -69,7 +70,6 @@ import com.sj.android.appusage.dialogs.MonthViewFragment.DateInterface;
 import com.sj.android.appusage.service.UsageTrackingService;
 import com.sj.android.appusage.service.UsageTrackingService.LocalBinder;
 import com.sj.android.appusage.service.UsageTrackingService.provideData;
-import com.sj.android.appusage.R;
 
 public class UsageListMainActivity extends Activity implements View.OnClickListener, DateInterface,
         UsageListFragment.OnUsageItemClickListener, UsageDetailListFragment.OnDetachFromActivity,
@@ -90,6 +90,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     private UsageDetailListFragment mDetailFragment;
     private static final String LOG_TAG = UsageListMainActivity.class.getSimpleName();
     private String[] mShowList = null;
+    private String[] mSortList = null;
     private TextView mShowByOptionsToday = null;
     private TextView mShowByOptionsWeekly = null;
     private TextView mShowByOptionsMonthly = null;
@@ -233,7 +234,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 if (mBinder != null) {
                     // Need data from service, fire off a broadcast.
                     Intent getDataIntent = new Intent();
-                    getDataIntent.setAction("com.android.asgj.appusage.action.DATA_PROVIDE");
+                    getDataIntent.setAction("com.android.sj.appusage.action.DATA_PROVIDE");
                     sendBroadcast(getDataIntent);
 
                     mBinder.setInterface(new provideData() {
@@ -317,9 +318,24 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         protected void onPostExecute(Void result) {
             // TODO Auto-generated method stub
             super.onPostExecute(result);
-            mUsageListFragment.setmUsageAppData(mDataMap);
             
-            mUsageListFragment.setmMusicData(mMusicList,totalMusicDuration, mIsYearMode);
+                String sortOrder = UsageSharedPrefernceHelper.getSortType(mContext);
+
+                if (sortOrder.equals(getString(R.string.string_duration_ascending))) {
+                    sortByDuration(0);
+                } else if (sortOrder.equals(getString(R.string.string_duration_descending))) {
+                    sortByDuration(1);
+                } else if (sortOrder.equals(getString(R.string.string_application_name_ascending))) {
+                    sortByAppName(0);
+                } else if (sortOrder.equals(getString(R.string.string_application_name_descending))) {
+                    sortByAppName(1);
+                } else if (sortOrder.equals(getString(R.string.string_most_recently_used))) {
+                    sortByMostRecent();
+                } else {
+                    mUsageListFragment.setmUsageAppData(mDataMap);
+                }
+                
+                mUsageListFragment.setmMusicData(mMusicList, totalMusicDuration, mIsYearMode);
         }
         
     }
@@ -332,16 +348,25 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         setContentView(R.layout.usage_list_main_layout);
         getActionBar().setDisplayShowHomeEnabled(false);
         mContext = this;
-        mShowList = new String[]{getString(R.string.string_Today),
-        		getString(R.string.string_Weekly),getString(R.string.string_Monthly)
-        		,getString(R.string.string_Yearly),getString(R.string.string_Custom)};
+        mShowList = new String[] { getString(R.string.string_Today),
+                getString(R.string.string_Weekly), getString(R.string.string_Monthly),
+                getString(R.string.string_Yearly), getString(R.string.string_Custom) };
+        mSortList = new String[] { getString(R.string.string_duration_ascending),
+                getString(R.string.string_duration_descending), getString(R.string.string_application_name_ascending),
+                getString(R.string.string_application_name_descending), getString(R.string.string_most_recently_used),
+                getString(R.string.string_sort_order_none) };
+
         mDatabase = new PhoneUsageDatabase(mContext);
-        
-        IntentFilter notificationFilter = new IntentFilter("com.android.asgj.appusage.action.NOTIFICATION_ALERT_ACTIVITY");
+
+        IntentFilter notificationFilter = new IntentFilter(
+                "com.android.sj.appusage.action.NOTIFICATION_ALERT_ACTIVITY");
         registerReceiver(notificationAlertReceiver, notificationFilter);
         mNotificationIntent = getIntent();
-        
-        if (mNotificationIntent != null && mNotificationIntent.getAction().equals("com.android.asgj.appusage.action.NOTIFIICATION") && ((mNotificationIntent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0)) {
+
+        if (mNotificationIntent != null
+                && mNotificationIntent.getAction().equals(
+                        "com.android.sj.appusage.action.NOTIFIICATION")
+                && ((mNotificationIntent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0)) {
             initListFragment(true);
         } else {
             initListFragment(false);
@@ -612,11 +637,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             intentGoToHomeScreen.addCategory("android.intent.category.HOME");
 
         // Test toast.
-        Toast.makeText(mContext, "Your phone usage is being calculated now!", Toast.LENGTH_LONG)
+        Toast.makeText(mContext, getString(R.string.string_tracking_started), Toast.LENGTH_LONG)
                 .show();
         startActivity(intentGoToHomeScreen);
-
-        finish();
 
     }
 
@@ -689,6 +712,9 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                 }
             }
         }
+        Toast.makeText(mContext, getString(R.string.string_tracking_stopped), Toast.LENGTH_LONG)
+                .show();
+
     }
 
     @Override
@@ -715,6 +741,95 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     	super.onStop();
     }
 
+    private void sortByDuration(int order) {
+        final int sortOrder = order;
+        List<Map.Entry<String, Long>> timeList = new LinkedList<Map.Entry<String, Long>>(
+                mDataMap.entrySet());
+
+        if (!timeList.isEmpty()) {
+            Collections.sort(timeList, new Comparator<Map.Entry<String, Long>>() {
+
+                @Override
+                public int compare(Entry<String, Long> lhs, Entry<String, Long> rhs) {
+                    // TODO Auto-generated
+                    // method stub
+                    if (sortOrder == 0) {
+                        return (int) (lhs.getValue() - rhs.getValue());
+                    } else {
+                        return (int) (rhs.getValue() - lhs.getValue());
+                    }
+                }
+            });
+            LinkedHashMap<String, Long> sortedTimeMap = new LinkedHashMap<String, Long>();
+            ListIterator<Map.Entry<String, Long>> timeIterator = timeList.listIterator();
+            while (timeIterator.hasNext()) {
+                Map.Entry<String, Long> entry = timeIterator.next();
+                sortedTimeMap.put(entry.getKey(), entry.getValue());
+            }
+            mUsageListFragment.setmUsageAppData(sortedTimeMap);
+        }
+    }
+
+    private void sortByAppName(int order) {
+        final int sortOrder = order;
+
+        List<Map.Entry<String, Long>> appList = new LinkedList<Map.Entry<String, Long>>(
+                mDataMap.entrySet());
+
+        Collections.sort(appList, new Comparator<Map.Entry<String, Long>>() {
+
+            @Override
+            public int compare(Entry<String, Long> lhs, Entry<String, Long> rhs) {
+                // TODO Auto-generated method
+                // stub
+                if (sortOrder == 2) {
+                    return (int) (mUsageListFragment.mLabelMap.get(lhs.getKey())
+                            .compareToIgnoreCase(mUsageListFragment.mLabelMap.get(rhs.getKey())));
+                } else {
+                    return (int) (mUsageListFragment.mLabelMap.get(rhs.getKey())
+                            .compareToIgnoreCase(mUsageListFragment.mLabelMap.get(lhs.getKey())));
+
+                }
+            }
+        });
+        LinkedHashMap<String, Long> sortedApplicationMap = new LinkedHashMap<String, Long>();
+        ListIterator<Map.Entry<String, Long>> appIterator = appList.listIterator();
+        while (appIterator.hasNext()) {
+            Map.Entry<String, Long> entry = appIterator.next();
+            sortedApplicationMap.put(entry.getKey(), entry.getValue());
+        }
+        mUsageListFragment.setmUsageAppData(sortedApplicationMap);
+
+    }
+
+    private void sortByMostRecent() {
+        UsageSharedPrefernceHelper.setSortType(mContext,
+                mSortList[4]);
+        HashMap<String, Long> map = mDatabase
+                .getApplicationEndTimeStampsForMentionedTimeBeforeToday(mContext,
+                        UsageSharedPrefernceHelper.getCalendarByShowType(mContext),
+                        Calendar.getInstance());
+        List<Map.Entry<String, Long>> lastTimeList = new LinkedList<Map.Entry<String, Long>>(
+                ((HashMap<String, Long>) map).entrySet());
+
+        Collections.sort(lastTimeList, new Comparator<Map.Entry<String, Long>>() {
+
+            @Override
+            public int compare(Entry<String, Long> lhs, Entry<String, Long> rhs) {
+                // TODO Auto-generated method
+                // stub
+                return (int) (rhs.getValue() - lhs.getValue());
+            }
+        });
+        LinkedHashMap<String, Long> sortedLastTimeUsedMap = new LinkedHashMap<String, Long>();
+        ListIterator<Map.Entry<String, Long>> lastTimeUsedIterator = lastTimeList.listIterator();
+        while (lastTimeUsedIterator.hasNext()) {
+            Map.Entry<String, Long> entry = lastTimeUsedIterator.next();
+            sortedLastTimeUsedMap.put(entry.getKey(), mDataMap.get(entry.getKey()));
+        }
+        mUsageListFragment.setmUsageAppData(sortedLastTimeUsedMap);
+
+    }
     private void showPopup() {
     	
         View view = findViewById(R.id.action_overflow);
@@ -762,10 +877,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     }
 
     public void setSortMenu(Menu menu) {
-        if ((mDataMap != null && mDataMap.isEmpty()) || mUsageListFragment.getViewPagerPage() == 1) {
-            MenuItem sortByItem = (MenuItem) menu.findItem(R.id.action_sort_by);
-            sortByItem.setVisible(false);
-        }
+        /*
+         * if ((mDataMap != null && mDataMap.isEmpty()) ||
+         * mUsageListFragment.getViewPagerPage() == 1) { MenuItem sortByItem =
+         * (MenuItem) menu.findItem(R.id.action_sort_by);
+         * sortByItem.setVisible(false); }
+         */
     }
 
     @Override
@@ -776,8 +893,62 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
         case R.id.action_overflow:
             showPopup();
             break;
+
+        case R.id.action_sort_by:
+            executeSortBy();
+            break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void executeSortBy() {
+        // Open alert dialog.
+        AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(this).setTitle(
+                getString(R.string.string_sort_by)).setSingleChoiceItems(
+                new ArrayAdapter<>(getBaseContext(),
+                        android.R.layout.simple_list_item_single_choice, mSortList),
+                        Utils.getIndexFromArray(mSortList,
+                                UsageSharedPrefernceHelper.getSortType(mContext)),
+                        new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // TODO Auto-generated method stub
+                        final int choice = which;
+                        
+                        UsageSharedPrefernceHelper.setSortType(mContext, mSortList[choice]);
+                        switch (which) {
+                        case 0: // Duration ascending case.
+                        case 1: // Duration descending case.
+                                if (choice == 0) {
+                                    sortByDuration(0);
+                                } else {
+                                    sortByDuration(1);
+                                }
+                                break;
+
+                        case 2: // Application name ascending.
+                        case 3: // Application name descending.
+                                if (choice == 2) {
+                                    sortByAppName(0);
+                                } else {
+                                    sortByAppName(1);
+                                }
+                                break;
+
+                        case 4: // Most recently used.
+                                sortByMostRecent();
+                                break;
+                        
+                        case 5 : // No order.
+                                mUsageListFragment.setmUsageAppData(mDataMap);
+                                break;
+                    }
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog sortByDialog = sortByBuilder.create();
+        sortByDialog.setCanceledOnTouchOutside(true);
+        sortByDialog.show();
     }
 
     @Override
@@ -1085,9 +1256,12 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
     public void onUsageItemSwiped(String pkg, int position) {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TEXT, "I used " + Utils.getApplicationLabelName(mContext, pkg)
-                + "for duration :" + Utils.getTimeFromSeconds(mDataMap.get(pkg).longValue()) + "\n"
-                + "Sent from PhoneUse App");
+        intent.putExtra(
+                Intent.EXTRA_TEXT,
+                        mContext.getString(R.string.string_share_item_content,
+                                Utils.getApplicationLabelName(mContext, pkg),
+                                Utils.getTimeFromSeconds(mDataMap.get(pkg).longValue()) + " today."
+                                        + "\n" + mContext.getString(R.string.string_sent_from)) + "\n" + "https://play.google.com/store/apps/details?id=com.sj.android.appusage");
         startActivity(Intent.createChooser(intent, "Share with"));
 
     }
@@ -1130,7 +1304,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             } else {
                 stopTrackingService();
                 item.setTitle(getString(R.string.string_start));
-                finish();
             }
 
             break;
@@ -1156,6 +1329,7 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
                         }
                     });
             AlertDialog dialog = builder.create();
+            dialog.setCanceledOnTouchOutside(true);
             dialog.show();
             break;
         case R.id.action_settings:
@@ -1166,114 +1340,6 @@ public class UsageListMainActivity extends Activity implements View.OnClickListe
             intent.putParcelableArrayListExtra("packageList", mList);
             startActivity(intent);
             break;
-        case R.id.action_sort_by:
-            // Open alert dialog.
-            AlertDialog.Builder sortByBuilder = new AlertDialog.Builder(this).setTitle(
-                    getString(R.string.string_sort_by)).setAdapter(
-                    new ArrayAdapter<>(getBaseContext(), android.R.layout.simple_list_item_1,
-                            new String[] { getString(R.string.string_duration),
-                                    getString(R.string.string_application),
-                                    getString(R.string.string_last_time_used) }),
-                    new OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // TODO Auto-generated method stub
-                            switch (which) {
-                            case 0: // Time case.
-                                List<Map.Entry<String, Long>> timeList = new LinkedList<Map.Entry<String, Long>>(
-                                        mDataMap.entrySet());
-
-                                if (!timeList.isEmpty()) {
-                                    Collections.sort(timeList,
-                                            new Comparator<Map.Entry<String, Long>>() {
-
-                                                @Override
-                                                public int compare(Entry<String, Long> lhs,
-                                                        Entry<String, Long> rhs) {
-                                                    // TODO Auto-generated
-                                                    // method stub
-                                                    return (int) (lhs.getValue() - rhs.getValue());
-                                                }
-                                            });
-                                    LinkedHashMap<String, Long> sortedTimeMap = new LinkedHashMap<String, Long>();
-                                    ListIterator<Map.Entry<String, Long>> timeIterator = timeList
-                                            .listIterator();
-                                    while (timeIterator.hasNext()) {
-                                        Map.Entry<String, Long> entry = timeIterator.next();
-                                        sortedTimeMap.put(entry.getKey(), entry.getValue());
-                                    }
-                                    mUsageListFragment.setmUsageAppData(sortedTimeMap);
-                                }
-                                break;
-
-                            case 1:
-                                List<Map.Entry<String, Long>> appList = new LinkedList<Map.Entry<String, Long>>(
-                                        mDataMap.entrySet());
-
-                                Collections.sort(appList,
-                                        new Comparator<Map.Entry<String, Long>>() {
-
-                                            @Override
-                                            public int compare(Entry<String, Long> lhs,
-                                                    Entry<String, Long> rhs) {
-                                                // TODO Auto-generated method
-                                                // stub
-                                                return (int) (mUsageListFragment.mLabelMap.get(lhs
-                                                        .getKey())
-                                                        .compareToIgnoreCase(mUsageListFragment.mLabelMap
-                                                                .get(rhs.getKey())));
-                                            }
-                                        });
-                                LinkedHashMap<String, Long> sortedApplicationMap = new LinkedHashMap<String, Long>();
-                                ListIterator<Map.Entry<String, Long>> appIterator = appList
-                                        .listIterator();
-                                while (appIterator.hasNext()) {
-                                    Map.Entry<String, Long> entry = appIterator.next();
-                                    sortedApplicationMap.put(entry.getKey(), entry.getValue());
-                                }
-                                mUsageListFragment.setmUsageAppData(sortedApplicationMap);
-                                break;
-
-                            case 2:
-                                HashMap<String, Long> map = mDatabase
-                                        .getApplicationEndTimeStampsForMentionedTimeBeforeToday(
-                                                mContext, UsageSharedPrefernceHelper
-                                                        .getCalendarByShowType(mContext), Calendar
-                                                        .getInstance());
-                                List<Map.Entry<String, Long>> lastTimeList = new LinkedList<Map.Entry<String, Long>>(
-                                        ((HashMap<String, Long>) map).entrySet());
-
-                                Collections.sort(lastTimeList,
-                                        new Comparator<Map.Entry<String, Long>>() {
-
-                                            @Override
-                                            public int compare(Entry<String, Long> lhs,
-                                                    Entry<String, Long> rhs) {
-                                                // TODO Auto-generated method
-                                                // stub
-                                                return (int) (rhs.getValue() - lhs.getValue());
-                                            }
-                                        });
-                                LinkedHashMap<String, Long> sortedLastTimeUsedMap = new LinkedHashMap<String, Long>();
-                                ListIterator<Map.Entry<String, Long>> lastTimeUsedIterator = lastTimeList
-                                        .listIterator();
-                                while (lastTimeUsedIterator.hasNext()) {
-                                    Map.Entry<String, Long> entry = lastTimeUsedIterator.next();
-                                    sortedLastTimeUsedMap.put(entry.getKey(),
-                                            mDataMap.get(entry.getKey()));
-                                }
-                                mUsageListFragment.setmUsageAppData(sortedLastTimeUsedMap);
-                                break;
-
-                            }
-                        }
-
-                    });
-            AlertDialog sortByDialog = sortByBuilder.create();
-            sortByDialog.show();
-            break;
-
         }
 
         return false;
