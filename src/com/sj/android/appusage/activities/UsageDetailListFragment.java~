@@ -105,8 +105,7 @@ public class UsageDetailListFragment extends Fragment implements View.OnClickLis
 		ExpandableListView list = new ExpandableListView(getActivity());
 		LinearLayout.LayoutParams params = new LayoutParams(
 				LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-		list.setLayoutParams(params);		
-		parentLayout.getRootView().setBackgroundColor(Color.WHITE);
+		list.setLayoutParams(params);
 		
 		if (!mIsYearMode) {
 		    mAdapter = new MusicListAdapter(mInfoMap, getActivity());
